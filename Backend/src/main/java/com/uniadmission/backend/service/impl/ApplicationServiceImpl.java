@@ -16,12 +16,16 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Autowired
         private ApplicationRepository applicationRepository;
+
         @Autowired
         private CandidateRepository candidateRepository;
+
         @Autowired
         private MajorRepository majorRepository;
+
         @Autowired
         private AdmissionRoundRepository admissionRoundRepository;
+
         @Autowired
         private SubjectGroupRepository subjectGroupRepository;
 
@@ -29,13 +33,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         @Transactional
         public Application submit(ApplicationSubmitRequest request) {
                 Candidate candidate = candidateRepository.findById(request.getCandidateId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy thí sinh"));
+                                .orElseThrow(() -> new RuntimeException("Candidate not found"));
                 Major major = majorRepository.findById(request.getMajorId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành học"));
+                                .orElseThrow(() -> new RuntimeException("Major not found"));
                 AdmissionRound round = admissionRoundRepository.findById(request.getAdmissionRoundId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt xét tuyển"));
+                                .orElseThrow(() -> new RuntimeException("Admission Round not found"));
                 SubjectGroup group = subjectGroupRepository.findById(request.getSubjectGroupId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy tổ hợp môn"));
+                                .orElseThrow(() -> new RuntimeException("Subject Group not found"));
 
                 Application application = new Application();
                 application.setCandidate(candidate);
@@ -52,5 +56,34 @@ public class ApplicationServiceImpl implements ApplicationService {
         @Override
         public List<Application> getApplicationsByCandidate(Long candidateId) {
                 return applicationRepository.findByCandidateId(candidateId);
+        }
+
+        @Override
+        @Transactional
+        public void cancelApplication(Long applicationId) {
+                Application application = applicationRepository.findById(applicationId)
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+                if (application.getStatus() != ApplicationStatus.PENDING) {
+                        throw new RuntimeException("Only pending applications can be cancelled");
+                }
+
+                application.setStatus(ApplicationStatus.CANCELLED);
+                applicationRepository.save(application);
+        }
+
+        @Override
+        public List<Application> getAllApplications() {
+                return applicationRepository.findAll();
+        }
+
+        @Override
+        @Transactional
+        public void updateApplicationStatus(Long id, ApplicationStatus status) {
+                Application application = applicationRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+                application.setStatus(status);
+                applicationRepository.save(application);
         }
 }
