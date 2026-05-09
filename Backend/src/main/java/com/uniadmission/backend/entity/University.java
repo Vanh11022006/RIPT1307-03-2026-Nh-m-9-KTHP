@@ -1,0 +1,25 @@
+package com.uniadmission.backend.entity;
+
+import com.uniadmission.backend.entity.enums.EntityStatus;
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "universities")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class University {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String code;
+    private String name;
+    private String logoUrl;
+    private String website;
+
+    @Enumerated(EnumType.STRING)
+    private EntityStatus status;
+}
