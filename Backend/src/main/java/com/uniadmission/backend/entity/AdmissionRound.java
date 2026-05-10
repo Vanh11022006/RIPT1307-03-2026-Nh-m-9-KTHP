@@ -1,14 +1,16 @@
 package com.uniadmission.backend.entity;
 
-import com.uniadmission.backend.entity.enums.AdmissionRoundStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "admission_rounds")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdmissionRound {
@@ -16,10 +18,34 @@ public class AdmissionRound {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
 
-    @Enumerated(EnumType.STRING)
-    private AdmissionRoundStatus status;
+    @Column(nullable = false)
+    private LocalDate startDate;
+
+    @Column(nullable = false)
+    private LocalDate endDate;
+
+    @Column(nullable = false)
+    private String status;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = "upcoming";
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
