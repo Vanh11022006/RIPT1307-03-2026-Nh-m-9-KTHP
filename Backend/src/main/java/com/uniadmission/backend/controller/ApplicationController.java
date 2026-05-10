@@ -3,55 +3,108 @@ package com.uniadmission.backend.controller;
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
 import com.uniadmission.backend.dto.response.ApiResponse;
 import com.uniadmission.backend.entity.Application;
+import com.uniadmission.backend.entity.Attachment;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
+import com.uniadmission.backend.repository.ApplicationRepository;
+import com.uniadmission.backend.repository.AttachmentRepository;
 import com.uniadmission.backend.service.ApplicationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.uniadmission.backend.service.FileService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/applications")
+@RequiredArgsConstructor
 public class ApplicationController {
 
-    @Autowired
-    private ApplicationService applicationService;
+    private final ApplicationService applicationService;
+    private final FileService fileService;
+    private final AttachmentRepository attachmentRepository;
+    private final ApplicationRepository applicationRepository;
 
-    @PostMapping("/submit")
-    @PreAuthorize("hasAuthority('CANDIDATE')")
+    @PostMapping("/{id}/upload")
+    public ResponseEntity<ApiResponse> uploadAttachments(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ ID: " + id));
+
+        files.forEach(file -> {
+            String fileName = fileService.storeFile(file);
+            Attachment attachment = Attachment.builder()
+                    .fileName(file.getOriginalFilename())
+                    .fileType(file.getContentType())
+                    .filePath(fileName)
+                    .application(application)
+                    .build();
+            attachmentRepository.save(attachment);
+        });
+
+        return ResponseEntity.ok(new ApiResponse(true, "Upload " + files.size() + " files thành công", null));
+    }
+
+    @PostMapping
     public ResponseEntity<ApiResponse> submitApplication(@RequestBody ApplicationSubmitRequest request) {
-        applicationService.submit(request);
-        return ResponseEntity.ok(new ApiResponse(true, "Application submitted successfully", null));
+        Application application = applicationService.submit(request);
+        return ResponseEntity.ok(new ApiResponse(true, "Submit application success", application));
     }
 
     @GetMapping("/candidate/{candidateId}")
-    @PreAuthorize("hasAuthority('CANDIDATE')")
-    public ResponseEntity<ApiResponse> getMyApplications(@PathVariable("candidateId") Long candidateId) {
+    public ResponseEntity<ApiResponse> getApplicationsByCandidate(@PathVariable Long candidateId) {
         List<Application> apps = applicationService.getApplicationsByCandidate(candidateId);
-        return ResponseEntity.ok(new ApiResponse(true, "Applications retrieved successfully", apps));
+        return ResponseEntity.ok(new ApiResponse(true, "Get applications success", apps));
     }
 
     @PutMapping("/{id}/cancel")
-    @PreAuthorize("hasAuthority('CANDIDATE')")
-    public ResponseEntity<ApiResponse> cancel(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse> cancelApplication(@PathVariable("id") Long id) {
         applicationService.cancelApplication(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Application cancelled successfully", null));
+        return ResponseEntity.ok(new ApiResponse(true, "Cancel application success", null));
     }
 
-    @GetMapping("/all")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse> getAll() {
         List<Application> apps = applicationService.getAllApplications();
         return ResponseEntity.ok(new ApiResponse(true, "Get all applications success", apps));
     }
 
     @PutMapping("/admin-update/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> updateStatus(@PathVariable("id") Long id,
             @RequestParam ApplicationStatus status) {
         applicationService.updateApplicationStatus(id, status);
         return ResponseEntity.ok(new ApiResponse(true, "Update status success", null));
     }
 
+    @GetMapping("/admin-list")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> getAdminApplications(
+            @RequestParam(required = false) ApplicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Application> applications = applicationService.getApplicationsForAdmin(status, page, size);
+        return ResponseEntity.ok(new ApiResponse(true, "Lấy danh sách hồ sơ thành công", applications));
+    }
+
+    @GetMapping("/admin-statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> getStatistics() {
+        Map<String, Long> stats = applicationService.getApplicationStatistics();
+        return ResponseEntity.ok(new ApiResponse(true, "Lấy thống kê thành công", stats));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getApplicationDetail(@PathVariable Long id) {
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
+
+        return ResponseEntity.ok(new ApiResponse(true, "Lấy chi tiết hồ sơ thành công", application));
+    }
 }

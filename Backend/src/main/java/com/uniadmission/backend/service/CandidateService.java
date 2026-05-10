@@ -6,4 +6,5 @@ public interface CandidateService {
     Candidate getProfile(Long userId);
 
     Candidate updateProfile(Long userId, Candidate candidateDetails);
+
 }
