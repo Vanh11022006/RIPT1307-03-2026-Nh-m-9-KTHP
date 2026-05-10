@@ -1,55 +1,33 @@
 package com.uniadmission.backend.service.impl;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
-import com.uniadmission.backend.entity.*;
+import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
-import com.uniadmission.backend.repository.*;
+import com.uniadmission.backend.repository.ApplicationRepository;
 import com.uniadmission.backend.service.ApplicationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.uniadmission.backend.service.EmailService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
 
-        @Autowired
-        private ApplicationRepository applicationRepository;
-
-        @Autowired
-        private CandidateRepository candidateRepository;
-
-        @Autowired
-        private MajorRepository majorRepository;
-
-        @Autowired
-        private AdmissionRoundRepository admissionRoundRepository;
-
-        @Autowired
-        private SubjectGroupRepository subjectGroupRepository;
+        private final ApplicationRepository applicationRepository;
+        private final EmailService emailService; // Tiêm EmailService vào đây
 
         @Override
-        @Transactional
         public Application submit(ApplicationSubmitRequest request) {
-                Candidate candidate = candidateRepository.findById(request.getCandidateId())
-                                .orElseThrow(() -> new RuntimeException("Candidate not found"));
-                Major major = majorRepository.findById(request.getMajorId())
-                                .orElseThrow(() -> new RuntimeException("Major not found"));
-                AdmissionRound round = admissionRoundRepository.findById(request.getAdmissionRoundId())
-                                .orElseThrow(() -> new RuntimeException("Admission Round not found"));
-                SubjectGroup group = subjectGroupRepository.findById(request.getSubjectGroupId())
-                                .orElseThrow(() -> new RuntimeException("Subject Group not found"));
-
                 Application application = new Application();
-                application.setCandidate(candidate);
-                application.setMajor(major);
-                application.setAdmissionRound(round);
-                application.setSubjectGroup(group);
-                application.setTotalScore(request.getTotalScore());
                 application.setStatus(ApplicationStatus.PENDING);
-                application.setSubmissionDate(LocalDateTime.now());
-
                 return applicationRepository.save(application);
         }
 
@@ -59,15 +37,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        @Transactional
         public void cancelApplication(Long applicationId) {
                 Application application = applicationRepository.findById(applicationId)
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
-
-                if (application.getStatus() != ApplicationStatus.PENDING) {
-                        throw new RuntimeException("Only pending applications can be cancelled");
-                }
-
                 application.setStatus(ApplicationStatus.CANCELLED);
                 applicationRepository.save(application);
         }
@@ -78,12 +50,41 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        @Transactional
         public void updateApplicationStatus(Long id, ApplicationStatus status) {
                 Application application = applicationRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 application.setStatus(status);
                 applicationRepository.save(application);
+
+                try {
+                        String email = application.getCandidate().getUser().getEmail();
+                        String name = application.getCandidate().getUser().getFullName();
+
+                        emailService.sendApplicationStatusEmail(email, name, status.name());
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi gửi email: " + e.getMessage());
+
+                }
+        }
+
+        @Override
+        public Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size) {
+                Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+                if (status != null) {
+                        return applicationRepository.findByStatus(status, pageable);
+                }
+                return applicationRepository.findAll(pageable);
+        }
+
+        @Override
+        public Map<String, Long> getApplicationStatistics() {
+                Map<String, Long> stats = new HashMap<>();
+                stats.put("PENDING", applicationRepository.countByStatus(ApplicationStatus.PENDING));
+                stats.put("APPROVED", applicationRepository.countByStatus(ApplicationStatus.APPROVED));
+                stats.put("REJECTED", applicationRepository.countByStatus(ApplicationStatus.REJECTED));
+                stats.put("CANCELLED", applicationRepository.countByStatus(ApplicationStatus.CANCELLED));
+                stats.put("TOTAL", applicationRepository.count());
+                return stats;
         }
 }

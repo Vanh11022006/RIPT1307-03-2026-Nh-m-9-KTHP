@@ -12,27 +12,22 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CandidateController {
 
-    private final CandidateService candidateService;
+        private final CandidateService candidateService;
 
-    @GetMapping("/profile/{userId}")
-    public ResponseEntity<ApiResponse<Candidate>> getProfile(@PathVariable Long userId) {
-        return ResponseEntity.ok(
-                ApiResponse.<Candidate>builder()
-                        .success(true)
-                        .message("Lấy hồ sơ thành công")
-                        .data(candidateService.getProfile(userId))
-                        .build());
-    }
+        @GetMapping("/my-profile/{userId}")
+        public ResponseEntity<ApiResponse> getMyProfile(@PathVariable Long userId) {
+                // Dùng đúng tên hàm getProfile của sếp
+                Candidate profile = candidateService.getProfile(userId);
+                return ResponseEntity.ok(new ApiResponse(true, "Lấy hồ sơ thành công", profile));
+        }
 
-    @PutMapping("/profile/{userId}")
-    public ResponseEntity<ApiResponse<Candidate>> updateProfile(
-            @PathVariable Long userId,
-            @RequestBody Candidate candidate) {
-        return ResponseEntity.ok(
-                ApiResponse.<Candidate>builder()
-                        .success(true)
-                        .message("Cập nhật hồ sơ thành công")
-                        .data(candidateService.updateProfile(userId, candidate))
-                        .build());
-    }
+        @PutMapping("/my-profile/{userId}")
+        public ResponseEntity<ApiResponse> updateMyProfile(
+                        @PathVariable Long userId,
+                        @RequestBody Candidate details) { // Dùng luôn Candidate thay vì Request
+
+                // Dùng đúng tên hàm updateProfile của sếp
+                Candidate updatedProfile = candidateService.updateProfile(userId, details);
+                return ResponseEntity.ok(new ApiResponse(true, "Cập nhật hồ sơ thành công", updatedProfile));
+        }
 }

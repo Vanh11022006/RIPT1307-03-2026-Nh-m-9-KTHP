@@ -4,6 +4,7 @@ import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "applications")
@@ -37,4 +38,8 @@ public class Application {
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
+
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL)
+    private List<Attachment> attachments;
+
 }

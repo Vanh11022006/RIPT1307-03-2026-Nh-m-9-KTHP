@@ -28,6 +28,8 @@ public class CandidateServiceImpl implements CandidateService {
         candidate.setGender(details.getGender());
         candidate.setCitizenId(details.getCitizenId());
 
+        candidate.setHighSchoolName(details.getHighSchoolName());
+
         return candidateRepository.save(candidate);
     }
 }
