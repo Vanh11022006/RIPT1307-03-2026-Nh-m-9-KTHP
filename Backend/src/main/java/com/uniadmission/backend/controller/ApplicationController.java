@@ -77,9 +77,15 @@ public class ApplicationController {
 
     @PutMapping("/admin-update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> updateStatus(@PathVariable("id") Long id,
-            @RequestParam ApplicationStatus status) {
-        applicationService.updateApplicationStatus(id, status);
+    public ResponseEntity<ApiResponse> updateStatus(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> payload) {
+
+        ApplicationStatus status = ApplicationStatus.valueOf(payload.get("status").toString().toUpperCase());
+        String notes = payload.containsKey("notes") ? payload.get("notes").toString() : null;
+        Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
+
+        applicationService.updateApplicationStatus(id, status, notes, adminId);
         return ResponseEntity.ok(new ApiResponse(true, "Update status success", null));
     }
 

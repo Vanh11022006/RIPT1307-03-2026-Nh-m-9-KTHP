@@ -18,7 +18,7 @@ public interface ApplicationService {
 
     List<Application> getAllApplications();
 
-    void updateApplicationStatus(Long id, ApplicationStatus status);
+    void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
 
     Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size);
 

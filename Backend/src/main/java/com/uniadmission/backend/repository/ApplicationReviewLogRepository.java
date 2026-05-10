@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ApplicationReviewLogRepository extends JpaRepository<ApplicationReviewLog, Long> {
-    List<ApplicationReviewLog> findByApplicationId(Long applicationId);
+    List<ApplicationReviewLog> findByApplicationIdOrderByCreatedAtDesc(Long applicationId);
 }
