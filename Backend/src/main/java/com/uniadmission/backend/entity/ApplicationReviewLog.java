@@ -1,14 +1,14 @@
 package com.uniadmission.backend.entity;
 
-import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "application_review_logs")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApplicationReviewLog {
@@ -16,19 +16,25 @@ public class ApplicationReviewLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "application_id", nullable = false)
-    private Application application;
+    @Column(name = "application_id", nullable = false)
+    private Long applicationId;
 
-    @ManyToOne
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private User reviewer;
+    @Column(name = "reviewer_id", nullable = false)
+    private Long adminId;
 
-    @Enumerated(EnumType.STRING)
-    private ApplicationStatus statusAfterReview;
+    @Column(name = "old_status")
+    private String oldStatus;
 
-    @Column(columnDefinition = "TEXT")
-    private String note;
+    @Column(name = "new_status", nullable = false)
+    private String newStatus;
 
-    private LocalDateTime reviewDate;
+    private String notes;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

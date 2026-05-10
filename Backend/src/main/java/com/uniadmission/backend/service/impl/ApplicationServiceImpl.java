@@ -2,10 +2,14 @@ package com.uniadmission.backend.service.impl;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
 import com.uniadmission.backend.entity.Application;
+import com.uniadmission.backend.entity.ApplicationReviewLog;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import com.uniadmission.backend.repository.ApplicationRepository;
+import com.uniadmission.backend.repository.ApplicationReviewLogRepository;
 import com.uniadmission.backend.service.ApplicationService;
 import com.uniadmission.backend.service.EmailService;
+import com.uniadmission.backend.service.NotificationLogService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +26,9 @@ import java.util.Map;
 public class ApplicationServiceImpl implements ApplicationService {
 
         private final ApplicationRepository applicationRepository;
-        private final EmailService emailService; // Tiêm EmailService vào đây
+        private final EmailService emailService;
+        private final ApplicationReviewLogRepository reviewLogRepository;
+        private final NotificationLogService notificationService;
 
         @Override
         public Application submit(ApplicationSubmitRequest request) {
@@ -50,21 +56,36 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        public void updateApplicationStatus(Long id, ApplicationStatus status) {
+        public void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
                 Application application = applicationRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
+                String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
+
                 application.setStatus(status);
                 applicationRepository.save(application);
+
+                ApplicationReviewLog log = new ApplicationReviewLog();
+                log.setApplicationId(application.getId());
+                log.setAdminId(adminId);
+                log.setOldStatus(oldStatus);
+                log.setNewStatus(status.name());
+                log.setNotes(notes);
+                reviewLogRepository.save(log);
 
                 try {
                         String email = application.getCandidate().getUser().getEmail();
                         String name = application.getCandidate().getUser().getFullName();
 
                         emailService.sendApplicationStatusEmail(email, name, status.name());
+
+                        String title = "Cập nhật trạng thái hồ sơ xét tuyển";
+                        String message = "Hồ sơ của bạn đã chuyển sang trạng thái: " + status.name() + ". Ghi chú: "
+                                        + notes;
+                        notificationService.createNotification(application.getCandidate().getUser().getId(), title,
+                                        message);
                 } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email: " + e.getMessage());
-
                 }
         }
 
