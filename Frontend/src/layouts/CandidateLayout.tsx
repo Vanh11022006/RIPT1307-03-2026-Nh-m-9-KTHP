@@ -113,7 +113,7 @@ export const CandidateLayout: React.FC = () => {
           <Dropdown menu={userMenu} placement="bottomRight" arrow>
             <Space style={{ cursor: "pointer", padding: "4px 12px", borderRadius: "30px", transition: "background 0.3s" }} className="hover-bg-gray">
               <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
-              <span style={{ fontWeight: 600, color: "#4b5563" }}>{currentUser?.fullName}</span>
+              <span style={{ fontWeight: 600, color: "#ffffff" }}>{currentUser?.fullName}</span>
             </Space>
           </Dropdown>
         </Header>

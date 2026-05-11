@@ -517,6 +517,10 @@ body {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
+.dashboard-body .ant-typography-secondary {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
 .dashboard-body .ant-page-header-heading-title {
   color: #fff !important;
 }
@@ -755,6 +759,43 @@ body {
 .dashboard-body .ant-alert-info .ant-alert-message, 
 .dashboard-body .ant-alert-info .ant-alert-description {
   color: var(--neon-cyan) !important;
+}
+.dashboard-body .ant-alert-warning {
+  background-color: rgba(250, 173, 20, 0.12) !important;
+  border-color: rgba(250, 173, 20, 0.35) !important;
+}
+.dashboard-body .ant-alert-warning .ant-alert-message, 
+.dashboard-body .ant-alert-warning .ant-alert-description {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+.dashboard-body .ant-alert-warning .ant-alert-icon {
+  color: #faad14 !important;
+}
+
+/* Admin Application Detail - Status Alert Text Contrast Fix */
+.admin-application-detail .status-alert.ant-alert-warning {
+  background-color: rgba(250, 173, 20, 0.14) !important;
+  border: 1px solid rgba(250, 173, 20, 0.45) !important;
+}
+
+.admin-application-detail .status-alert .ant-alert-message,
+.admin-application-detail .status-alert .ant-alert-description,
+.admin-application-detail .status-alert .ant-alert-content,
+.admin-application-detail .status-alert span,
+.admin-application-detail .status-alert div {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.admin-application-detail .status-alert.ant-alert-warning .ant-alert-icon {
+  color: #faad14 !important;
+}
+
+.admin-application-detail .status-alert.ant-alert-success .ant-alert-icon {
+  color: #10b981 !important;
+}
+
+.admin-application-detail .status-alert.ant-alert-error .ant-alert-icon {
+  color: #ef4444 !important;
 }
 
 /* Inner Cards (e.g. Điểm thành phần) */

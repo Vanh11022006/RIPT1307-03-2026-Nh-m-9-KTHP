@@ -194,11 +194,11 @@ export const AdminApplicationDetail: React.FC = () => {
   const renderStatusAlert = () => {
     switch (application.status) {
       case "pending":
-        return <Alert message="Hồ sơ đang chờ quản trị viên xử lý." type="warning" showIcon />;
+        return <Alert className="status-alert" message="Hồ sơ đang chờ quản trị viên xử lý." type="warning" showIcon />;
       case "approved":
-        return <Alert message="Hồ sơ đã được duyệt." type="success" showIcon />;
+        return <Alert className="status-alert" message="Hồ sơ đã được duyệt." type="success" showIcon />;
       case "rejected":
-        return <Alert message="Hồ sơ đã bị từ báo." type="error" showIcon />;
+        return <Alert className="status-alert" message="Hồ sơ đã bị từ chối." type="error" showIcon />;
       default:
         return null;
     }
@@ -210,7 +210,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const finalAdmissionScore = examTotalScore + priorityScore;
 
   return (
-    <div>
+    <div className="admin-application-detail">
       <PageHeader
         title="Chi tiết hồ sơ xét tuyển"
         breadcrumbs={[
@@ -310,7 +310,7 @@ export const AdminApplicationDetail: React.FC = () => {
             </Descriptions>
             <Divider style={{ margin: "12px 0" }} />
             <div style={{ marginBottom: 16 }}>
-              <Text strong style={{ display: "block", marginBottom: 8 }}>Trạng thái xử lý:</Text>
+              <Text strong style={{ display: "block", marginBottom: 8, color: "rgba(255,255,255,0.65)" }}>Trạng thái xử lý:</Text>
               {renderStatusAlert()}
 
               {application.status === "pending" && (
@@ -328,12 +328,12 @@ export const AdminApplicationDetail: React.FC = () => {
               )}
             </div>
             <div>
-              <Text strong style={{ display: "block", marginBottom: 8 }}>Ghi chú thí sinh:</Text>
-              <Text type={application.candidateNote ? "secondary" : "secondary"}>{application.candidateNote || "Không có ghi chú"}</Text>
+              <Text strong style={{ display: "block", marginBottom: 8, color: "rgba(255,255,255,0.65)" }}>Ghi chú thí sinh:</Text>
+              <Text style={{ color: "rgba(255,255,255,0.92)" }}>{application.candidateNote || "Không có ghi chú"}</Text>
             </div>
             <div style={{ marginTop: 16 }}>
-              <Text strong style={{ display: "block", marginBottom: 8 }}>Ghi chú admin:</Text>
-              <Text type={application.adminNote ? "secondary" : "secondary"}>{application.adminNote || "Không có ghi chú"}</Text>
+              <Text strong style={{ display: "block", marginBottom: 8, color: "rgba(255,255,255,0.65)" }}>Ghi chú admin:</Text>
+              <Text style={{ color: "rgba(255,255,255,0.92)" }}>{application.adminNote || "Không có ghi chú"}</Text>
             </div>
           </Card>
 
