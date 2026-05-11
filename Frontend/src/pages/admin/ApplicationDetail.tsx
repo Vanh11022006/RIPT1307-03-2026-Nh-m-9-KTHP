@@ -366,6 +366,8 @@ export const AdminApplicationDetail: React.FC = () => {
       </Row>
 
       <Modal
+        className="reject-application-modal"
+        rootClassName="reject-application-modal-root"
         title="Từ chối hồ sơ"
         open={isRejectModalOpen}
         onCancel={() => {
@@ -374,6 +376,11 @@ export const AdminApplicationDetail: React.FC = () => {
         }}
         footer={null}
         destroyOnClose
+        modalRender={(modal) => (
+          <div className="reject-application-modal-wrapper">
+            {modal}
+          </div>
+        )}
       >
         <Form
           form={form}

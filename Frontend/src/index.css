@@ -896,3 +896,102 @@ body {
   color: #fff !important;
 }
 
+/* =========================================================
+   REJECT APPLICATION MODAL STYLES
+   ========================================================= */
+.reject-application-modal-root .ant-modal-content,
+.reject-application-modal .ant-modal-content,
+.reject-application-modal-wrapper .ant-modal-content {
+  background: #141722 !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55) !important;
+}
+
+.reject-application-modal-root .ant-modal-header,
+.reject-application-modal .ant-modal-header,
+.reject-application-modal-wrapper .ant-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.reject-application-modal-root .ant-modal-title,
+.reject-application-modal .ant-modal-title,
+.reject-application-modal-wrapper .ant-modal-title {
+  color: rgba(255, 255, 255, 0.96) !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+}
+
+.reject-application-modal-root .ant-modal-body,
+.reject-application-modal .ant-modal-body,
+.reject-application-modal-wrapper .ant-modal-body {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.reject-application-modal-root .ant-form-item-label > label,
+.reject-application-modal .ant-form-item-label > label,
+.reject-application-modal-wrapper .ant-form-item-label > label {
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-weight: 600 !important;
+}
+
+.reject-application-modal-root .ant-form-item-required::before,
+.reject-application-modal .ant-form-item-required::before,
+.reject-application-modal-wrapper .ant-form-item-required::before {
+  color: #ff7875 !important;
+}
+
+.reject-application-modal-root textarea.ant-input,
+.reject-application-modal .ant-input,
+.reject-application-modal textarea.ant-input,
+.reject-application-modal-wrapper textarea.ant-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px !important;
+  min-height: 120px !important;
+}
+
+.reject-application-modal-root textarea.ant-input::placeholder,
+.reject-application-modal textarea.ant-input::placeholder,
+.reject-application-modal-wrapper textarea.ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.reject-application-modal-root textarea.ant-input:focus,
+.reject-application-modal textarea.ant-input:focus,
+.reject-application-modal-wrapper textarea.ant-input:focus {
+  border-color: #22d3ee !important;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.18) !important;
+}
+
+.reject-application-modal-root .ant-form-item-explain-error,
+.reject-application-modal .ant-form-item-explain-error,
+.reject-application-modal-wrapper .ant-form-item-explain-error {
+  color: #ff7875 !important;
+}
+
+.reject-application-modal-root .ant-modal-footer,
+.reject-application-modal .ant-modal-footer,
+.reject-application-modal-wrapper .ant-modal-footer {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.reject-application-modal-root .ant-btn-default,
+.reject-application-modal .ant-btn-default,
+.reject-application-modal-wrapper .ant-btn-default {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.reject-application-modal-root .ant-btn-primary,
+.reject-application-modal .ant-btn-primary,
+.reject-application-modal-wrapper .ant-btn-primary {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
