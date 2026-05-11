@@ -161,19 +161,28 @@ body {
 .glass-input {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  color: #ffffff !important;
   backdrop-filter: blur(4px);
   transition: all 0.3s ease;
 }
 
-.glass-input:hover, .glass-input:focus, .glass-input-focused {
+.glass-input input,
+.glass-input .ant-input {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.glass-input:hover, .glass-input:focus, .glass-input-focused, .glass-input:focus-within {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: var(--neon-cyan) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
 }
 
-.glass-input::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+.glass-input::placeholder,
+.glass-input input::placeholder,
+.glass-input .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+  opacity: 1 !important;
 }
 
 /* =========================================================

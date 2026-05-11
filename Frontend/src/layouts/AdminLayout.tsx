@@ -11,8 +11,7 @@ import {
   LogoutOutlined,
   AppstoreOutlined,
   CalendarOutlined,
-  BellOutlined,
-  SearchOutlined
+  BellOutlined
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";

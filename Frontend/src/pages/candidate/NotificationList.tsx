@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty } from "antd";
-import { CheckOutlined, BellOutlined } from "@ant-design/icons";
+import { CheckOutlined, BellOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import { useAuthStore } from "../../stores/auth.store";
 import type { NotificationLog } from "../../types/notification.types";
