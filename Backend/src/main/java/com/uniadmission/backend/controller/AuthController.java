@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") // Quan trọng: Cho phép Frontend ReactJS gọi chéo cổng 8080 mà không bị lỗi CORS
+@CrossOrigin(origins = "*")
 public class AuthController {
 
         @Autowired
@@ -45,8 +45,6 @@ public class AuthController {
 
                 User user = userOpt.get();
 
-                // Kiểm tra mật khẩu (Hỗ trợ cả trường hợp password đã hash và chưa hash trong
-                // DB)
                 boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword())
                                 || request.getPassword().equals(user.getPassword());
 
@@ -68,22 +66,19 @@ public class AuthController {
         @PostMapping("/register")
         @Transactional
         public ResponseEntity<ApiResponse<User>> register(@RequestBody RegisterRequest request) {
-                // 1. Kiểm tra email đã đăng ký chưa
                 if (userRepository.existsByEmail(request.getEmail())) {
                         return ResponseEntity.badRequest()
                                         .body(new ApiResponse<>(false, "Email này đã được đăng ký!", null));
                 }
 
-                // 2. Tạo User mới
                 User user = new User();
                 user.setFullName(request.getFullName());
                 user.setEmail(request.getEmail());
-                user.setPassword(passwordEncoder.encode(request.getPassword())); // Đã Hash mật khẩu an toàn
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setPhone(request.getPhone());
-                user.setRole("candidate"); // Mặc định là role thí sinh
+                user.setRole("candidate");
                 user.setStatus("active");
 
-                // 3. Lưu xuống Database MySQL
                 userRepository.saveAndFlush(user);
 
                 Candidate candidate = new Candidate();

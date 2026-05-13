@@ -6,7 +6,7 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useMajorStore } from "../../stores/major.store";
 import { useUniversityStore } from "../../stores/university.store";
-import { mockSubjectGroups } from "../../mocks/subjectGroups.mock";
+import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import type { Major } from "../../types/major.types";
 
 const { Option } = Select;
@@ -15,10 +15,11 @@ const { Text } = Typography;
 export const MajorManagement: React.FC = () => {
   const { majors, createMajor, updateMajor, toggleMajorStatus } = useMajorStore();
   const { universities, getUniversityById } = useUniversityStore();
+  const { subjectGroups } = useSubjectGroupStore();
 
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
-  const safeSubjectGroups = Array.isArray(mockSubjectGroups) ? mockSubjectGroups : [];
+  const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
 
   const [searchText, setSearchText] = useState("");
   const [universityFilter, setUniversityFilter] = useState<string>("all");

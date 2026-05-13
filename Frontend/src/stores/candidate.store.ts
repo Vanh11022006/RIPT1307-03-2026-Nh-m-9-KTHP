@@ -1,17 +1,35 @@
 import { create } from "zustand";
 import type {  Candidate  } from "../types/candidate.types";
-import { mockCandidates } from "../mocks/candidates.mock";
+import axiosClient from "../api/axiosClient";
 
 interface CandidateState {
   candidates: Candidate[];
+  loading: boolean;
+  getCandidates: () => Promise<void>;
   getCandidateByUserId: (userId: string) => Candidate | undefined;
   getCandidateById: (id: string) => Candidate | undefined;
-  updateCandidate: (id: string, data: Partial<Candidate>) => void;
-  saveProfile: (userId: string, data: Partial<Candidate>) => void;
+  updateCandidate: (id: string, data: Partial<Candidate>) => Promise<void>;
+  saveProfile: (userId: string, data: Partial<Candidate>) => Promise<void>;
+  getProfile: (userId: string) => Promise<Candidate | null>;
 }
 
 export const useCandidateStore = create<CandidateState>((set, get) => ({
-  candidates: [...mockCandidates],
+  candidates: [],
+  loading: false,
+
+  getCandidates: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosClient.get("/candidates");
+      if (response && response.data) {
+        set({ candidates: response.data });
+      }
+    } catch (error) {
+      console.error("Failed to fetch candidates:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
 
   getCandidateByUserId: (userId) => {
     return get().candidates.find((c) => c.userId === userId);
@@ -21,43 +39,46 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
     return get().candidates.find((c) => c.id === id);
   },
 
-  updateCandidate: (id, data) => {
-    set((state) => ({
-      candidates: state.candidates.map((c) =>
-        c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString() } : c
-      )
-    }));
+  updateCandidate: async (id, data) => {
+    try {
+      const response = await axiosClient.put(`/candidates/${id}`, data);
+      if (response && response.data) {
+        set((state) => ({
+          candidates: state.candidates.map((c) =>
+            c.id === id ? response.data : c
+          )
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to update candidate:", error);
+    }
   },
 
-  saveProfile: (userId, data) => {
-    set((state) => {
-      const existing = state.candidates.find((c) => c.userId === userId);
-      if (existing) {
-        return {
+  saveProfile: async (userId, data) => {
+    try {
+      const response = await axiosClient.put(`/candidates/my-profile/${userId}`, data);
+      if (response && response.data) {
+        set((state) => ({
           candidates: state.candidates.map((c) =>
-            c.userId === userId ? { ...c, ...data, updatedAt: new Date().toISOString() } : c
+            c.userId === userId ? response.data : c
           )
-        };
-      } else {
-        const newCandidate: Candidate = {
-          id: `candidate_${Date.now()}`,
-          userId: userId,
-          fullName: data.fullName || "",
-          dateOfBirth: data.dateOfBirth || "",
-          gender: data.gender || "other",
-          citizenId: data.citizenId || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          address: data.address || "",
-          city: data.city || "",
-          highSchool: data.highSchool || "",
-          graduationYear: data.graduationYear || new Date().getFullYear(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ...data
-        } as Candidate;
-        return { candidates: [...state.candidates, newCandidate] };
+        }));
       }
-    });
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    }
+  },
+
+  getProfile: async (userId) => {
+    try {
+      const response = await axiosClient.get(`/candidates/my-profile/${userId}`);
+      if (response && response.data) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+      return null;
+    }
   }
 }));
