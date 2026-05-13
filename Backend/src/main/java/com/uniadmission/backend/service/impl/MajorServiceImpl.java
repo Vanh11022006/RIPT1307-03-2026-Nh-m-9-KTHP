@@ -26,13 +26,13 @@ public class MajorServiceImpl implements MajorService {
 
     @Override
     public Major getMajorById(Long id) {
-        return majorRepository.findById(id)
+        return majorRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Major not found"));
     }
 
     @Override
     public Major createMajor(Major major) {
-        return majorRepository.save(major);
+        return majorRepository.save(java.util.Objects.requireNonNull(major));
     }
 
     @Override
@@ -46,6 +46,6 @@ public class MajorServiceImpl implements MajorService {
     @Override
     public void deleteMajor(Long id) {
         Major existingMajor = getMajorById(id);
-        majorRepository.delete(existingMajor);
+        majorRepository.delete(java.util.Objects.requireNonNull(existingMajor));
     }
 }

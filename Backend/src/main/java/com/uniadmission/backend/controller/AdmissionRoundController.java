@@ -18,29 +18,30 @@ public class AdmissionRoundController {
     private final AdmissionRoundService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAll() {
+    public ResponseEntity<ApiResponse<List<AdmissionRound>>> getAll() {
         List<AdmissionRound> rounds = service.getAll();
-        return ResponseEntity.ok(new ApiResponse(true, "Lấy danh sách đợt tuyển sinh thành công", rounds));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách đợt tuyển sinh thành công", rounds));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> create(@RequestBody AdmissionRound round) {
+    public ResponseEntity<ApiResponse<AdmissionRound>> create(@RequestBody AdmissionRound round) {
         AdmissionRound created = service.create(round);
-        return ResponseEntity.ok(new ApiResponse(true, "Tạo đợt tuyển sinh thành công", created));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Tạo đợt tuyển sinh thành công", created));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> update(@PathVariable Long id, @RequestBody AdmissionRound details) {
+    public ResponseEntity<ApiResponse<AdmissionRound>> update(@PathVariable Long id,
+            @RequestBody AdmissionRound details) {
         AdmissionRound updated = service.update(id, details);
-        return ResponseEntity.ok(new ApiResponse(true, "Cập nhật đợt tuyển sinh thành công", updated));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật đợt tuyển sinh thành công", updated));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Xóa đợt tuyển sinh thành công", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Xóa đợt tuyển sinh thành công", null));
     }
 }

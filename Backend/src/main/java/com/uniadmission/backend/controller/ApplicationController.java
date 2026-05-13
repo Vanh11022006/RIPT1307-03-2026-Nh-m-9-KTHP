@@ -30,11 +30,11 @@ public class ApplicationController {
     private final ApplicationRepository applicationRepository;
 
     @PostMapping("/{id}/upload")
-    public ResponseEntity<ApiResponse> uploadAttachments(
+    public ResponseEntity<ApiResponse<Void>> uploadAttachments(
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) {
 
-        Application application = applicationRepository.findById(id)
+        Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ ID: " + id));
 
         files.forEach(file -> {
@@ -45,39 +45,39 @@ public class ApplicationController {
                     .filePath(fileName)
                     .application(application)
                     .build();
-            attachmentRepository.save(attachment);
+            attachmentRepository.save(java.util.Objects.requireNonNull(attachment));
         });
 
-        return ResponseEntity.ok(new ApiResponse(true, "Upload " + files.size() + " files thành công", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Upload " + files.size() + " files thành công", null));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> submitApplication(@RequestBody ApplicationSubmitRequest request) {
+    public ResponseEntity<ApiResponse<Application>> submitApplication(@RequestBody ApplicationSubmitRequest request) {
         Application application = applicationService.submit(request);
-        return ResponseEntity.ok(new ApiResponse(true, "Submit application success", application));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", application));
     }
 
     @GetMapping("/candidate/{candidateId}")
-    public ResponseEntity<ApiResponse> getApplicationsByCandidate(@PathVariable Long candidateId) {
+    public ResponseEntity<ApiResponse<List<Application>>> getApplicationsByCandidate(@PathVariable Long candidateId) {
         List<Application> apps = applicationService.getApplicationsByCandidate(candidateId);
-        return ResponseEntity.ok(new ApiResponse(true, "Get applications success", apps));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get applications success", apps));
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<ApiResponse> cancelApplication(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<Void>> cancelApplication(@PathVariable("id") Long id) {
         applicationService.cancelApplication(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Cancel application success", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cancel application success", null));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAll() {
+    public ResponseEntity<ApiResponse<List<Application>>> getAll() {
         List<Application> apps = applicationService.getAllApplications();
-        return ResponseEntity.ok(new ApiResponse(true, "Get all applications success", apps));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get all applications success", apps));
     }
 
     @PutMapping("/admin-update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> updateStatus(
+    public ResponseEntity<ApiResponse<Void>> updateStatus(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
@@ -86,31 +86,31 @@ public class ApplicationController {
         Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
 
         applicationService.updateApplicationStatus(id, status, notes, adminId);
-        return ResponseEntity.ok(new ApiResponse(true, "Update status success", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", null));
     }
 
     @GetMapping("/admin-list")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> getAdminApplications(
+    public ResponseEntity<ApiResponse<Page<Application>>> getAdminApplications(
             @RequestParam(required = false) ApplicationStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<Application> applications = applicationService.getApplicationsForAdmin(status, page, size);
-        return ResponseEntity.ok(new ApiResponse(true, "Lấy danh sách hồ sơ thành công", applications));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", applications));
     }
 
     @GetMapping("/admin-statistics")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> getStatistics() {
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics() {
         Map<String, Long> stats = applicationService.getApplicationStatistics();
-        return ResponseEntity.ok(new ApiResponse(true, "Lấy thống kê thành công", stats));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getApplicationDetail(@PathVariable Long id) {
-        Application application = applicationRepository.findById(id)
+    public ResponseEntity<ApiResponse<Application>> getApplicationDetail(@PathVariable Long id) {
+        Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
 
-        return ResponseEntity.ok(new ApiResponse(true, "Lấy chi tiết hồ sơ thành công", application));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy chi tiết hồ sơ thành công", application));
     }
 }

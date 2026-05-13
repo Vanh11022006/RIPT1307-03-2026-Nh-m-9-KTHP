@@ -1,7 +1,7 @@
 package com.uniadmission.backend.entity;
 
 import com.uniadmission.backend.entity.enums.EntityStatus;
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 
 @Entity

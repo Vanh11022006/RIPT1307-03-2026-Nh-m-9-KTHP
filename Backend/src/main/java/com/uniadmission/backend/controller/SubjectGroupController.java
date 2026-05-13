@@ -18,29 +18,29 @@ public class SubjectGroupController {
     private final SubjectGroupService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAll() {
+    public ResponseEntity<ApiResponse<List<SubjectGroup>>> getAll() {
         List<SubjectGroup> groups = service.getAll();
-        return ResponseEntity.ok(new ApiResponse(true, "Lấy danh sách tổ hợp môn thành công", groups));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách tổ hợp môn thành công", groups));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> create(@RequestBody SubjectGroup subjectGroup) {
+    public ResponseEntity<ApiResponse<SubjectGroup>> create(@RequestBody SubjectGroup subjectGroup) {
         SubjectGroup created = service.create(subjectGroup);
-        return ResponseEntity.ok(new ApiResponse(true, "Tạo tổ hợp môn thành công", created));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Tạo tổ hợp môn thành công", created));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> update(@PathVariable Long id, @RequestBody SubjectGroup details) {
+    public ResponseEntity<ApiResponse<SubjectGroup>> update(@PathVariable Long id, @RequestBody SubjectGroup details) {
         SubjectGroup updated = service.update(id, details);
-        return ResponseEntity.ok(new ApiResponse(true, "Cập nhật tổ hợp môn thành công", updated));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật tổ hợp môn thành công", updated));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Xóa tổ hợp môn thành công", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Xóa tổ hợp môn thành công", null));
     }
 }
