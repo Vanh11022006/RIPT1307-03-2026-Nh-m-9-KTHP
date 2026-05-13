@@ -17,8 +17,9 @@ public class ApplicationReviewLogController {
     private final ApplicationReviewLogService logService;
 
     @GetMapping("/{applicationId}/logs")
-    public ResponseEntity<ApiResponse> getApplicationLogs(@PathVariable Long applicationId) {
+    public ResponseEntity<ApiResponse<List<ApplicationReviewLog>>> getApplicationLogs(
+            @PathVariable Long applicationId) {
         List<ApplicationReviewLog> logs = logService.getLogsByApplication(applicationId);
-        return ResponseEntity.ok(new ApiResponse(true, "Success", logs));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
     }
 }

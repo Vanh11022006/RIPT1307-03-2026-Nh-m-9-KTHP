@@ -44,7 +44,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Override
         public void cancelApplication(Long applicationId) {
-                Application application = applicationRepository.findById(applicationId)
+                Application application = applicationRepository
+                                .findById(java.util.Objects.requireNonNull(applicationId))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
                 application.setStatus(ApplicationStatus.CANCELLED);
                 applicationRepository.save(application);
@@ -57,7 +58,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Override
         public void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
-                Application application = applicationRepository.findById(id)
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";

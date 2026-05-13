@@ -36,7 +36,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
 
     @Override
     public void markAsRead(Long id) {
-        NotificationLog log = repository.findById(id)
+        NotificationLog log = repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
         log.setRead(true);
         repository.save(log);

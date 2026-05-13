@@ -1,7 +1,8 @@
 package com.uniadmission.backend.entity;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "evidence_files")
@@ -16,6 +17,9 @@ public class ApplicationEvidenceFile {
 
     @ManyToOne
     @JoinColumn(name = "application_id")
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Application application;
 
     private String fileName;

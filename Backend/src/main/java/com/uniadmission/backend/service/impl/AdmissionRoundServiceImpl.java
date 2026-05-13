@@ -21,7 +21,7 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
 
     @Override
     public AdmissionRound getById(Long id) {
-        return repository.findById(id)
+        return repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt tuyển sinh ID: " + id));
     }
 
@@ -51,9 +51,9 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
 
     @Override
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsById(java.util.Objects.requireNonNull(id))) {
             throw new RuntimeException("Không tìm thấy đợt tuyển sinh để xóa");
         }
-        repository.deleteById(id);
+        repository.deleteById(java.util.Objects.requireNonNull(id));
     }
 }

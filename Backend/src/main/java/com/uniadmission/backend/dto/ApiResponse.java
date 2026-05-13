@@ -1,14 +1,12 @@
-package com.uniadmission.backend.dto.response;
+package com.uniadmission.backend.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class ApiResponse<T> {
     private boolean success;
     private String message;

@@ -29,7 +29,7 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
 
     @Override
     public SubjectGroup update(Long id, SubjectGroup details) {
-        SubjectGroup group = repository.findById(id)
+        SubjectGroup group = repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tổ hợp môn ID: " + id));
 
         group.setName(details.getName());
@@ -39,9 +39,9 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
 
     @Override
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsById(java.util.Objects.requireNonNull(id))) {
             throw new RuntimeException("Không tìm thấy tổ hợp để xóa");
         }
-        repository.deleteById(id);
+        repository.deleteById(java.util.Objects.requireNonNull(id));
     }
 }

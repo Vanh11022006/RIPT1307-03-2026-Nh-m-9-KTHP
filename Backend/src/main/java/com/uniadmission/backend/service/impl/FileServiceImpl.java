@@ -27,7 +27,10 @@ public class FileServiceImpl implements FileService {
                 Files.createDirectories(root);
             }
 
-            String fileName = UUID.randomUUID().toString() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
+            String originalFileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "file";
+            String cleanedPath = StringUtils.cleanPath(originalFileName);
+            String finalName = (cleanedPath != null && !cleanedPath.isEmpty()) ? cleanedPath : originalFileName;
+            String fileName = UUID.randomUUID().toString() + "_" + finalName;
             Path targetLocation = root.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 

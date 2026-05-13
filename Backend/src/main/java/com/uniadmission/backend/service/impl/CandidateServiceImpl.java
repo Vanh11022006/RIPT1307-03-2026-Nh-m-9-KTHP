@@ -6,6 +6,8 @@ import com.uniadmission.backend.service.CandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CandidateServiceImpl implements CandidateService {
@@ -16,6 +18,11 @@ public class CandidateServiceImpl implements CandidateService {
     public Candidate getProfile(Long userId) {
         return candidateRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ thí sinh"));
+    }
+
+    @Override
+    public List<Candidate> getAllCandidates() {
+        return candidateRepository.findAll();
     }
 
     @Override
