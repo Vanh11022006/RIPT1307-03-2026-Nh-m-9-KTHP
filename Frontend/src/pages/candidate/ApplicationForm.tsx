@@ -15,7 +15,7 @@ import { useMajorStore } from "../../stores/major.store";
 import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
-import { mockSubjectGroups } from "../../mocks/subjectGroups.mock";
+import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import { calculateTotalScore } from "../../utils/calculate";
 import { PRIORITY_GROUPS, getPriorityScore } from "../../constants/priorityGroups";
 import { EVIDENCE_CATEGORIES } from "../../constants/evidenceCategories";
@@ -40,6 +40,7 @@ export const ApplicationForm: React.FC = () => {
   const { createNotificationLog } = useNotificationLogStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
+  const { subjectGroups } = useSubjectGroupStore();
 
   const activeRounds = useMemo(() => {
     const safeRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
@@ -78,14 +79,16 @@ export const ApplicationForm: React.FC = () => {
     
     // Fallback if missing
     const codes = Array.isArray(major.subjectGroupCodes) ? major.subjectGroupCodes : [];
-    return mockSubjectGroups.filter(sg => codes.includes(sg.code));
-  }, [selectedMajorId, availableMajors]);
+    const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+    return safeSubjectGroups.filter(sg => codes.includes(sg.code));
+  }, [selectedMajorId, availableMajors, subjectGroups]);
 
   const requiredSubjects = useMemo(() => {
     if (!selectedSubjectGroupCode) return [];
-    const group = mockSubjectGroups.find(g => g.code === selectedSubjectGroupCode);
+    const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+    const group = safeSubjectGroups.find(g => g.code === selectedSubjectGroupCode);
     return group ? group.subjects : [];
-  }, [selectedSubjectGroupCode]);
+  }, [selectedSubjectGroupCode, subjectGroups]);
 
   useEffect(() => {
     if (defaultUniversityId) {
