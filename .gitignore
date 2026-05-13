@@ -1,8 +1,2 @@
 .vscode/
 **/uploads/
-
-node_modules/
-dist/
-build/
-.git/
-*.log
