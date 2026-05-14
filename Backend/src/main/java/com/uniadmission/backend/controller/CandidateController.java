@@ -1,6 +1,7 @@
 package com.uniadmission.backend.controller;
 
 import com.uniadmission.backend.dto.response.ApiResponse;
+import com.uniadmission.backend.dto.request.CandidateProfileRequest;
 import com.uniadmission.backend.entity.Candidate;
 import com.uniadmission.backend.service.CandidateService;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class CandidateController {
         @PutMapping("/my-profile/{userId}")
         public ResponseEntity<ApiResponse<Candidate>> updateMyProfile(
                         @PathVariable Long userId,
-                        @RequestBody Candidate details) {
+                        @RequestBody CandidateProfileRequest details) {
 
                 Candidate updatedProfile = candidateService.updateProfile(userId, details);
                 return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ thành công", updatedProfile));

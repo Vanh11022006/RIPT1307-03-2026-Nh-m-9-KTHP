@@ -14,9 +14,21 @@ interface AuthState {
 const STORAGE_KEY = "currentUser";
 const TOKEN_KEY = "access_token";
 
+// Synchronously read stored user and token so the initial state
+// reflects persisted authentication and avoids redirect on first render.
+let _initialUser: User | null = null;
+try {
+  const s = localStorage.getItem(STORAGE_KEY);
+  if (s) _initialUser = JSON.parse(s) as User;
+} catch (e) {
+  console.error("Failed to parse stored user", e);
+  localStorage.removeItem(STORAGE_KEY);
+}
+const _initialToken = localStorage.getItem(TOKEN_KEY);
+
 export const useAuthStore = create<AuthState>((set) => ({
-  currentUser: null,
-  isAuthenticated: false,
+  currentUser: _initialUser,
+  isAuthenticated: !!(_initialUser && _initialToken),
 
   loadCurrentUserFromStorage: () => {
     const storedUser = localStorage.getItem(STORAGE_KEY);

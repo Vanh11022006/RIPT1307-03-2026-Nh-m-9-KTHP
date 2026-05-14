@@ -28,10 +28,7 @@ export const ApplicationDetail: React.FC = () => {
   const { getMajorById } = useMajorStore();
   const { getAdmissionRoundById } = useAdmissionRoundStore();
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
   const application = useMemo(() => {
     if (!id) return undefined;

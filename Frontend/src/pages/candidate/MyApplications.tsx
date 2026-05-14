@@ -25,10 +25,7 @@ export const MyApplications: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
   const applications = useMemo(() => {
     if (!candidate) return [];
