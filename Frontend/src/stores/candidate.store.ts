@@ -9,7 +9,7 @@ interface CandidateState {
   getCandidateByUserId: (userId: string) => Candidate | undefined;
   getCandidateById: (id: string) => Candidate | undefined;
   updateCandidate: (id: string, data: Partial<Candidate>) => Promise<void>;
-  saveProfile: (userId: string, data: Partial<Candidate>) => Promise<void>;
+  saveProfile: (userId: string, data: Partial<Candidate>) => Promise<boolean>;
   getProfile: (userId: string) => Promise<Candidate | null>;
 }
 
@@ -57,15 +57,22 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
   saveProfile: async (userId, data) => {
     try {
       const response = await axiosClient.put(`/candidates/my-profile/${userId}`, data);
-      if (response && response.data) {
+      // axiosClient interceptor may return response.data directly
+      const payload = response?.data ?? response;
+
+      if (payload) {
         set((state) => ({
           candidates: state.candidates.map((c) =>
-            c.userId === userId ? response.data : c
+            c.userId === userId ? payload : c
           )
         }));
+        return true;
       }
-    } catch (error) {
+
+      return false;
+    } catch (error: any) {
       console.error("Failed to save profile:", error);
+      return false;
     }
   },
 

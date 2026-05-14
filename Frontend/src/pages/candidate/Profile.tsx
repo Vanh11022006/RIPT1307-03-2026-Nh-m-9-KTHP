@@ -31,17 +31,21 @@ export const Profile: React.FC = () => {
     }
   }, [currentUser, getCandidateByUserId, form]);
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
     if (!currentUser) return;
-    
+
     // Format dateOfBirth to ISO string
     const formattedValues = {
       ...values,
       dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
     };
 
-    saveProfile(currentUser.id, formattedValues);
-    message.success("Cập nhật thông tin cá nhân thành công!");
+    const ok = await saveProfile(currentUser.id, formattedValues);
+    if (ok) {
+      message.success("Cập nhật thông tin cá nhân thành công!");
+    } else {
+      message.error("Không thể lưu thông tin. Vui lòng thử lại hoặc đăng nhập lại.");
+    }
   };
 
   const currentYear = new Date().getFullYear();
