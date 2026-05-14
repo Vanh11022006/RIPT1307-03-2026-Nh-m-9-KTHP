@@ -10,11 +10,17 @@ const { Option } = Select;
 export const Profile: React.FC = () => {
   const [form] = Form.useForm();
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId, saveProfile } = useCandidateStore();
+  const { getCandidateByUserId, getProfile, saveProfile } = useCandidateStore();
+  const profile = currentUser ? getCandidateByUserId(currentUser.id) : undefined;
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      getProfile(currentUser.id).catch((error) => console.error("Failed to load profile", error));
+    }
+  }, [currentUser?.id, getProfile]);
 
   useEffect(() => {
     if (currentUser) {
-      const profile = getCandidateByUserId(currentUser.id);
       if (profile) {
         form.setFieldsValue({
           ...profile,
@@ -29,15 +35,14 @@ export const Profile: React.FC = () => {
         });
       }
     }
-  }, [currentUser, getCandidateByUserId, form]);
+  }, [currentUser, profile, form]);
 
   const onFinish = async (values: any) => {
     if (!currentUser) return;
 
-    // Format dateOfBirth to ISO string
     const formattedValues = {
       ...values,
-      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
+      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format("YYYY-MM-DD") : undefined,
     };
 
     const ok = await saveProfile(currentUser.id, formattedValues);

@@ -1,14 +1,17 @@
 package com.uniadmission.backend.dto.request;
 
 import lombok.Data;
-import java.time.LocalDate;
 
 @Data
 public class CandidateProfileRequest {
+    private String fullName;
+    private String email;
     private String phone;
     private String address;
     private String citizenId;
-    private LocalDate birthDate;
+    private String dateOfBirth;
     private String gender;
-    private String highSchoolName;
+    private String city;
+    private String highSchool;
+    private Integer graduationYear;
 }

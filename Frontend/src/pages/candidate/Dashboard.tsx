@@ -37,10 +37,7 @@ export const CandidateDashboard: React.FC = () => {
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeAdmissionRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
   const safeApplications = useMemo(() => {
     if (!candidate) return [];

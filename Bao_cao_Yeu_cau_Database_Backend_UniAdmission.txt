@@ -1,0 +1,105 @@
+﻿BÁO CÁO YÊU CẦU
+DATABASE & BACKEND
+Dự án: Hệ thống Quản lý Tuyển sinh Đại học Trực tuyến
+Tài liệu bàn giao từ Frontend cho nhóm Backend & Database
+Phiên bảnv1.0Ngày lập06/05/2026Frontend Repositoryhttps://github.com/DuyNguyen0201/WEB-DUYMục đíchChuẩn hóa schema database, API endpoints và quy ước dữ liệu để tích hợp FE-BE-DB
+Lưu ý: Tài liệu này được xây dựng dựa trên cấu trúc TypeScript interfaces và dữ liệu mock hiện có ở Frontend. Backend có thể điều chỉnh chi tiết triển khai, nhưng cần thống nhất lại Data Contract trước khi kết nối API thật.
+
+
+Mục lục nội dung
+* 1. Tổng quan và mục đích tài liệu
+* 2. Tài nguyên Frontend cần tham chiếu
+* 3. Yêu cầu thiết kế Database Schema
+* 4. Yêu cầu RESTful API cho Backend
+* 5. Quy chuẩn giao tiếp dữ liệu
+* 6. Checklist bàn giao và tích hợp
+
+
+1. Tổng quan và mục đích tài liệu
+Tài liệu này đóng vai trò là bản yêu cầu kỹ thuật để nhóm Backend và Database thiết kế hệ thống phù hợp với Frontend đã được xây dựng. Frontend hiện đã có sẵn cấu trúc dữ liệu TypeScript, mock data và các luồng nghiệp vụ chính của hệ thống tuyển sinh trực tuyến.
+Mục tiêu chính là đảm bảo khi tích hợp Backend và Database, các API trả về dữ liệu đúng cấu trúc mà Frontend đang sử dụng, hạn chế việc phải sửa lại UI, store hoặc business flow ở phía Frontend.
+Phạm vi tài liệu
+* Định nghĩa các bảng/collection cốt lõi cần có trong Database.
+* Đề xuất các RESTful API mà Frontend dự kiến sẽ gọi.
+* Thống nhất quy chuẩn đặt tên field, format response và mã lỗi HTTP.
+* Cung cấp checklist bàn giao để nhóm FE-BE-DB tích hợp thuận lợi.
+2. Tài nguyên Frontend cần tham chiếu
+Nhóm Backend và Database nên tải và tham khảo trực tiếp các thư mục sau trong repository Frontend để đảm bảo dữ liệu thiết kế không lệch so với UI hiện có.
+Tài nguyênMục đích sử dụngsrc/types/Chứa toàn bộ Data Interfaces. Đây là chuẩn chính để thiết kế Database Schema và API response.src/mocks/Chứa dữ liệu mẫu. Có thể dùng để seed data vào Database trong giai đoạn demo/tích hợp.
+Liên kết tham khảo
+* Types: https://github.com/DuyNguyen0201/WEB-DUY/tree/main/src/types
+* Mocks: https://github.com/DuyNguyen0201/WEB-DUY/tree/main/src/mocks
+3. Yêu cầu thiết kế Database Schema
+Database có thể dùng snake_case ở tầng lưu trữ, nhưng API trả về cho Frontend nên map sang camelCase để khớp với TypeScript interfaces.
+3.1 Bảng Users - Quản lý tài khoản
+FieldTypeGhi chúidString/UUIDPrimary KeyfullNameStringTên người dùngemailStringUniquepasswordStringHash bằng Bcrypt/Argon2phoneStringSố điện thoạiroleEnumcandidate hoặc adminstatusEnumactive hoặc inactiveavatarString URLNullablecreatedAt / updatedAtDateTimeTự động sinh
+3.2 Bảng Candidates - Hồ sơ thí sinh
+FieldTypeGhi chúidString/UUIDPrimary KeyuserIdString/UUIDForeign Key -> Users(id)fullNameStringHọ tên thí sinhdateOfBirthDate/DateTimeNgày sinhgenderEnummale, female, othercitizenIdStringUnique - CCCD/CMNDphone, emailStringThông tin liên hệaddress, cityStringĐịa chỉ và thành phốhighSchoolStringTrường THPTgraduationYearIntNăm tốt nghiệp
+3.3 Bảng Universities - Trường đại học
+FieldTypeGhi chúidString/UUIDPrimary KeycodeStringMã trườngnameStringTên trườngshortNameStringTên viết tắtaddress, cityStringĐịa chỉ và thành phốwebsite, email, phoneStringThông tin liên hệdescriptionTextMô tảlogoString URLNullablestatusEnumactive hoặc inactivecreatedAt / updatedAtDateTimeTự động sinh
+3.4 Bảng Majors - Ngành học
+FieldTypeGhi chúidString/UUIDPrimary KeyuniversityIdString/UUIDForeign Key -> Universities(id)codeStringMã ngànhnameStringTên ngànhadmissionQuotaIntChỉ tiêu tuyển sinhminScoreFloatĐiểm sàn/điểm chuẩn tham chiếusubjectGroupCodesArray/JSONCác tổ hợp như A00, A01, D01tuitionFeePerYearIntHọc phí mỗi nămstatusEnumactive hoặc inactive
+3.5 Bảng Applications - Đơn đăng ký xét tuyển
+Đây là bảng lõi của hệ thống, liên kết thí sinh với trường, ngành, tổ hợp xét tuyển, đợt xét tuyển, điểm số và trạng thái xử lý hồ sơ.
+FieldTypeGhi chúidString/UUIDPrimary KeyapplicationCodeStringUnique, ví dụ APP-2026-001candidateIdString/UUIDForeign Key -> CandidatesuniversityIdString/UUIDForeign Key -> UniversitiesmajorIdString/UUIDForeign Key -> MajorssubjectGroupCodeStringTổ hợp xét tuyển, ví dụ A00admissionRoundIdString/UUIDNullable, lưu đợt xét tuyểnpriorityGroupStringĐối tượng ưu tiên, nullablepriorityScoreFloatĐiểm ưu tiên, nullablescoresJSON/ObjectĐiểm thành phần {math: 8, physics: 9...}totalScoreFloatTổng điểm thievidenceFilesJSON/ArrayMảng file minh chứng hoặc tách sang bảng riêngstatusEnumpending, approved, rejectedcandidateNoteTextGhi chú của thí sinhadminNoteTextGhi chú/lý do của cán bộ duyệtsubmittedAtDateTimeThời điểm nộpreviewedAt / reviewedByDateTime/StringThông tin xử lý hồ sơ
+3.6 Các bảng phụ khuyến nghị
+BảngMục đíchField chínhSubjectGroupsQuản lý tổ hợp xét tuyểnid, code, name, subjects, createdAt, updatedAtAdmissionRoundsQuản lý đợt tuyển sinhid, code, name, year, startDate, endDate, status, descriptionApplicationEvidenceFilesLưu file minh chứng nếu tách khỏi JSONid, applicationId, fileName, fileUrl, fileType, fileSize, category, uploadedAtApplicationReviewLogsLưu lịch sử duyệt đơnapplicationId, previousStatus, newStatus, reviewedBy, reviewedAt, noteNotificationLogsLưu email/thông báo giả lậprecipientUserId, recipientEmail, type, channel, subject, content, status, createdAt
+4. Yêu cầu RESTful API cho Backend
+Dưới đây là danh sách API mà Frontend dự kiến sẽ gọi. Backend nên thiết kế theo chuẩn RESTful, có phân quyền rõ ràng và hỗ trợ filtering/pagination ở các màn hình quản trị có bảng dữ liệu lớn.
+4.1 Authentication APIs
+MethodEndpointMục đíchRolePOST/api/auth/loginNhận {email, password}, trả về JWT token và thông tin userPublicPOST/api/auth/registerĐăng ký tài khoản ứng viênPublicGET/api/auth/meLấy thông tin user đang đăng nhập dựa vào JWTAuthenticated
+4.2 Candidate APIs
+MethodEndpointMục đíchGET/api/candidates/profileLấy thông tin hồ sơ cá nhân của thí sinhPUT/api/candidates/profileCập nhật thông tin cá nhân: địa chỉ, CCCD, trường THPT...GET/api/public/universitiesLấy danh sách trường đại học active để nộp hồ sơGET/api/public/universities/:id/majorsLấy danh sách ngành của một trường cụ thểPOST/api/applicationsNộp hồ sơ xét tuyển mớiGET/api/applications/my-applicationsLấy danh sách hồ sơ mà thí sinh đã nộp
+4.3 Admin APIs
+MethodEndpointYêu cầu/Mục đíchGET/api/admin/applicationsLấy toàn bộ danh sách đơn; hỗ trợ pagination, sorting, filtering theo status, universityId, majorId, admissionRoundId.GET/api/admin/applications/:idLấy chi tiết một đơn đăng ký, kèm Candidate, University, Major, AdmissionRound.PUT/api/admin/applications/:id/statusDuyệt/từ chối hồ sơ, cập nhật status/adminNote và ghi ApplicationReviewLogs.GET/api/admin/statistics/dashboardTrả về thống kê tổng quan, thống kê theo trạng thái, trường, ngành, đợt xét tuyển.GET/api/admin/notificationsLấy danh sách notification/email logs.
+4.4 Upload APIs
+MethodEndpointMục đíchPOST/api/uploads/evidenceUpload file minh chứng dạng multipart/form-data; trả về metadata gồm fileName, fileUrl, fileType, fileSize, category.
+5. Quy chuẩn giao tiếp dữ liệu
+5.1 Naming Convention
+Toàn bộ keys trong JSON response trả về Frontend bắt buộc nên dùng camelCase để khớp với TypeScript interfaces hiện tại. Database có thể dùng snake_case, nhưng Backend cần map sang camelCase ở API layer.
+Đúng - camelCaseKhông nên - snake_casefullNamefull_namecreatedAtcreated_atuniversityIduniversity_idadmissionRoundIdadmission_round_idpriorityScorepriority_score
+5.2 Response Format
+Các API nên bọc dữ liệu trong một chuẩn chung để Frontend xử lý thống nhất.
+{
+  "success": true,
+  "message": "Success",
+  "data": { ... },
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+5.3 Error Format
+{
+  "success": false,
+  "message": "Dữ liệu không hợp lệ",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Email không đúng định dạng"
+    }
+  ]
+}
+5.4 HTTP Status Codes
+MãÝ nghĩaTình huống sử dụng200OKLấy/cập nhật dữ liệu thành công201CreatedTạo mới bản ghi thành công400Bad RequestDữ liệu gửi lên không hợp lệ401UnauthorizedChưa đăng nhập hoặc token không hợp lệ403ForbiddenKhông đủ quyền truy cập404Not FoundKhông tìm thấy tài nguyên500Internal Server ErrorLỗi server
+6. Checklist bàn giao và tích hợp
+Trước khi bắt đầu tích hợp API thật, nhóm nên dùng checklist sau để tránh lệch giữa Frontend, Backend và Database.
+* Database đã có đủ bảng cốt lõi: users, candidates, universities, majors, subject_groups, admission_rounds, applications, evidence_files, notification_logs.
+* API response trả về camelCase.
+* Auth thống nhất role: admin và candidate.
+* Application status thống nhất: pending, approved, rejected.
+* Entity status thống nhất: active, inactive.
+* Admission round status thống nhất: upcoming, active, closed.
+* Ứng dụng có seed data tối thiểu cho admin/candidate/trường/ngành/hồ sơ.
+* API quản trị hỗ trợ filtering theo status, universityId, majorId, admissionRoundId.
+* API nộp hồ sơ kiểm tra trùng hồ sơ theo business rules.
+* Upload minh chứng hỗ trợ category: transcript, citizenId, priorityProof, certificate, other.
+* Duyệt/từ chối hồ sơ tạo review log và notification log.
+* Dashboard statistics có API riêng hoặc response tối ưu cho FE.
+Kết luận
+Nếu Backend và Database tuân thủ tài liệu này, Frontend có thể chuyển từ mock data sang API thật theo từng module mà không cần viết lại UI. Mọi thay đổi khác biệt về schema hoặc API nên được thống nhất lại trước khi triển khai để tránh phát sinh lỗi tích hợp.
+UniAdmission | Database & Backend Requirements
+
+Trang 
+
