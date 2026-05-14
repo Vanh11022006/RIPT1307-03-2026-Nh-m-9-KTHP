@@ -1,26 +1,16 @@
 import type {  ApplicationScores  } from "../types/application.types";
 
 export const calculateTotalScore = (scores: ApplicationScores): number => {
-  console.log("🔍 calculateTotalScore input:", scores);
-  
-  if (!scores || typeof scores !== "object") {
-    console.log("❌ Scores is not an object");
-    return 0;
-  }
-  
   let total = 0;
-  
-  // Use Object.entries to iterate all properties
-  Object.entries(scores).forEach(([key, value]) => {
-    console.log(`  Checking ${key}: ${value} (type: ${typeof value})`);
-    if (value !== undefined && value !== null && value !== "" && !isNaN(Number(value))) {
-      const numValue = Number(value);
-      total += numValue;
-      console.log(`    ✓ Added ${numValue}, total now: ${total}`);
-    }
-  });
+  if (scores.math) total += scores.math;
+  if (scores.physics) total += scores.physics;
+  if (scores.chemistry) total += scores.chemistry;
+  if (scores.literature) total += scores.literature;
+  if (scores.english) total += scores.english;
+  if (scores.biology) total += scores.biology;
+  if (scores.history) total += scores.history;
+  if (scores.geography) total += scores.geography;
+  if (scores.civicEducation) total += scores.civicEducation;
 
-  const result = Number(total.toFixed(2));
-  console.log("📊 Final total score:", result);
-  return result;
+  return Number(total.toFixed(2));
 };

@@ -2,27 +2,6 @@ import { create } from "zustand";
 import type {  University  } from "../types/university.types";
 import axiosClient from "../api/axiosClient";
 
-const normalizeUniversity = (university: any): University => {
-  const status = String(university?.status ?? "").toLowerCase() === "inactive" ? "inactive" : "active";
-
-  return {
-    id: String(university?.id ?? ""),
-    code: university?.code ?? "",
-    name: university?.name ?? "",
-    shortName: university?.shortName ?? university?.code ?? university?.name ?? "",
-    address: university?.address ?? "",
-    city: university?.city ?? "",
-    website: university?.website ?? "",
-    email: university?.email ?? "",
-    phone: university?.phone ?? "",
-    description: university?.description ?? "",
-    logo: university?.logo ?? university?.logoUrl ?? "",
-    status,
-    createdAt: university?.createdAt ?? "",
-    updatedAt: university?.updatedAt ?? "",
-  } as University;
-};
-
 interface UniversityState {
   universities: University[];
   loading: boolean;
@@ -42,9 +21,9 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
     set({ loading: true });
     try {
       const response = await axiosClient.get("/universities");
-      const payload = response?.data ?? response;
-      const universities = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-      set({ universities: universities.map(normalizeUniversity) });
+      if (response && response.data) {
+        set({ universities: response.data });
+      }
     } catch (error) {
       console.error("Failed to fetch universities:", error);
     } finally {
@@ -63,11 +42,9 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
   createUniversity: async (university) => {
     try {
       const response = await axiosClient.post("/universities", university);
-      const payload = response?.data ?? response;
-      const createdUniversity = normalizeUniversity(payload?.data ?? payload);
-      if (createdUniversity.id) {
+      if (response && response.data) {
         set((state) => ({
-          universities: [...state.universities, createdUniversity]
+          universities: [...state.universities, response.data]
         }));
       }
     } catch (error) {
@@ -78,12 +55,10 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
   updateUniversity: async (id, data) => {
     try {
       const response = await axiosClient.put(`/universities/${id}`, data);
-      const payload = response?.data ?? response;
-      const updatedUniversity = normalizeUniversity(payload?.data ?? payload);
-      if (updatedUniversity.id) {
+      if (response && response.data) {
         set((state) => ({
           universities: state.universities.map((u) =>
-            u.id === id ? updatedUniversity : u
+            u.id === id ? response.data : u
           )
         }));
       }

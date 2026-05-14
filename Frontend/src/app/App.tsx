@@ -8,15 +8,13 @@ import { useUniversityStore } from "../stores/university.store";
 import { useMajorStore } from "../stores/major.store";
 import { useAdmissionRoundStore } from "../stores/admissionRound.store";
 import { useSubjectGroupStore } from "../stores/subjectGroup.store";
-import { useCandidateStore } from "../stores/candidate.store";
 
 export const App: React.FC = () => {
-  const { loadCurrentUserFromStorage, currentUser } = useAuthStore();
+  const { loadCurrentUserFromStorage } = useAuthStore();
   const { getUniversities } = useUniversityStore();
   const { getMajors } = useMajorStore();
   const { getAdmissionRounds } = useAdmissionRoundStore();
   const { getAllSubjectGroups } = useSubjectGroupStore();
-  const { getProfile } = useCandidateStore();
 
   useEffect(() => {
     loadCurrentUserFromStorage();
@@ -26,14 +24,6 @@ export const App: React.FC = () => {
     getAdmissionRounds();
     getAllSubjectGroups();
   }, [loadCurrentUserFromStorage, getUniversities, getMajors, getAdmissionRounds, getAllSubjectGroups]);
-
-  // When currentUser is available, load candidate profile into store so Profile page
-  // can render the saved data after reload.
-  useEffect(() => {
-    if (currentUser && currentUser.id) {
-      getProfile(currentUser.id).catch((e) => console.error(e));
-    }
-  }, [currentUser, getProfile]);
 
   return (
     <ConfigProvider

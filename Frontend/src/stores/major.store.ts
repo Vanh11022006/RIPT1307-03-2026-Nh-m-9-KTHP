@@ -2,21 +2,6 @@ import { create } from "zustand";
 import type {  Major  } from "../types/major.types";
 import axiosClient from "../api/axiosClient";
 
-const normalizeMajor = (major: any): Major => ({
-  id: String(major?.id ?? ""),
-  universityId: String(major?.universityId ?? major?.university?.id ?? ""),
-  code: major?.code ?? "",
-  name: major?.name ?? "",
-  admissionQuota: Number(major?.admissionQuota ?? 0),
-  subjectGroupCodes: Array.isArray(major?.subjectGroupCodes) ? major.subjectGroupCodes : [],
-  minScore: Number(major?.minScore ?? 0),
-  tuitionFeePerYear: Number(major?.tuitionFeePerYear ?? 0),
-  description: major?.description ?? "",
-  status: String(major?.status ?? "").toLowerCase() === "inactive" ? "inactive" : "active",
-  createdAt: major?.createdAt ?? "",
-  updatedAt: major?.updatedAt ?? "",
-});
-
 interface MajorState {
   majors: Major[];
   loading: boolean;
@@ -37,9 +22,9 @@ export const useMajorStore = create<MajorState>((set, get) => ({
     set({ loading: true });
     try {
       const response = await axiosClient.get("/majors");
-      const payload = response?.data ?? response;
-      const majors = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-      set({ majors: majors.map(normalizeMajor) });
+      if (response && response.data) {
+        set({ majors: response.data });
+      }
     } catch (error) {
       console.error("Failed to fetch majors:", error);
     } finally {
@@ -48,11 +33,11 @@ export const useMajorStore = create<MajorState>((set, get) => ({
   },
 
   getMajorsByUniversityId: (universityId) => {
-    return get().majors.filter((m) => String(m.universityId) === String(universityId));
+    return get().majors.filter((m) => m.universityId === universityId);
   },
 
   getActiveMajorsByUniversityId: (universityId) => {
-    return get().majors.filter((m) => String(m.universityId) === String(universityId) && m.status === "active");
+    return get().majors.filter((m) => m.universityId === universityId && m.status === "active");
   },
 
   getMajorById: (id) => {
@@ -62,11 +47,9 @@ export const useMajorStore = create<MajorState>((set, get) => ({
   createMajor: async (major) => {
     try {
       const response = await axiosClient.post("/majors", major);
-      const payload = response?.data ?? response;
-      const createdMajor = normalizeMajor(payload?.data ?? payload);
-      if (createdMajor.id) {
+      if (response && response.data) {
         set((state) => ({
-          majors: [...state.majors, createdMajor]
+          majors: [...state.majors, response.data]
         }));
       }
     } catch (error) {
@@ -77,12 +60,10 @@ export const useMajorStore = create<MajorState>((set, get) => ({
   updateMajor: async (id, data) => {
     try {
       const response = await axiosClient.put(`/majors/${id}`, data);
-      const payload = response?.data ?? response;
-      const updatedMajor = normalizeMajor(payload?.data ?? payload);
-      if (updatedMajor.id) {
+      if (response && response.data) {
         set((state) => ({
           majors: state.majors.map((m) =>
-            m.id === id ? updatedMajor : m
+            m.id === id ? response.data : m
           )
         }));
       }

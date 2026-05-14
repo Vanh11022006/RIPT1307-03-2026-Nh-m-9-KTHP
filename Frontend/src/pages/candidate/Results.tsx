@@ -20,7 +20,10 @@ export const Results: React.FC = () => {
   const { universities } = useUniversityStore();
   const { majors } = useMajorStore();
 
-  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
+  const candidate = useMemo(() => {
+    if (!currentUser) return null;
+    return getCandidateByUserId(currentUser.id);
+  }, [currentUser, getCandidateByUserId]);
 
   const applications = useMemo(() => {
     if (!candidate) return [];

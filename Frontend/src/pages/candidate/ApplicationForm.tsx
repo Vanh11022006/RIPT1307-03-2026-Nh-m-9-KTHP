@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
-  Card, Form, Select, Input, InputNumber, Button, Upload, 
+  Card, Form, Select, InputNumber, Button, Upload, 
   Checkbox, Alert, message, Typography, Row, Col, Space,
   Divider, Statistic
 } from "antd";
@@ -35,7 +35,6 @@ export const ApplicationForm: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId } = useCandidateStore();
   const { getActiveUniversities } = useUniversityStore();
-  const { majors } = useMajorStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
   const { applications, createApplication } = useApplicationStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
@@ -58,7 +57,10 @@ export const ApplicationForm: React.FC = () => {
   const [totalScore, setTotalScore] = useState<number>(0);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
+  const candidate = useMemo(() => {
+    if (!currentUser) return null;
+    return getCandidateByUserId(currentUser.id);
+  }, [currentUser, getCandidateByUserId]);
 
   const isProfileComplete = useMemo(() => {
     if (!candidate) return false;
@@ -70,7 +72,7 @@ export const ApplicationForm: React.FC = () => {
   const availableMajors = useMemo(() => {
     if (!selectedUniversityId) return [];
     return getActiveMajorsByUniversityId(selectedUniversityId);
-  }, [selectedUniversityId, majors, getActiveMajorsByUniversityId]);
+  }, [selectedUniversityId, getActiveMajorsByUniversityId]);
 
   const availableSubjectGroups = useMemo(() => {
     if (!selectedMajorId) return [];
@@ -80,10 +82,7 @@ export const ApplicationForm: React.FC = () => {
     // Fallback if missing
     const codes = Array.isArray(major.subjectGroupCodes) ? major.subjectGroupCodes : [];
     const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
-    if (codes.length === 0) {
-      return safeSubjectGroups;
-    }
-    return safeSubjectGroups.filter(sg => codes.includes(sg.code ?? ""));
+    return safeSubjectGroups.filter(sg => codes.includes(sg.code));
   }, [selectedMajorId, availableMajors, subjectGroups]);
 
   const requiredSubjects = useMemo(() => {
@@ -125,8 +124,6 @@ export const ApplicationForm: React.FC = () => {
   }, [editId, fetchApplicationById, form]);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
-    console.log("📝 Form changed:", { changedValues, allValues });
-    
     if (changedValues.universityId) {
       setSelectedUniversityId(changedValues.universityId);
       setSelectedMajorId(undefined);
@@ -148,12 +145,15 @@ export const ApplicationForm: React.FC = () => {
       setTotalScore(0);
     }
 
-    // Always recalculate if allValues has scores
-    if (allValues.scores) {
-      console.log("📊 Calculating total score from:", allValues.scores);
-      const scoreTotal = calculateTotalScore(allValues.scores);
-      console.log("📊 Calculated total:", scoreTotal);
-      setTotalScore(scoreTotal);
+    if (changedValues.scores || allValues.scores) {
+      const currentScores = allValues.scores || {};
+      const scoreObj: any = {};
+      requiredSubjects.forEach(sub => {
+        if (currentScores[sub] !== undefined) {
+          scoreObj[sub] = currentScores[sub];
+        }
+      });
+      setTotalScore(calculateTotalScore(scoreObj));
     }
 
     if (changedValues.priorityGroup) {
@@ -326,17 +326,17 @@ export const ApplicationForm: React.FC = () => {
           <Row gutter={16}>
             <Col xs={24} sm={8}>
               <Form.Item label="Họ và tên">
-                <Input disabled value={candidate?.fullName ?? ""} />
+                <InputNumber disabled style={{ width: "100%" }} value={candidate?.fullName} controls={false} formatter={value => `${value}`} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
               <Form.Item label="Số CCCD">
-                <Input disabled value={candidate?.citizenId ?? ""} />
+                <InputNumber disabled style={{ width: "100%" }} value={candidate?.citizenId} controls={false} formatter={value => `${value}`} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
               <Form.Item label="Email">
-                <Input disabled value={candidate?.email ?? ""} />
+                <InputNumber disabled style={{ width: "100%" }} value={candidate?.email} controls={false} formatter={value => `${value}`} />
               </Form.Item>
             </Col>
           </Row>

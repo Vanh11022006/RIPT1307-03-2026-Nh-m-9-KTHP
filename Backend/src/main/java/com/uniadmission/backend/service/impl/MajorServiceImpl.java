@@ -21,7 +21,7 @@ public class MajorServiceImpl implements MajorService {
 
     @Override
     public List<Major> getMajorsByUniversityId(Long universityId) {
-        return majorRepository.findByUniversity_Id(universityId);
+        return majorRepository.findByUniversityId(universityId);
     }
 
     @Override

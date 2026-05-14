@@ -2,19 +2,6 @@ import { create } from "zustand";
 import type { AdmissionRound } from "../types/admissionRound.types";
 import axiosClient from "../api/axiosClient";
 
-const normalizeAdmissionRound = (round: any): AdmissionRound => ({
-  id: String(round?.id ?? ""),
-  code: round?.code ?? "",
-  name: round?.name ?? "",
-  year: Number(round?.year ?? 0),
-  startDate: round?.startDate ?? "",
-  endDate: round?.endDate ?? "",
-  status: String(round?.status ?? "").toLowerCase() as AdmissionRound["status"],
-  description: round?.description ?? "",
-  createdAt: round?.createdAt ?? "",
-  updatedAt: round?.updatedAt ?? "",
-});
-
 interface AdmissionRoundState {
   admissionRounds: AdmissionRound[];
   loading: boolean;
@@ -32,9 +19,9 @@ export const useAdmissionRoundStore = create<AdmissionRoundState>((set, get) => 
     set({ loading: true });
     try {
       const response = await axiosClient.get("/admission-rounds");
-      const payload = response?.data ?? response;
-      const rounds = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-      set({ admissionRounds: rounds.map(normalizeAdmissionRound) });
+      if (response && response.data) {
+        set({ admissionRounds: response.data });
+      }
     } catch (error) {
       console.error("Failed to fetch admission rounds:", error);
     } finally {
@@ -47,11 +34,9 @@ export const useAdmissionRoundStore = create<AdmissionRoundState>((set, get) => 
   createAdmissionRound: async (data) => {
     try {
       const response = await axiosClient.post("/admission-rounds", data);
-      const payload = response?.data ?? response;
-      const createdRound = normalizeAdmissionRound(payload?.data ?? payload);
-      if (createdRound.id) {
+      if (response && response.data) {
         set((state) => ({
-          admissionRounds: [createdRound, ...state.admissionRounds]
+          admissionRounds: [response.data, ...state.admissionRounds]
         }));
       }
     } catch (error) {
@@ -62,12 +47,10 @@ export const useAdmissionRoundStore = create<AdmissionRoundState>((set, get) => 
   updateAdmissionRound: async (id, data) => {
     try {
       const response = await axiosClient.put(`/admission-rounds/${id}`, data);
-      const payload = response?.data ?? response;
-      const updatedRound = normalizeAdmissionRound(payload?.data ?? payload);
-      if (updatedRound.id) {
+      if (response && response.data) {
         set((state) => ({
           admissionRounds: state.admissionRounds.map(round => 
-            round.id === id ? updatedRound : round
+            round.id === id ? response.data : round
           )
         }));
       }

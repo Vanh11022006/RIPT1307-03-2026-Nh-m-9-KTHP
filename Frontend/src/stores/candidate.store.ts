@@ -1,24 +1,6 @@
 import { create } from "zustand";
 import type {  Candidate  } from "../types/candidate.types";
 import axiosClient from "../api/axiosClient";
-import { useAuthStore } from "./auth.store";
-
-const normalizeCandidate = (candidate: any, userId?: string): Candidate => {
-  const currentUser = useAuthStore.getState().currentUser;
-  const resolvedUserId = candidate?.userId ?? userId ?? currentUser?.id ?? "";
-  const canUseCurrentUserFallback = currentUser && String(resolvedUserId) === String(currentUser.id);
-
-  return {
-    ...candidate,
-    id: String(candidate?.id ?? ""),
-    userId: String(resolvedUserId),
-    fullName: candidate?.fullName ?? (canUseCurrentUserFallback ? currentUser.fullName : "") ?? "",
-    email: candidate?.email ?? (canUseCurrentUserFallback ? currentUser.email : "") ?? "",
-    phone: candidate?.phone ?? (canUseCurrentUserFallback ? currentUser.phone : "") ?? "",
-    dateOfBirth: candidate?.dateOfBirth ?? candidate?.birthDate ?? "",
-    highSchool: candidate?.highSchool ?? candidate?.highSchoolName ?? "",
-  } as Candidate;
-};
 
 interface CandidateState {
   candidates: Candidate[];
@@ -39,13 +21,8 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
     set({ loading: true });
     try {
       const response = await axiosClient.get("/candidates");
-      const payload = response?.data ?? response;
-      if (payload) {
-        set({
-          candidates: Array.isArray(payload)
-            ? payload.map((candidate) => normalizeCandidate(candidate))
-            : [],
-        });
+      if (response && response.data) {
+        set({ candidates: response.data });
       }
     } catch (error) {
       console.error("Failed to fetch candidates:", error);
@@ -55,7 +32,7 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
   },
 
   getCandidateByUserId: (userId) => {
-    return get().candidates.find((c) => String(c.userId) === String(userId));
+    return get().candidates.find((c) => c.userId === userId);
   },
 
   getCandidateById: (id) => {
@@ -65,11 +42,10 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
   updateCandidate: async (id, data) => {
     try {
       const response = await axiosClient.put(`/candidates/${id}`, data);
-      const payload = response?.data ?? response;
-      if (payload) {
+      if (response && response.data) {
         set((state) => ({
           candidates: state.candidates.map((c) =>
-            c.id === id ? normalizeCandidate(payload, c.userId) : c
+            c.id === id ? response.data : c
           )
         }));
       }
@@ -85,15 +61,11 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
       const payload = response?.data ?? response;
 
       if (payload) {
-        const normalizedCandidate = normalizeCandidate(payload, userId);
-        set((state) => {
-          const exists = state.candidates.some((c) => String(c.userId) === String(userId));
-          return {
-            candidates: exists
-              ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
-              : [...state.candidates, normalizedCandidate]
-          } as any;
-        });
+        set((state) => ({
+          candidates: state.candidates.map((c) =>
+            c.userId === userId ? payload : c
+          )
+        }));
         return true;
       }
 
@@ -107,19 +79,8 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
   getProfile: async (userId) => {
     try {
       const response = await axiosClient.get(`/candidates/my-profile/${userId}`);
-      const payload = response?.data ?? response;
-      if (payload) {
-        const normalizedCandidate = normalizeCandidate(payload, userId);
-        // Ensure the fetched profile is stored in candidates for immediate access
-        set((state) => {
-          const exists = state.candidates.some((c) => String(c.userId) === String(userId));
-          return {
-            candidates: exists
-              ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
-              : [...state.candidates, normalizedCandidate]
-          } as any;
-        });
-        return normalizedCandidate;
+      if (response && response.data) {
+        return response.data;
       }
       return null;
     } catch (error) {

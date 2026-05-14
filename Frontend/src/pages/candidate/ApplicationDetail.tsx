@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Card, Result, Button, Descriptions, Typography, Tag, Alert, Row, Col, Steps, Table, Space, Empty } from "antd";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useParams, useNavigate } from "react-router-dom";
@@ -22,119 +22,23 @@ export const ApplicationDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId, getProfile } = useCandidateStore();
-  const { getApplicationById, fetchApplicationById } = useApplicationStore();
+  const { getCandidateByUserId } = useCandidateStore();
+  const { getApplicationById } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
   const { getAdmissionRoundById } = useAdmissionRoundStore();
 
-  const [candidate, setCandidate] = useState(() => (currentUser ? getCandidateByUserId(currentUser.id) : null));
-  const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
-  const [loading, setLoading] = useState<boolean>(!application || (!!currentUser && !candidate));
+  const candidate = useMemo(() => {
+    if (!currentUser) return null;
+    return getCandidateByUserId(currentUser.id);
+  }, [currentUser, getCandidateByUserId]);
 
-  useEffect(() => {
-    let mounted = true;
+  const application = useMemo(() => {
+    if (!id) return undefined;
+    return getApplicationById(id);
+  }, [id, getApplicationById]);
 
-    const loadCandidate = async () => {
-      if (!currentUser?.id) {
-        if (mounted) {
-          setCandidate(null);
-        }
-        return;
-      }
-
-      const cachedCandidate = getCandidateByUserId(currentUser.id);
-      if (cachedCandidate) {
-        if (mounted) {
-          setCandidate(cachedCandidate);
-        }
-        return;
-      }
-
-      const fetchedCandidate = await getProfile(currentUser.id);
-      if (mounted) {
-        setCandidate(fetchedCandidate);
-      }
-    };
-
-    loadCandidate().catch((error) => {
-      console.error("Failed to load candidate profile", error);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [currentUser?.id, getCandidateByUserId, getProfile]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadApplication = async () => {
-      if (!id) {
-        if (mounted) {
-          setApplication(undefined);
-          setLoading(false);
-        }
-        return;
-      }
-
-      const cachedApplication = getApplicationById(id);
-      if (cachedApplication) {
-        if (mounted) {
-          setApplication(cachedApplication);
-          setLoading(false);
-        }
-        return;
-      }
-
-      if (mounted) {
-        setLoading(true);
-      }
-
-      const fetchedApplication = await fetchApplicationById(id);
-
-      if (mounted) {
-        setApplication(fetchedApplication ?? undefined);
-        setLoading(false);
-      }
-    };
-
-    loadApplication().catch((error) => {
-      console.error("Failed to load application detail", error);
-      if (mounted) {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [id, getApplicationById, fetchApplicationById]);
-
-  useEffect(() => {
-    if (loading && currentUser?.id) {
-      return;
-    }
-
-    if (application && candidate) {
-      setLoading(false);
-    }
-  }, [application, candidate, currentUser?.id, loading]);
-
-  if (loading) {
-    return (
-      <div style={{ padding: 24 }}>
-        <Card loading />
-      </div>
-    );
-  }
-
-  // Debug logs to help diagnose runtime 404 issues
-  // Please open browser console and check these values when reproducing the issue
-  // eslint-disable-next-line no-console
-  console.log("[ApplicationDetail debug]", { id, loading, application, candidate });
-
-  if (!candidate || !application || String(application.candidateId) !== String(candidate.id)) {
+  if (!candidate || !application || application.candidateId !== candidate.id) {
     return (
       <div style={{ padding: 24 }}>
         <Card>
@@ -219,7 +123,7 @@ export const ApplicationDetail: React.FC = () => {
   const priorityGroup = application.priorityGroup ?? "none";
   const priorityScore = application.priorityScore ?? 0;
   const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
+  const finalAdmissionScore = examTotalScore + priorityScore;
 
   const getStepCurrent = (status: string) => {
     if (status === "pending") return 1;

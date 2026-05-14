@@ -1,6 +1,2 @@
 .vscode/
 **/uploads/
-node_modules/
-dist/
-build/
-.env

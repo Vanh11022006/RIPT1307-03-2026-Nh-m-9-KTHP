@@ -32,7 +32,10 @@ export const MyApplications: React.FC = () => {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [form] = Form.useForm();
 
-  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
+  const candidate = useMemo(() => {
+    if (!currentUser) return null;
+    return getCandidateByUserId(currentUser.id);
+  }, [currentUser, getCandidateByUserId]);
 
   useEffect(() => {
     let mounted = true;
