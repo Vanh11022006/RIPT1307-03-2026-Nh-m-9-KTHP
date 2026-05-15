@@ -1,7 +1,9 @@
 package com.uniadmission.backend.controller;
 
+import java.util.stream.Collectors;
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
 import com.uniadmission.backend.dto.response.ApiResponse;
+import com.uniadmission.backend.dto.response.ApplicationResponse;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.Attachment;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
@@ -52,15 +54,19 @@ public class ApplicationController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Application>> submitApplication(@RequestBody ApplicationSubmitRequest request) {
+    public ResponseEntity<ApiResponse<ApplicationResponse>> submitApplication(
+            @RequestBody ApplicationSubmitRequest request) {
         Application application = applicationService.submit(request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", application));
+        ApplicationResponse resp = mapToResponse(application);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", resp));
     }
 
     @GetMapping("/candidate/{candidateId}")
-    public ResponseEntity<ApiResponse<List<Application>>> getApplicationsByCandidate(@PathVariable Long candidateId) {
+    public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getApplicationsByCandidate(
+            @PathVariable Long candidateId) {
         List<Application> apps = applicationService.getApplicationsByCandidate(candidateId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Get applications success", apps));
+        List<ApplicationResponse> resp = apps.stream().map(this::mapToResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get applications success", resp));
     }
 
     @PutMapping("/{id}/cancel")
@@ -70,9 +76,10 @@ public class ApplicationController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Application>>> getAll() {
+    public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getAll() {
         List<Application> apps = applicationService.getAllApplications();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Get all applications success", apps));
+        List<ApplicationResponse> resp = apps.stream().map(this::mapToResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get all applications success", resp));
     }
 
     @PutMapping("/admin-update/{id}")
@@ -87,6 +94,23 @@ public class ApplicationController {
 
         applicationService.updateApplicationStatus(id, status, notes, adminId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", null));
+    }
+
+    @PutMapping("/{id}/priority")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> updatePriority(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> payload) {
+
+        String priorityGroup = payload.containsKey("priorityGroup") ? payload.get("priorityGroup").toString() : null;
+        Double priorityScore = payload.containsKey("priorityScore") && payload.get("priorityScore") != null
+                ? Double.valueOf(payload.get("priorityScore").toString())
+                : null;
+        Long adminId = payload.containsKey("adminId") ? Long.valueOf(payload.get("adminId").toString()) : 1L;
+
+        applicationService.updateApplicationPriority(id, priorityGroup, priorityScore, adminId);
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update priority success", null));
     }
 
     @GetMapping("/admin-list")
@@ -107,10 +131,55 @@ public class ApplicationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Application>> getApplicationDetail(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ApplicationResponse>> getApplicationDetail(@PathVariable Long id) {
         Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
 
-        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy chi tiết hồ sơ thành công", application));
+        ApplicationResponse resp = mapToResponse(application);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy chi tiết hồ sơ thành công", resp));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> updateApplication(@PathVariable Long id,
+            @RequestBody ApplicationSubmitRequest request) {
+        Application updated = applicationService.updateApplication(id, request);
+        ApplicationResponse resp = mapToResponse(updated);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ thành công", resp));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteApplication(@PathVariable Long id) {
+        applicationService.deleteApplication(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Xóa hồ sơ thành công", null));
+    }
+
+    private ApplicationResponse mapToResponse(Application application) {
+        if (application == null)
+            return null;
+        return ApplicationResponse.builder()
+                .id(application.getId())
+                .candidateId(application.getCandidate() != null ? application.getCandidate().getId() : null)
+                .majorId(application.getMajor() != null ? application.getMajor().getId() : null)
+                .majorName(application.getMajor() != null ? application.getMajor().getName() : null)
+                .universityId(application.getMajor() != null && application.getMajor().getUniversity() != null
+                        ? application.getMajor().getUniversity().getId()
+                        : null)
+                .applicationCode(application.getApplicationCode())
+                .admissionRoundId(
+                        application.getAdmissionRound() != null ? application.getAdmissionRound().getId() : null)
+                .admissionRoundName(
+                        application.getAdmissionRound() != null ? application.getAdmissionRound().getName() : null)
+                .subjectGroupId(application.getSubjectGroup() != null ? application.getSubjectGroup().getId() : null)
+                .subjectGroupName(
+                        application.getSubjectGroup() != null ? application.getSubjectGroup().getName() : null)
+                .subjectGroupCode(
+                        application.getSubjectGroup() != null ? application.getSubjectGroup().getCode() : null)
+                .totalScore(application.getTotalScore())
+                .priorityGroup(application.getPriorityGroup())
+                .priorityScore(application.getPriorityScore())
+                .submittedAt(
+                        application.getSubmissionDate() != null ? application.getSubmissionDate().toString() : null)
+                .status(application.getStatus() != null ? application.getStatus().name().toLowerCase() : null)
+                .build();
     }
 }

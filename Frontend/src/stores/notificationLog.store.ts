@@ -18,43 +18,37 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   loading: false,
 
   getNotificationLogs: async () => {
-    set({ loading: true });
-    try {
-      const response = await axiosClient.get("/notification-logs");
-      if (response && response.data) {
-        set({ notificationLogs: response.data });
-      }
-    } catch (error) {
-      console.error("Failed to fetch notification logs:", error);
-    } finally {
-      set({ loading: false });
-    }
+    set({ loading: false });
   },
   
   createNotificationLog: async (data) => {
     try {
-      const response = await axiosClient.post("/notification-logs", data);
-      if (response && response.data) {
-        set((state) => ({
-          notificationLogs: [response.data, ...state.notificationLogs]
-        }));
-      }
+      const notification: NotificationLog = {
+        id: `noti_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        recipientUserId: data.recipientUserId,
+        recipientEmail: data.recipientEmail,
+        recipientName: data.recipientName,
+        applicationId: data.applicationId,
+        type: data.type,
+        channel: data.channel,
+        subject: data.subject,
+        content: data.content,
+        status: data.status ?? "sent",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      set((state) => ({
+        notificationLogs: [notification, ...state.notificationLogs]
+      }));
     } catch (error) {
       console.error("Failed to create notification log:", error);
     }
   },
   
   getNotificationLogsByUserId: async (userId) => {
-    try {
-      const response = await axiosClient.get(`/notification-logs/user/${userId}`);
-      if (response && response.data) {
-        return response.data;
-      }
-      return [];
-    } catch (error) {
-      console.error("Failed to fetch notification logs by user:", error);
-      return [];
-    }
+    const safeLogs = Array.isArray(get().notificationLogs) ? get().notificationLogs : [];
+    return safeLogs.filter(log => String(log.recipientUserId) === String(userId));
   },
   
   getNotificationLogsByApplicationId: (applicationId) => {
@@ -69,14 +63,11 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   
   markNotificationAsRead: async (notificationId) => {
     try {
-      const response = await axiosClient.put(`/notification-logs/${notificationId}/read`);
-      if (response && response.data) {
-        set((state) => ({
-          notificationLogs: state.notificationLogs.map(log => 
-            log.id === notificationId ? response.data : log
-          )
-        }));
-      }
+      set((state) => ({
+        notificationLogs: state.notificationLogs.map(log => 
+          log.id === notificationId ? { ...log, isRead: true } : log
+        )
+      }));
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }

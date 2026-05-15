@@ -13,4 +13,6 @@ public class ApplicationSubmitRequest {
     private Long admissionRoundId;
     private Long subjectGroupId;
     private double totalScore;
+    private String priorityGroup;
+    private Double priorityScore;
 }

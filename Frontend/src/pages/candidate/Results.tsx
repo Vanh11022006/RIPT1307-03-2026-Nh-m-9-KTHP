@@ -81,7 +81,10 @@ export const Results: React.FC = () => {
                       <div style={{ marginTop: 16, textAlign: "left" }}>
                         <Paragraph><strong>Trường:</strong> {getUniversityName(app.universityId)}</Paragraph>
                         <Paragraph><strong>Ngành:</strong> {getMajorName(app.majorId)}</Paragraph>
-                        <Paragraph><strong>Tổ hợp:</strong> {app.subjectGroupCode} (Tổng điểm: <Text type="danger" strong>{app.totalScore.toFixed(2)}</Text>)</Paragraph>
+                        <Paragraph>
+                          <strong>Tổ hợp:</strong> {app.subjectGroupCode} (
+                          Tổng điểm: <Text type="danger" strong>{(Number(app.finalScore ?? (Number(app.totalScore ?? 0) + Number(app.priorityScore ?? 0)))).toFixed(2)}</Text>)
+                        </Paragraph>
                       </div>
                     }
                   />

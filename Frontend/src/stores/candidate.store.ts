@@ -10,6 +10,7 @@ const normalizeCandidate = (candidate: any, userId?: string): Candidate => {
 
   return {
     ...candidate,
+    id: String(candidate?.id ?? ""),
     userId: String(resolvedUserId),
     fullName: candidate?.fullName ?? (canUseCurrentUserFallback ? currentUser.fullName : "") ?? "",
     email: candidate?.email ?? (canUseCurrentUserFallback ? currentUser.email : "") ?? "",

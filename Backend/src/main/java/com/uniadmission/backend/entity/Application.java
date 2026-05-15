@@ -43,7 +43,11 @@ public class Application {
     @EqualsAndHashCode.Exclude
     private SubjectGroup subjectGroup;
 
+    private String applicationCode;
+
     private Double totalScore;
+    private String priorityGroup;
+    private Double priorityScore;
     private LocalDateTime submissionDate;
 
     @Enumerated(EnumType.STRING)

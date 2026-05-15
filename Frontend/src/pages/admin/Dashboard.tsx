@@ -22,7 +22,7 @@ import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { formatDate } from "../../utils/date";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 export const AdminDashboard: React.FC = () => {
@@ -61,7 +61,8 @@ export const AdminDashboard: React.FC = () => {
   }, [filteredApplications]);
 
   const latestApplications = useMemo(() => {
-    return [...filteredApplications]
+    return filteredApplications
+      .slice()
       .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
       .slice(0, 8);
   }, [filteredApplications]);
@@ -153,7 +154,10 @@ export const AdminDashboard: React.FC = () => {
       dataIndex: "totalScore",
       key: "totalScore",
       align: "center" as const,
-      render: (score: number) => score?.toFixed(2)
+      render: (score: number, record: any) => {
+        const final = record?.finalScore ?? (Number(score ?? 0) + Number(record?.priorityScore ?? 0));
+        return final !== undefined ? <Text strong>{(final ?? 0).toFixed(2)}</Text> : "-";
+      }
     },
     {
       title: "Trạng thái",

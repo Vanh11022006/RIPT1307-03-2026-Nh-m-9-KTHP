@@ -150,7 +150,10 @@ export const ApplicationManagement: React.FC = () => {
       dataIndex: "totalScore",
       key: "totalScore",
       align: "center" as const,
-      render: (val: number) => val !== undefined ? <Typography.Text type="danger" strong>{val.toFixed(2)}</Typography.Text> : "Chưa cập nhật"
+      render: (val: number, record: any) => {
+        const final = record.finalScore ?? (Number(val ?? 0) + Number(record.priorityScore ?? 0));
+        return final !== undefined ? <Typography.Text type="danger" strong>{(final ?? 0).toFixed(2)}</Typography.Text> : "Chưa cập nhật";
+      }
     },
     {
       title: "Trạng thái",

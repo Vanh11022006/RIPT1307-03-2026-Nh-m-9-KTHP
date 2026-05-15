@@ -49,6 +49,7 @@ export interface Application {
   admissionRoundId?: string;
   priorityGroup?: string;
   priorityScore?: number;
+  finalScore?: number;
   scores: ApplicationScores;
   totalScore: number;
   evidenceFiles: EvidenceFile[];

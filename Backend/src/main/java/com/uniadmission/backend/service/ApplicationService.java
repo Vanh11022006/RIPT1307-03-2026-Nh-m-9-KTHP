@@ -20,6 +20,12 @@ public interface ApplicationService {
 
     void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
 
+    void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
+
+    Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
+
+    void deleteApplication(Long id);
+
     Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size);
 
     Map<String, Long> getApplicationStatistics();

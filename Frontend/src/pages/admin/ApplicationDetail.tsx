@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, message, Popconfirm } from "antd";
 import { ArrowLeftOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { getApplicationById, approveApplication, rejectApplication } = useApplicationStore();
+  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication } = useApplicationStore();
   const { getCandidateById } = useCandidateStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
@@ -34,10 +34,63 @@ export const AdminApplicationDetail: React.FC = () => {
 
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
+  const [loading, setLoading] = useState<boolean>(!application);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadApplication = async () => {
+      if (!id) {
+        if (mounted) {
+          setApplication(undefined);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const cachedApplication = getApplicationById(id);
+      if (cachedApplication) {
+        if (mounted) {
+          setApplication(cachedApplication);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (mounted) {
+        setLoading(true);
+      }
+
+      const fetchedApplication = await fetchApplicationById(id);
+
+      if (mounted) {
+        setApplication(fetchedApplication ?? undefined);
+        setLoading(false);
+      }
+    };
+
+    loadApplication().catch((error) => {
+      console.error("Failed to load application detail", error);
+      if (mounted) {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, getApplicationById, fetchApplicationById]);
 
   if (!id) return null;
 
-  const application = getApplicationById(id);
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card loading />
+      </div>
+    );
+  }
 
   if (!application) {
     return (
@@ -207,7 +260,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const priorityGroup = application.priorityGroup ?? "none";
   const priorityScore = application.priorityScore ?? 0;
   const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = examTotalScore + priorityScore;
+  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
 
   return (
     <div>

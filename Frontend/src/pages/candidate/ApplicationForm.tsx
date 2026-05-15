@@ -30,6 +30,7 @@ export const ApplicationForm: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultUniversityId = searchParams.get("universityId");
+  const editId = searchParams.get("editId");
 
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId } = useCandidateStore();
@@ -42,6 +43,7 @@ export const ApplicationForm: React.FC = () => {
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
   const { subjectGroups } = useSubjectGroupStore();
+  const { fetchApplicationById, cancelApplication } = useApplicationStore();
 
   const activeRounds = useMemo(() => {
     const safeRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
@@ -97,6 +99,31 @@ export const ApplicationForm: React.FC = () => {
     }
   }, [defaultUniversityId, form]);
 
+  useEffect(() => {
+    // If editing an existing pending application, prefill form
+    let mounted = true;
+    const loadForEdit = async () => {
+      if (!editId) return;
+      const app = await fetchApplicationById(editId);
+      if (!app || !mounted) return;
+      form.setFieldsValue({
+        universityId: app.universityId,
+        majorId: app.majorId,
+        subjectGroupCode: app.subjectGroupCode,
+        admissionRoundId: app.admissionRoundId,
+        scores: app.scores,
+        priorityGroup: app.priorityGroup ?? 'none'
+      });
+      setSelectedUniversityId(app.universityId);
+      setSelectedMajorId(app.majorId);
+      setSelectedSubjectGroupCode(app.subjectGroupCode);
+      setTotalScore(app.totalScore ?? 0);
+      setSelectedPriorityGroup(app.priorityGroup ?? 'none');
+    };
+    loadForEdit().catch(err => console.error(err));
+    return () => { mounted = false; };
+  }, [editId, fetchApplicationById, form]);
+
   const handleValuesChange = (changedValues: any, allValues: any) => {
     console.log("📝 Form changed:", { changedValues, allValues });
     
@@ -147,7 +174,7 @@ export const ApplicationForm: React.FC = () => {
     setFileList(newFileList);
   };
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
     if (!candidate || !currentUser) return;
 
     // Check duplicate
@@ -174,9 +201,41 @@ export const ApplicationForm: React.FC = () => {
       uploadedAt: new Date().toISOString()
     }));
 
+    const selectedSubjectGroup = availableSubjectGroups.find(
+      (group) => String(group.code) === String(values.subjectGroupCode)
+    );
+
+    if (!selectedSubjectGroup?.id) {
+      message.error("Không tìm thấy tổ hợp xét tuyển phù hợp.");
+      return;
+    }
+
+    const submitPayload: any = {
+      candidateId: Number(candidate.id),
+      majorId: Number(values.majorId),
+      admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
+      subjectGroupId: Number(selectedSubjectGroup.id),
+      totalScore,
+      priorityGroup: selectedPriorityGroup,
+      priorityScore: currentPriorityScore,
+    };
+
+    await createApplication(submitPayload);
+
+    // If this was editing an existing application, cancel the old one
+    if (editId) {
+      try {
+        await cancelApplication(editId);
+      } catch (err) {
+        console.error('Failed to cancel original application after edit', err);
+      }
+    }
+
+    const applicationCode = `HS${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`;
+    const submittedAt = new Date().toISOString();
     const newApp: Application = {
       id: `app_${Date.now()}`,
-      applicationCode: `HS${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`,
+      applicationCode,
       candidateId: candidate.id,
       universityId: values.universityId,
       majorId: values.majorId,
@@ -188,12 +247,10 @@ export const ApplicationForm: React.FC = () => {
       totalScore,
       evidenceFiles: mockEvidences,
       status: "pending",
-      submittedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      submittedAt,
+      createdAt: submittedAt,
+      updatedAt: submittedAt
     };
-
-    createApplication(newApp);
 
     try {
       const university = getUniversityById(values.universityId);

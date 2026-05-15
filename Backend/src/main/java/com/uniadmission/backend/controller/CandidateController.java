@@ -25,8 +25,12 @@ public class CandidateController {
         @GetMapping("/my-profile/{userId}")
         public ResponseEntity<ApiResponse<Candidate>> getMyProfile(@PathVariable Long userId) {
 
-                Candidate profile = candidateService.getProfile(userId);
-                return ResponseEntity.ok(new ApiResponse<>(true, "Lấy hồ sơ thành công", profile));
+                try {
+                        Candidate profile = candidateService.getProfile(userId);
+                        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy hồ sơ thành công", profile));
+                } catch (RuntimeException ex) {
+                        return ResponseEntity.status(404).body(new ApiResponse<>(false, ex.getMessage(), null));
+                }
         }
 
         @PutMapping("/my-profile/{userId}")
@@ -34,7 +38,11 @@ public class CandidateController {
                         @PathVariable Long userId,
                         @RequestBody CandidateProfileRequest details) {
 
-                Candidate updatedProfile = candidateService.updateProfile(userId, details);
-                return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ thành công", updatedProfile));
+                try {
+                        Candidate updatedProfile = candidateService.updateProfile(userId, details);
+                        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ thành công", updatedProfile));
+                } catch (RuntimeException ex) {
+                        return ResponseEntity.status(404).body(new ApiResponse<>(false, ex.getMessage(), null));
+                }
         }
 }
