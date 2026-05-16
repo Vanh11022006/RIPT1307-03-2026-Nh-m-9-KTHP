@@ -34,7 +34,19 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
           subjects: Array.isArray(group?.subjects)
             ? group.subjects
             : typeof group?.subjects === "string" && group.subjects.trim()
-              ? group.subjects.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean)
+              ? (() => {
+                  const raw = group.subjects.trim();
+                  // try parse JSON array first (e.g. "[\"math\",\"physics\"]")
+                  if (raw.startsWith("[") && raw.endsWith("]")) {
+                    try {
+                      const parsed = JSON.parse(raw);
+                      if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                    } catch (e) {
+                      // fall back to split
+                    }
+                  }
+                  return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                })()
               : [],
         }))
       });
@@ -57,10 +69,19 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
             code: createdGroup?.code,
             name: createdGroup?.name ?? "",
             subjects: Array.isArray(createdGroup?.subjects)
-              ? createdGroup.subjects
-              : typeof createdGroup?.subjects === "string" && createdGroup.subjects.trim()
-                ? createdGroup.subjects.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean)
-                : [],
+                ? createdGroup.subjects
+                : typeof createdGroup?.subjects === "string" && createdGroup.subjects.trim()
+                  ? (() => {
+                      const raw = createdGroup.subjects.trim();
+                      if (raw.startsWith("[") && raw.endsWith("]")) {
+                        try {
+                          const parsed = JSON.parse(raw);
+                          if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                        } catch (e) {}
+                      }
+                      return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                    })()
+                  : [],
           }, ...state.subjectGroups],
         }));
       }
@@ -85,7 +106,16 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
                   subjects: Array.isArray(updatedGroup?.subjects)
                     ? updatedGroup.subjects
                     : typeof updatedGroup?.subjects === "string" && updatedGroup.subjects.trim()
-                      ? updatedGroup.subjects.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean)
+                      ? (() => {
+                          const raw = updatedGroup.subjects.trim();
+                          if (raw.startsWith("[") && raw.endsWith("]")) {
+                            try {
+                              const parsed = JSON.parse(raw);
+                              if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                            } catch (e) {}
+                          }
+                          return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                        })()
                       : [],
                 }
               : sg

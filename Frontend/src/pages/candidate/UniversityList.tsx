@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Card, Row, Col, Input, Select, Button, Space, Typography } from "antd";
+import { Card, Row, Col, Input, Select, Button, Space, Typography, Pagination } from "antd";
 import { SearchOutlined, BankOutlined, EnvironmentOutlined, GlobalOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -19,10 +19,14 @@ export const UniversityList: React.FC = () => {
 
   const [searchText, setSearchText] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(9);
 
   // Extract unique cities for the filter
   const cities = useMemo(() => {
-    const allCities = activeUniversities.map(u => u.city);
+    const allCities = activeUniversities
+      .map((u) => (u.city || "").toString().trim())
+      .filter((c) => c.length > 0);
     return Array.from(new Set(allCities)).sort();
   }, [activeUniversities]);
 
@@ -45,6 +49,16 @@ export const UniversityList: React.FC = () => {
     });
   }, [activeUniversities, searchText, selectedCity]);
 
+  // reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, selectedCity]);
+
+  const paginatedUniversities = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUniversities.slice(start, start + pageSize);
+  }, [filteredUniversities, currentPage, pageSize]);
+
   return (
     <div>
       <PageHeader title="Danh sách trường đại học" />
@@ -53,12 +67,20 @@ export const UniversityList: React.FC = () => {
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={16} md={18}>
             <Input
+              id="uni-search"
               placeholder="Tìm kiếm theo mã trường, tên trường, tên viết tắt..."
               prefix={<SearchOutlined />}
               size="large"
               allowClear
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              style={{
+                color: '#1e293b',
+                fontSize: 14,
+                textIndent: 0,
+                opacity: 1,
+                caretColor: '#111827'
+              }}
             />
           </Col>
           <Col xs={24} sm={8} md={6}>
@@ -79,8 +101,9 @@ export const UniversityList: React.FC = () => {
       </Card>
 
       {filteredUniversities.length > 0 ? (
+        <>
         <Row gutter={[24, 24]}>
-          {filteredUniversities.map((university) => (
+          {paginatedUniversities.map((university) => (
             <Col xs={24} sm={12} lg={8} key={university.id}>
               <Card
                 hoverable
@@ -142,6 +165,18 @@ export const UniversityList: React.FC = () => {
             </Col>
           ))}
         </Row>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+          <Pagination
+            current={currentPage}
+            pageSize={pageSize}
+            total={filteredUniversities.length}
+            onChange={(page, size) => { setCurrentPage(page); setPageSize(size || pageSize); }}
+            showSizeChanger
+            pageSizeOptions={[6,9,12,24].map(n => String(n))}
+            showQuickJumper
+          />
+        </div>
+        </>
       ) : (
         <Card>
           <EmptyState description="Không tìm thấy trường đại học phù hợp" />
