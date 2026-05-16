@@ -801,6 +801,68 @@ body {
   background-color: #0f172a !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Force search input in university list to be visible (white background, black text) */
+.university-search .ant-input,
+.university-search .ant-select-selector,
+.university-search .ant-input-affix-wrapper {
+  background: #ffffff !important;
+  color: #000000 !important;
+  caret-color: #000000 !important;
+}
+.university-search .ant-input::placeholder,
+.university-search .ant-input-affix-wrapper::placeholder {
+  color: rgba(0,0,0,0.45) !important;
+}
+
+/* Remove blue focus ring / glow for the university search input */
+.university-search,
+.university-search .ant-input-affix-wrapper,
+.university-search .ant-input {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+.university-search:focus-within,
+.university-search .ant-input-affix-wrapper:focus,
+.university-search .ant-input-affix-wrapper:focus-within,
+.university-search .ant-input:focus {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* Plain white search bar: no visible frame, just white background and black text */
+.university-search {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.university-search .ant-input-affix-wrapper {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+}
+.university-search .ant-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000 !important;
+}
+.university-search .ant-input::placeholder {
+  color: rgba(0,0,0,0.45) !important;
+}
+.university-search .ant-input-affix-wrapper:focus-within {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Ensure university search is visible (do not hide) */
+.university-search {
+  display: block;
+}
 .dark-modal .ant-modal-header {
   background-color: transparent !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -853,5 +915,77 @@ body {
 }
 .dashboard-body .ant-card-actions > li > span:hover {
   color: #fff !important;
+}
+
+/* Light modal overrides for edit application modal to improve readability */
+.edit-application-modal .ant-modal-content {
+  background: #ffffff !important;
+  color: #0b1c30 !important;
+  border-radius: 12px !important;
+}
+.edit-application-modal .ant-modal-header, .edit-application-modal .ant-modal-footer {
+  background: transparent !important;
+  border: none !important;
+}
+.edit-application-modal .ant-modal-title {
+  color: #0b1c30 !important;
+  font-weight: 700 !important;
+}
+.edit-application-modal .ant-form-item-label > label {
+  color: #0b1c30 !important;
+  font-weight: 600 !important;
+}
+.edit-application-modal .ant-input,
+.edit-application-modal .ant-input-number-input {
+  color: #0b1c30 !important;
+}
+.edit-application-modal input::placeholder,
+.edit-application-modal .ant-input::placeholder,
+.edit-application-modal .ant-input-number input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+.edit-application-modal .ant-form-item-explain {
+  color: #3d4850 !important;
+}
+.edit-application-modal .ant-upload a {
+  color: #00668a !important;
+  font-weight: 600 !important;
+}
+.edit-application-modal .total-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+.edit-application-modal .total-value {
+  color: #ff0000;
+  font-size: 28px;
+  font-weight: 800;
+}
+.edit-application-modal .total-block {
+  text-align: right;
+  margin-right: 18px;
+}
+.edit-application-modal .ant-upload {
+  margin-top: 12px;
+}
+.edit-application-modal .ant-upload a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.edit-application-modal .ant-btn {
+  font-weight: 600 !important;
+}
+
+/* Force InputNumber text and placeholder visibility */
+.edit-application-modal .ant-input-number .ant-input-number-input {
+  color: #0b1c30 !important;
+}
+.edit-application-modal .ant-input-number .ant-input-number-input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+.edit-application-modal .ant-form-item-label > label {
+  text-shadow: none !important;
 }
 

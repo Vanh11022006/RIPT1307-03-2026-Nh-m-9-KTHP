@@ -19,7 +19,16 @@ public class University {
     private String name;
     private String logoUrl;
     private String website;
+    private String shortName;
+    private String address;
+    private String city;
+    private String email;
+    private String phone;
+    private String description;
 
     @Enumerated(EnumType.STRING)
     private EntityStatus status;
+
+    private String createdAt;
+    private String updatedAt;
 }

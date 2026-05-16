@@ -82,6 +82,20 @@ public class ApplicationServiceImpl implements ApplicationService {
                         saved.setApplicationCode(code);
                         saved = applicationRepository.save(saved);
                 }
+                // Create an in-app notification for the candidate about submission
+                try {
+                        Long userId = saved.getCandidate().getUser().getId();
+                        String title = "Bạn đã nộp hồ sơ xét tuyển";
+                        String message = "Mã hồ sơ: " + saved.getApplicationCode() +
+                                        ". Ngành: "
+                                        + (saved.getMajor() != null ? saved.getMajor().getName() : "Không rõ") +
+                                        ". Tổ hợp: "
+                                        + (saved.getSubjectGroup() != null ? saved.getSubjectGroup().getName()
+                                                        : "Không rõ");
+                        notificationService.createNotification(userId, title, message);
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi tạo notification cho nộp hồ sơ: " + e.getMessage());
+                }
                 return saved;
         }
 
@@ -97,6 +111,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
                 application.setStatus(ApplicationStatus.CANCELLED);
                 applicationRepository.save(application);
+                // Notify candidate about cancellation
+                try {
+                        Long userId = application.getCandidate().getUser().getId();
+                        String title = "Hủy hồ sơ xét tuyển";
+                        String message = "Hồ sơ của bạn (Mã: " + application.getApplicationCode() + ") đã được hủy.";
+                        notificationService.createNotification(userId, title, message);
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi tạo notification cho hủy hồ sơ: " + e.getMessage());
+                }
         }
 
         @Override
@@ -188,6 +211,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
                 applicationRepository.save(application);
+                // Notify candidate about application edit
+                try {
+                        Long userId = application.getCandidate().getUser().getId();
+                        String title = "Chỉnh sửa hồ sơ xét tuyển";
+                        String message = "Hồ sơ của bạn (Mã: " + application.getApplicationCode()
+                                        + ") đã được cập nhật.";
+                        notificationService.createNotification(userId, title, message);
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi tạo notification cho chỉnh sửa hồ sơ: " + e.getMessage());
+                }
                 return application;
         }
 
@@ -195,6 +228,16 @@ public class ApplicationServiceImpl implements ApplicationService {
         public void deleteApplication(Long id) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                // Notify candidate before deletion
+                try {
+                        Long userId = application.getCandidate().getUser().getId();
+                        String title = "Xóa hồ sơ xét tuyển";
+                        String message = "Hồ sơ của bạn (Mã: " + application.getApplicationCode()
+                                        + ") đã bị xóa khỏi hệ thống.";
+                        notificationService.createNotification(userId, title, message);
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi tạo notification cho xóa hồ sơ: " + e.getMessage());
+                }
                 applicationRepository.delete(application);
         }
 

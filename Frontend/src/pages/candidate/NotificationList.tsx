@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty } from "antd";
+import React, { useState, useEffect } from "react";
+import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty, Spin } from "antd";
 import { CheckOutlined, BellOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import { useAuthStore } from "../../stores/auth.store";
@@ -9,19 +9,27 @@ const { Title, Text, Paragraph } = Typography;
 
 export const NotificationList: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { getAllNotificationLogs, markNotificationAsRead } = useNotificationLogStore();
-  
-  const allLogs = getAllNotificationLogs();
-  const safeLogs = Array.isArray(allLogs) ? allLogs : [];
+  const { markNotificationAsRead, getNotificationLogs } = useNotificationLogStore();
+  const notificationLogs = useNotificationLogStore(state => state.notificationLogs);
+  const loading = useNotificationLogStore(state => state.loading);
+  const safeLogs = Array.isArray(notificationLogs) ? notificationLogs : [];
 
   // Filter for current user. Fallback to email if userId matching fails for some reason in mock setup
-  const myLogs = safeLogs.filter(log => 
-    log.recipientUserId === currentUser?.id || 
-    (currentUser?.email && log.recipientEmail === currentUser?.email)
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const myLogs = safeLogs.filter(log => {
+    const userIdMatch = currentUser?.id != null && String(log.recipientUserId) === String(currentUser.id);
+    const emailMatch = currentUser?.email && String((log.recipientEmail ?? "")).toLowerCase() === String(currentUser.email).toLowerCase();
+    return userIdMatch || emailMatch;
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
+
+  // Load persisted notifications when component mounts or user changes
+  useEffect(() => {
+    if (currentUser?.id) {
+      getNotificationLogs();
+    }
+  }, [currentUser?.id]);
 
   // Helpers
   const getTypeTag = (type: string) => {
@@ -72,7 +80,9 @@ export const NotificationList: React.FC = () => {
       </div>
 
       <Card bordered={false}>
-        {myLogs.length === 0 ? (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
+        ) : myLogs.length === 0 ? (
           <Empty description="Bạn chưa có thông báo nào" />
         ) : (
           <List

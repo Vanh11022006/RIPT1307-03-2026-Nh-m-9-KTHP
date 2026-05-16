@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Application } from "../types/application.types";
 import axiosClient from "../api/axiosClient";
+import { useNotificationLogStore } from "./notificationLog.store";
 
 const formatApplicationCode = (id: string, submittedAt?: string, createdAt?: string): string => {
   const dateSource = submittedAt || createdAt;
@@ -34,7 +35,7 @@ const normalizeApplicationArray = (payload: any): Application[] => {
     candidateId: String(a?.candidateId ?? ""),
     universityId: String(a?.universityId ?? ""),
     majorId: String(a?.majorId ?? ""),
-    subjectGroupCode: a?.subjectGroupCode ?? (a?.subjectGroupName ?? ""),
+    subjectGroupCode: a?.subjectGroupCode ?? a?.subjectGroupName ?? (a?.subjectGroup?.code ?? a?.subjectGroup?.name ?? ""),
     admissionRoundId: a?.admissionRoundId != null ? String(a.admissionRoundId) : undefined,
     priorityGroup: a?.priorityGroup ?? undefined,
   // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
@@ -44,7 +45,6 @@ const normalizeApplicationArray = (payload: any): Application[] => {
   finalScore: Number(a?.totalScore ?? 0) + Number(a?.priorityScore ?? 0),
     evidenceFiles: a?.evidenceFiles ?? [],
     status: String(a?.status ?? "pending"),
-    candidateNote: a?.candidateNote ?? undefined,
     adminNote: a?.adminNote ?? undefined,
     submittedAt: a?.submittedAt ?? a?.submissionDate ?? a?.createdAt ?? "",
     reviewedAt: a?.reviewedAt ?? undefined,
@@ -137,6 +137,12 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         set((state) => ({
           applications: [created, ...state.applications]
         }));
+        // Refresh persisted notifications after creating application
+        try {
+          await useNotificationLogStore.getState().getNotificationLogs();
+        } catch (err) {
+          console.warn('Failed to refresh notifications after createApplication', err);
+        }
       }
     } catch (error) {
       console.error("Failed to create application:", error);
@@ -157,6 +163,12 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             a.id === id ? updated : a
           )
         }));
+        // Refresh notifications so candidate sees approval
+        try {
+          await useNotificationLogStore.getState().getNotificationLogs();
+        } catch (err) {
+          console.warn('Failed to refresh notifications after approveApplication', err);
+        }
       }
     } catch (error) {
       console.error("Failed to approve application:", error);
@@ -170,6 +182,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       set((state) => ({
         applications: state.applications.filter(a => a.id !== id)
       }));
+      try {
+        await useNotificationLogStore.getState().getNotificationLogs();
+      } catch (err) {
+        console.warn('Failed to refresh notifications after cancelApplication', err);
+      }
     } catch (error) {
       console.error("Failed to cancel application:", error);
     }
@@ -183,6 +200,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         set((state) => ({
           applications: state.applications.map(a => a.id === id ? updated : a)
         }));
+        try {
+          await useNotificationLogStore.getState().getNotificationLogs();
+        } catch (err) {
+          console.warn('Failed to refresh notifications after updateApplication', err);
+        }
       }
       return updated;
     } catch (error) {
@@ -217,6 +239,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             a.id === id ? updated : a
           )
         }));
+        try {
+          await useNotificationLogStore.getState().getNotificationLogs();
+        } catch (err) {
+          console.warn('Failed to refresh notifications after rejectApplication', err);
+        }
       }
     } catch (error) {
       console.error("Failed to reject application:", error);

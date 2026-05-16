@@ -10,9 +10,9 @@ import type { NotificationLog } from "../../types/notification.types";
 const { Title, Text } = Typography;
 
 export const NotificationLogList: React.FC = () => {
-  const { getAllNotificationLogs } = useNotificationLogStore();
-  const allLogs = getAllNotificationLogs();
-  const safeLogs = Array.isArray(allLogs) ? allLogs : [];
+  const notificationLogs = useNotificationLogStore(state => state.notificationLogs);
+  const loading = useNotificationLogStore(state => state.loading);
+  const safeLogs = Array.isArray(notificationLogs) ? notificationLogs : [];
 
   const [searchText, setSearchText] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");

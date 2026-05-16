@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Card, Row, Col, Input, Select, Button, Space, Typography } from "antd";
+import React, { useState, useMemo, useEffect } from "react";
+import { Card, Row, Col, Input, Select, Button, Space, Typography, AutoComplete, Pagination } from "antd";
 import { SearchOutlined, BankOutlined, EnvironmentOutlined, GlobalOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -18,11 +18,14 @@ export const UniversityList: React.FC = () => {
   const activeUniversities = getActiveUniversities();
 
   const [searchText, setSearchText] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
   // Extract unique cities for the filter
   const cities = useMemo(() => {
-    const allCities = activeUniversities.map(u => u.city);
+    const allCities = activeUniversities.map(u => u.city).filter(c => c && String(c).trim());
     return Array.from(new Set(allCities)).sort();
   }, [activeUniversities]);
 
@@ -45,21 +48,62 @@ export const UniversityList: React.FC = () => {
     });
   }, [activeUniversities, searchText, selectedCity]);
 
+  const autocompleteOptions = useMemo(() => {
+    const q = String(inputValue || "").trim().toLowerCase();
+    if (!q) return [];
+    return activeUniversities
+      .filter(u => {
+        const name = String(u.name || "").toLowerCase();
+        const code = String(u.code || "").toLowerCase();
+        const shortName = String(u.shortName || "").toLowerCase();
+        return name.includes(q) || code.includes(q) || shortName.includes(q);
+      })
+      .slice(0, 10)
+      .map(u => ({ value: u.name, label: `${u.name} · ${u.code}` }));
+  }, [activeUniversities, searchText]);
+
+  // Debounce the actual searchText used for filtering to reduce re-renders
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchText(inputValue);
+    }, 220);
+    return () => clearTimeout(handler);
+  }, [inputValue]);
+
+  // Reset page when filters change
+  useEffect(() => setPage(1), [searchText, selectedCity]);
+
+  const total = filteredUniversities.length;
+  const paginatedUniversities = filteredUniversities.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div>
       <PageHeader title="Danh sách trường đại học" />
       
-      <Card style={{ marginBottom: 24 }}>
+      <Card className="university-search" style={{ marginBottom: 24 }}>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={16} md={18}>
-            <Input
-              placeholder="Tìm kiếm theo mã trường, tên trường, tên viết tắt..."
-              prefix={<SearchOutlined />}
-              size="large"
-              allowClear
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
+            <AutoComplete
+              style={{ width: '100%' }}
+              options={autocompleteOptions}
+              value={inputValue}
+              onChange={(val) => setInputValue(String(val))}
+              onSelect={(value) => {
+                setInputValue(String(value));
+                setSearchText(String(value));
+                const match = activeUniversities.find(u => u.name === value || u.code === value || u.shortName === value || (u.name || '').startsWith(String(value)));
+                if (match) navigate(`${basePath}/universities/${match.id}`);
+              }}
+              onSearch={(value) => setInputValue(String(value))}
+            >
+              <Input
+                placeholder="Tìm kiếm theo mã trường, tên trường, tên viết tắt..."
+                prefix={<SearchOutlined />}
+                size="large"
+                allowClear
+                style={{ color: '#000', background: '#fff', caretColor: '#000' }}
+              />
+            </AutoComplete>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Select
@@ -80,7 +124,7 @@ export const UniversityList: React.FC = () => {
 
       {filteredUniversities.length > 0 ? (
         <Row gutter={[24, 24]}>
-          {filteredUniversities.map((university) => (
+          {paginatedUniversities.map((university) => (
             <Col xs={24} sm={12} lg={8} key={university.id}>
               <Card
                 hoverable
@@ -124,7 +168,7 @@ export const UniversityList: React.FC = () => {
                 <div style={{ marginTop: "auto" }}>
                   <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
                     <EnvironmentOutlined style={{ marginRight: 8, color: "#8c8c8c" }} />
-                    <Text>{university.city}</Text>
+                    <Text>{university.city && String(university.city).trim() ? university.city : <Text type="secondary">Chưa cập nhật</Text>}</Text>
                   </div>
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <GlobalOutlined style={{ marginRight: 8, color: "#8c8c8c" }} />
@@ -132,9 +176,13 @@ export const UniversityList: React.FC = () => {
                       style={{ maxWidth: 200 }}
                       ellipsis={{ tooltip: university.website }}
                     >
-                      <a href={`https://${university.website}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                        {university.website}
-                      </a>
+                      {university.website && String(university.website).trim() ? (
+                        <a href={university.website.startsWith('http') ? university.website : `https://${university.website}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                          {university.website}
+                        </a>
+                      ) : (
+                        <Text type="secondary">Chưa cập nhật</Text>
+                      )}
                     </Text>
                   </div>
                 </div>
@@ -146,6 +194,11 @@ export const UniversityList: React.FC = () => {
         <Card>
           <EmptyState description="Không tìm thấy trường đại học phù hợp" />
         </Card>
+      )}
+      {total > pageSize && (
+        <div style={{ textAlign: 'right', marginTop: 16 }}>
+          <Pagination current={page} pageSize={pageSize} total={total} onChange={(p) => setPage(p)} showSizeChanger={false} />
+        </div>
       )}
     </div>
   );

@@ -380,10 +380,7 @@ export const AdminApplicationDetail: React.FC = () => {
                 </Space>
               )}
             </div>
-            <div>
-              <Text strong style={{ display: "block", marginBottom: 8 }}>Ghi chú thí sinh:</Text>
-              <Text type={application.candidateNote ? "secondary" : "secondary"}>{application.candidateNote || "Không có ghi chú"}</Text>
-            </div>
+            {/* candidateNote removed from UI - deprecated */}
             <div style={{ marginTop: 16 }}>
               <Text strong style={{ display: "block", marginBottom: 8 }}>Ghi chú admin:</Text>
               <Text type={application.adminNote ? "secondary" : "secondary"}>{application.adminNote || "Không có ghi chú"}</Text>

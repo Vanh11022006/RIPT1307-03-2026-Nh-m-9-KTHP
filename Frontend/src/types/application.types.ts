@@ -54,7 +54,6 @@ export interface Application {
   totalScore: number;
   evidenceFiles: EvidenceFile[];
   status: ApplicationStatus;
-  candidateNote?: string;
   adminNote?: string;
   submittedAt: string;
   reviewedAt?: string;

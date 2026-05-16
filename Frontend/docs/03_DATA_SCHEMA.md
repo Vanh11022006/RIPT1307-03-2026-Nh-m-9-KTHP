@@ -314,7 +314,6 @@ export interface Application {
   totalScore: number;
   evidenceFiles: EvidenceFile[];
   status: ApplicationStatus;
-  candidateNote?: string;
   adminNote?: string;
   submittedAt: string;
   reviewedAt?: string;
@@ -338,7 +337,6 @@ Field description:
 | totalScore | number | Tổng điểm |
 | evidenceFiles | EvidenceFile[] | File minh chứng |
 | status | ApplicationStatus | pending, approved hoặc rejected |
-| candidateNote | string | Ghi chú của thí sinh |
 | adminNote | string | Ghi chú của admin |
 | submittedAt | string | Ngày nộp |
 | reviewedAt | string | Ngày duyệt/từ chối |

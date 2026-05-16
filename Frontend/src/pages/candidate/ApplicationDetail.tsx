@@ -269,14 +269,7 @@ export const ApplicationDetail: React.FC = () => {
               <Empty description="Chưa có file minh chứng" />
             )}
 
-            {application.candidateNote && (
-              <div style={{ marginTop: 24 }}>
-                <Title level={5}>Ghi chú của thí sinh</Title>
-                <Card type="inner">
-                  <Text>{application.candidateNote}</Text>
-                </Card>
-              </div>
-            )}
+            {/* candidateNote removed from UI - field deprecated */}
           </Card>
         </Col>
       </Row>

@@ -16,13 +16,20 @@ export const UniversityDetail: React.FC = () => {
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   const listPath = basePath ? `${basePath}/universities` : '/universities';
   
-  const { getUniversityById } = useUniversityStore();
+  const { getUniversityById, getUniversities } = useUniversityStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
 
   const university = useMemo(() => {
     if (!id) return undefined;
     return getUniversityById(id);
   }, [id, getUniversityById]);
+
+  // If university not found in store, try fetching list from backend
+  React.useEffect(() => {
+    if (id && !university) {
+      getUniversities().catch((e) => console.error(e));
+    }
+  }, [id, university, getUniversities]);
 
   const majors = useMemo(() => {
     if (!id) return [];
@@ -111,16 +118,17 @@ export const UniversityDetail: React.FC = () => {
         <Col span={24}>
           <Card>
             <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 24 }}>
-              <div style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: 12, 
-                background: "#f0f2f5", 
-                display: "flex", 
-                alignItems: "center", 
+              <div style={{
+                width: 80,
+                height: 80,
+                borderRadius: 12,
+                background: "#f0f2f5",
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
                 marginRight: 24,
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}>
                 <BankOutlined style={{ fontSize: 40, color: "#1677ff" }} />
               </div>
@@ -135,23 +143,29 @@ export const UniversityDetail: React.FC = () => {
 
             <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
               <Descriptions.Item label={<><EnvironmentOutlined /> Tỉnh/Thành phố</>}>
-                {university.city}
+                {university.city && university.city.trim() ? university.city : <Text type="secondary">Chưa cập nhật</Text>}
               </Descriptions.Item>
               <Descriptions.Item label="Địa chỉ chi tiết" span={1}>
-                {university.address}
+                {university.address && university.address.trim() ? university.address : <Text type="secondary">Chưa cập nhật</Text>}
               </Descriptions.Item>
               <Descriptions.Item label={<><GlobalOutlined /> Website</>}>
-                <a href={`https://${university.website}`} target="_blank" rel="noopener noreferrer">
-                  {university.website}
-                </a>
+                {university.website && university.website.trim() ? (
+                  <a href={university.website.startsWith('http') ? university.website : `https://${university.website}`} target="_blank" rel="noopener noreferrer">
+                    {university.website}
+                  </a>
+                ) : (
+                  <Text type="secondary">Chưa cập nhật</Text>
+                )}
               </Descriptions.Item>
               <Descriptions.Item label={<><MailOutlined /> Email</>}>
-                <a href={`mailto:${university.email}`}>
-                  {university.email}
-                </a>
+                {university.email && university.email.trim() ? (
+                  <a href={`mailto:${university.email}`}>{university.email}</a>
+                ) : (
+                  <Text type="secondary">Chưa cập nhật</Text>
+                )}
               </Descriptions.Item>
               <Descriptions.Item label={<><PhoneOutlined /> Điện thoại</>}>
-                {university.phone}
+                {university.phone && university.phone.trim() ? university.phone : <Text type="secondary">Chưa cập nhật</Text>}
               </Descriptions.Item>
             </Descriptions>
 
