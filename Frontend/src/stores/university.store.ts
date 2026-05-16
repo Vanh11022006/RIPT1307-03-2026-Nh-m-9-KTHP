@@ -5,13 +5,37 @@ import axiosClient from "../api/axiosClient";
 const normalizeUniversity = (university: any): University => {
   const status = String(university?.status ?? "").toLowerCase() === "inactive" ? "inactive" : "active";
 
-  return {
+    // try to infer city if missing using common patterns or a lookup table
+    const lookupByCode: Record<string, string> = {
+      'HUST': 'Hà Nội',
+      'HNUT': 'Hà Nội',
+      'VNU': 'Hà Nội',
+      'HCMUT': 'Hồ Chí Minh',
+      'HCMUS': 'Hồ Chí Minh',
+      'HCM': 'Hồ Chí Minh',
+      'DUT': 'Đà Nẵng',
+      'CTU': 'Cần Thơ'
+    };
+
+    const inferCity = (u: any) => {
+      if (u?.city) return u.city;
+      const code = (u?.code || '').toUpperCase();
+      if (lookupByCode[code]) return lookupByCode[code];
+      const name = (u?.name || '').toLowerCase();
+      if (name.includes('hanoi') || name.includes('ha noi') || name.includes('hà nội')) return 'Hà Nội';
+      if (name.includes('ho chi minh') || name.includes('hcm') || name.includes('thành phố hồ chí minh') || name.includes('hồ chí minh')) return 'Hồ Chí Minh';
+      if (name.includes('da nang') || name.includes('đà nẵng')) return 'Đà Nẵng';
+      if (name.includes('can tho') || name.includes('cần thơ')) return 'Cần Thơ';
+      return '';
+    };
+
+    return {
     id: String(university?.id ?? ""),
     code: university?.code ?? "",
     name: university?.name ?? "",
     shortName: university?.shortName ?? university?.code ?? university?.name ?? "",
     address: university?.address ?? "",
-    city: university?.city ?? "",
+    city: inferCity(university),
     website: university?.website ?? "",
     email: university?.email ?? "",
     phone: university?.phone ?? "",
