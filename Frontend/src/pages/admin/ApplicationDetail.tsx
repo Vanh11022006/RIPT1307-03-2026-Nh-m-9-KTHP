@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, message, Popconfirm } from "antd";
 import { ArrowLeftOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { getApplicationById, approveApplication, rejectApplication } = useApplicationStore();
+  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication } = useApplicationStore();
   const { getCandidateById } = useCandidateStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
@@ -34,10 +34,63 @@ export const AdminApplicationDetail: React.FC = () => {
 
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
+  const [loading, setLoading] = useState<boolean>(!application);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadApplication = async () => {
+      if (!id) {
+        if (mounted) {
+          setApplication(undefined);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const cachedApplication = getApplicationById(id);
+      if (cachedApplication) {
+        if (mounted) {
+          setApplication(cachedApplication);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (mounted) {
+        setLoading(true);
+      }
+
+      const fetchedApplication = await fetchApplicationById(id);
+
+      if (mounted) {
+        setApplication(fetchedApplication ?? undefined);
+        setLoading(false);
+      }
+    };
+
+    loadApplication().catch((error) => {
+      console.error("Failed to load application detail", error);
+      if (mounted) {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, getApplicationById, fetchApplicationById]);
 
   if (!id) return null;
 
-  const application = getApplicationById(id);
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card loading />
+      </div>
+    );
+  }
 
   if (!application) {
     return (
@@ -85,12 +138,25 @@ export const AdminApplicationDetail: React.FC = () => {
       title: "Tên file",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => (
-        <Space>
-          <PaperClipOutlined />
-          <Text>{text}</Text>
-        </Space>
-      )
+      render: (text: string, record: any) => {
+        const fileUrl = record?.url;
+
+        return (
+          <Space>
+            {fileUrl ? (
+              <a href={fileUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <PaperClipOutlined />
+                <span>{text || "Chưa cập nhật"}</span>
+              </a>
+            ) : (
+              <>
+                <PaperClipOutlined />
+                <Text>{text || "Chưa cập nhật"}</Text>
+              </>
+            )}
+          </Space>
+        );
+      }
     },
     {
       title: "Loại minh chứng",
@@ -116,17 +182,6 @@ export const AdminApplicationDetail: React.FC = () => {
       key: "uploadedAt",
       render: (date: string) => date ? formatDateTime(date) : "Chưa cập nhật"
     },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_: any, record: any) => (
-        record.url ? (
-          <Button type="link" href={record.url} target="_blank">Xem file</Button>
-        ) : (
-          <Text type="secondary">Không có liên kết</Text>
-        )
-      )
-    }
   ];
 
   const handleApprove = () => {
@@ -207,7 +262,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const priorityGroup = application.priorityGroup ?? "none";
   const priorityScore = application.priorityScore ?? 0;
   const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = examTotalScore + priorityScore;
+  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
 
   return (
     <div className="admin-application-detail">
@@ -338,6 +393,9 @@ export const AdminApplicationDetail: React.FC = () => {
           </Card>
 
           <Card title="Điểm xét tuyển">
+            <div style={{ marginBottom: 12 }}>
+              <Tag color="cyan">Tổ hợp: {application.subjectGroupCode || "Chưa cập nhật"}</Tag>
+            </div>
             {scoreData.length > 0 ? (
               <>
                 <Table

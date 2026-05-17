@@ -36,10 +36,32 @@ public class NotificationLogServiceImpl implements NotificationLogService {
 
     @Override
     public void markAsRead(Long id) {
-        NotificationLog log = repository.findById(id)
+        NotificationLog log = repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
         log.setRead(true);
         repository.save(log);
+    }
+
+    @Override
+    public void deleteNotification(Long id) {
+        repository.findById(java.util.Objects.requireNonNull(id))
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        repository.deleteById(id);
+    }
+
+    @Override
+    public void deleteNotificationsByUserId(Long userId) {
+        List<NotificationLog> logs = repository
+                .findByUserIdOrderByCreatedAtDesc(java.util.Objects.requireNonNull(userId));
+        if (logs == null) {
+            return;
+        }
+
+        for (NotificationLog log : logs) {
+            if (log != null && log.getId() != null) {
+                repository.deleteById(java.util.Objects.requireNonNull(log.getId()));
+            }
+        }
     }
 
     @Override

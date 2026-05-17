@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Result, Button, Descriptions, Typography, Tag, Alert, Row, Col, Steps, Table, Space, Empty } from "antd";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useParams, useNavigate } from "react-router-dom";
@@ -22,23 +22,119 @@ export const ApplicationDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId } = useCandidateStore();
-  const { getApplicationById } = useApplicationStore();
+  const { getCandidateByUserId, getProfile } = useCandidateStore();
+  const { getApplicationById, fetchApplicationById } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
   const { getAdmissionRoundById } = useAdmissionRoundStore();
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const [candidate, setCandidate] = useState(() => (currentUser ? getCandidateByUserId(currentUser.id) : null));
+  const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
+  const [loading, setLoading] = useState<boolean>(!application || (!!currentUser && !candidate));
 
-  const application = useMemo(() => {
-    if (!id) return undefined;
-    return getApplicationById(id);
-  }, [id, getApplicationById]);
+  useEffect(() => {
+    let mounted = true;
 
-  if (!candidate || !application || application.candidateId !== candidate.id) {
+    const loadCandidate = async () => {
+      if (!currentUser?.id) {
+        if (mounted) {
+          setCandidate(null);
+        }
+        return;
+      }
+
+      const cachedCandidate = getCandidateByUserId(currentUser.id);
+      if (cachedCandidate) {
+        if (mounted) {
+          setCandidate(cachedCandidate);
+        }
+        return;
+      }
+
+      const fetchedCandidate = await getProfile(currentUser.id);
+      if (mounted) {
+        setCandidate(fetchedCandidate);
+      }
+    };
+
+    loadCandidate().catch((error) => {
+      console.error("Failed to load candidate profile", error);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser?.id, getCandidateByUserId, getProfile]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadApplication = async () => {
+      if (!id) {
+        if (mounted) {
+          setApplication(undefined);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const cachedApplication = getApplicationById(id);
+      if (cachedApplication) {
+        if (mounted) {
+          setApplication(cachedApplication);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (mounted) {
+        setLoading(true);
+      }
+
+      const fetchedApplication = await fetchApplicationById(id);
+
+      if (mounted) {
+        setApplication(fetchedApplication ?? undefined);
+        setLoading(false);
+      }
+    };
+
+    loadApplication().catch((error) => {
+      console.error("Failed to load application detail", error);
+      if (mounted) {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, getApplicationById, fetchApplicationById]);
+
+  useEffect(() => {
+    if (loading && currentUser?.id) {
+      return;
+    }
+
+    if (application && candidate) {
+      setLoading(false);
+    }
+  }, [application, candidate, currentUser?.id, loading]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card loading />
+      </div>
+    );
+  }
+
+  // Debug logs to help diagnose runtime 404 issues
+  // Please open browser console and check these values when reproducing the issue
+  // eslint-disable-next-line no-console
+  console.log("[ApplicationDetail debug]", { id, loading, application, candidate });
+
+  if (!candidate || !application || String(application.candidateId) !== String(candidate.id)) {
     return (
       <div style={{ padding: 24 }}>
         <Card>
@@ -76,12 +172,25 @@ export const ApplicationDetail: React.FC = () => {
       title: "Tên file",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => (
-        <Space>
-          <PaperClipOutlined />
-          <Text>{text || "Chưa cập nhật"}</Text>
-        </Space>
-      )
+      render: (text: string, record: any) => {
+        const fileUrl = record?.url;
+
+        return (
+          <Space>
+            {fileUrl ? (
+              <a href={fileUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <PaperClipOutlined />
+                <span>{text || "Chưa cập nhật"}</span>
+              </a>
+            ) : (
+              <>
+                <PaperClipOutlined />
+                <Text>{text || "Chưa cập nhật"}</Text>
+              </>
+            )}
+          </Space>
+        );
+      }
     },
     { 
       title: "Loại minh chứng", 
@@ -107,23 +216,12 @@ export const ApplicationDetail: React.FC = () => {
       key: "uploadedAt",
       render: (date: string) => date ? formatDateTime(date) : "Chưa cập nhật"
     },
-    { 
-      title: "Hành động", 
-      key: "action",
-      render: (_: any, record: any) => (
-        record.url ? (
-          <Button type="link" href={record.url} target="_blank">Xem file</Button>
-        ) : (
-          <Text type="secondary">Không có liên kết</Text>
-        )
-      )
-    }
   ];
 
   const priorityGroup = application.priorityGroup ?? "none";
   const priorityScore = application.priorityScore ?? 0;
   const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = examTotalScore + priorityScore;
+  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
 
   const getStepCurrent = (status: string) => {
     if (status === "pending") return 1;
@@ -242,17 +340,24 @@ export const ApplicationDetail: React.FC = () => {
             </Descriptions>
 
             <Title level={5}>Điểm thành phần</Title>
+            <div style={{ marginBottom: 12 }}>
+              <Tag color="cyan">Tổ hợp: {application.subjectGroupCode || "Chưa cập nhật"}</Tag>
+            </div>
             <Card type="inner" style={{ marginBottom: 24 }}>
-              <Row gutter={[16, 16]}>
-                {Object.entries(application.scores || {}).map(([subject, score]) => (
-                  <Col xs={12} sm={8} md={6} key={subject}>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <Text type="secondary">{subjectNames[subject] || subject}</Text>
-                      <Text strong style={{ fontSize: 16 }}>{score !== undefined ? score.toFixed(2) : "-"}</Text>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
+              {Object.keys(application.scores || {}).length > 0 ? (
+                <Row gutter={[16, 16]}>
+                  {Object.entries(application.scores || {}).map(([subject, score]) => (
+                    <Col xs={12} sm={8} md={6} key={subject}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <Text type="secondary">{subjectNames[subject] || subject}</Text>
+                        <Text strong style={{ fontSize: 16 }}>{score !== undefined ? score.toFixed(2) : "-"}</Text>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <Empty description="Chưa có dữ liệu điểm" />
+              )}
             </Card>
 
             <Title level={5}>Minh chứng đính kèm</Title>

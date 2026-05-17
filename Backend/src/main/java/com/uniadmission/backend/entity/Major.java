@@ -1,7 +1,9 @@
 package com.uniadmission.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uniadmission.backend.entity.enums.EntityStatus;
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 
 @Entity
@@ -17,7 +19,15 @@ public class Major {
 
     @ManyToOne
     @JoinColumn(name = "university_id")
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private University university;
+
+    @JsonProperty("universityId")
+    public Long getUniversityId() {
+        return university != null ? university.getId() : null;
+    }
 
     private String code;
     private String name;

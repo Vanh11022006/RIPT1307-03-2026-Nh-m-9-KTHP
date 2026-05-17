@@ -10,11 +10,17 @@ const { Option } = Select;
 export const Profile: React.FC = () => {
   const [form] = Form.useForm();
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId, saveProfile } = useCandidateStore();
+  const { getCandidateByUserId, getProfile, saveProfile } = useCandidateStore();
+  const profile = currentUser ? getCandidateByUserId(currentUser.id) : undefined;
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      getProfile(currentUser.id).catch((error) => console.error("Failed to load profile", error));
+    }
+  }, [currentUser?.id, getProfile]);
 
   useEffect(() => {
     if (currentUser) {
-      const profile = getCandidateByUserId(currentUser.id);
       if (profile) {
         form.setFieldsValue({
           ...profile,
@@ -29,19 +35,22 @@ export const Profile: React.FC = () => {
         });
       }
     }
-  }, [currentUser, getCandidateByUserId, form]);
+  }, [currentUser, profile, form]);
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
     if (!currentUser) return;
-    
-    // Format dateOfBirth to ISO string
+
     const formattedValues = {
       ...values,
-      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
+      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format("YYYY-MM-DD") : undefined,
     };
 
-    saveProfile(currentUser.id, formattedValues);
-    message.success("Cập nhật thông tin cá nhân thành công!");
+    const ok = await saveProfile(currentUser.id, formattedValues);
+    if (ok) {
+      message.success("Cập nhật thông tin cá nhân thành công!");
+    } else {
+      message.error("Không thể lưu thông tin. Vui lòng thử lại hoặc đăng nhập lại.");
+    }
   };
 
   const currentYear = new Date().getFullYear();

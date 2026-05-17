@@ -10,7 +10,7 @@ import { useCandidateStore } from "../../stores/candidate.store";
 import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
-import { mockSubjectGroups } from "../../mocks/subjectGroups.mock";
+import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import type { Application } from "../../types/application.types";
 import { formatDateTime } from "../../utils/date";
 
@@ -24,11 +24,12 @@ export const ApplicationManagement: React.FC = () => {
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
+  const { subjectGroups } = useSubjectGroupStore();
 
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
   const safeMajors = Array.isArray(majors) ? majors : [];
-  const safeSubjectGroups = Array.isArray(mockSubjectGroups) ? mockSubjectGroups : [];
+  const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
   const safeAdmissionRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
 
   const [searchText, setSearchText] = useState("");
@@ -149,7 +150,10 @@ export const ApplicationManagement: React.FC = () => {
       dataIndex: "totalScore",
       key: "totalScore",
       align: "center" as const,
-      render: (val: number) => val !== undefined ? <Typography.Text type="danger" strong>{val.toFixed(2)}</Typography.Text> : "Chưa cập nhật"
+      render: (val: number, record: any) => {
+        const final = record.finalScore ?? (Number(val ?? 0) + Number(record.priorityScore ?? 0));
+        return final !== undefined ? <Typography.Text type="danger" strong>{(final ?? 0).toFixed(2)}</Typography.Text> : "Chưa cập nhật";
+      }
     },
     {
       title: "Trạng thái",

@@ -12,11 +12,9 @@ import java.util.List;
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
-    List<Application> findByCandidateId(Long candidateId);
+    List<Application> findByCandidate_Id(Long candidateId);
 
-    Page<Application> findAll(Pageable pageable);
-
-    Page<Application> findByStatus(ApplicationStatus status, Pageable pageable);
+    Page<Application> findByStatus(ApplicationStatus status, @org.springframework.lang.NonNull Pageable pageable);
 
     long countByStatus(ApplicationStatus status);
 }

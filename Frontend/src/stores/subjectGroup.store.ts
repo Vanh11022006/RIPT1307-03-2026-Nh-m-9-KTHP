@@ -1,30 +1,129 @@
 import { create } from "zustand";
-import { mockSubjectGroups } from "../mocks/subjectGroups.mock";
+import axiosClient from "../api/axiosClient";
 
 export interface SubjectGroup {
-  code: string;
+  id?: string | number;
+  code?: string;
   name: string;
   subjects: string[];
 }
 
 interface SubjectGroupState {
   subjectGroups: SubjectGroup[];
-  getAllSubjectGroups: () => SubjectGroup[];
-  createSubjectGroup: (subjectGroup: SubjectGroup) => void;
-  updateSubjectGroup: (code: string, subjectGroup: Partial<SubjectGroup>) => void;
+  loading: boolean;
+  getAllSubjectGroups: () => Promise<void>;
+  createSubjectGroup: (subjectGroup: SubjectGroup) => Promise<void>;
+  updateSubjectGroup: (code: string, subjectGroup: Partial<SubjectGroup>) => Promise<void>;
 }
 
-export const useSubjectGroupStore = create<SubjectGroupState>((set, get) => ({
-  subjectGroups: mockSubjectGroups,
-  getAllSubjectGroups: () => get().subjectGroups,
-  createSubjectGroup: (subjectGroup) =>
-    set((state) => ({
-      subjectGroups: [subjectGroup, ...state.subjectGroups],
-    })),
-  updateSubjectGroup: (code, subjectGroup) =>
-    set((state) => ({
-      subjectGroups: state.subjectGroups.map((sg) =>
-        sg.code === code ? { ...sg, ...subjectGroup } : sg
-      ),
-    })),
+export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
+  subjectGroups: [],
+  loading: false,
+
+  getAllSubjectGroups: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosClient.get("/subject-groups");
+      const payload = response?.data ?? response;
+      const groups = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+      set({
+        subjectGroups: groups.map((group: any) => ({
+          id: group?.id,
+          code: group?.code,
+          name: group?.name ?? "",
+          subjects: Array.isArray(group?.subjects)
+            ? group.subjects
+            : typeof group?.subjects === "string" && group.subjects.trim()
+              ? (() => {
+                  const raw = group.subjects.trim();
+                  // try parse JSON array first (e.g. "[\"math\",\"physics\"]")
+                  if (raw.startsWith("[") && raw.endsWith("]")) {
+                    try {
+                      const parsed = JSON.parse(raw);
+                      if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                    } catch (e) {
+                      // fall back to split
+                    }
+                  }
+                  return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                })()
+              : [],
+        }))
+      });
+    } catch (error) {
+      console.error("Failed to fetch subject groups:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  createSubjectGroup: async (subjectGroup) => {
+    try {
+      const response = await axiosClient.post("/subject-groups", subjectGroup);
+      const payload = response?.data ?? response;
+      const createdGroup = payload?.data ?? payload;
+      if (createdGroup) {
+        set((state) => ({
+          subjectGroups: [{
+            id: createdGroup?.id,
+            code: createdGroup?.code,
+            name: createdGroup?.name ?? "",
+            subjects: Array.isArray(createdGroup?.subjects)
+                ? createdGroup.subjects
+                : typeof createdGroup?.subjects === "string" && createdGroup.subjects.trim()
+                  ? (() => {
+                      const raw = createdGroup.subjects.trim();
+                      if (raw.startsWith("[") && raw.endsWith("]")) {
+                        try {
+                          const parsed = JSON.parse(raw);
+                          if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                        } catch (e) {}
+                      }
+                      return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                    })()
+                  : [],
+          }, ...state.subjectGroups],
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to create subject group:", error);
+    }
+  },
+
+  updateSubjectGroup: async (code, subjectGroup) => {
+    try {
+      const response = await axiosClient.put(`/subject-groups/${code}`, subjectGroup);
+      const payload = response?.data ?? response;
+      const updatedGroup = payload?.data ?? payload;
+      if (updatedGroup) {
+        set((state) => ({
+          subjectGroups: state.subjectGroups.map((sg) =>
+            sg.code === code
+              ? {
+                  id: updatedGroup?.id,
+                  code: updatedGroup?.code,
+                  name: updatedGroup?.name ?? "",
+                  subjects: Array.isArray(updatedGroup?.subjects)
+                    ? updatedGroup.subjects
+                    : typeof updatedGroup?.subjects === "string" && updatedGroup.subjects.trim()
+                      ? (() => {
+                          const raw = updatedGroup.subjects.trim();
+                          if (raw.startsWith("[") && raw.endsWith("]")) {
+                            try {
+                              const parsed = JSON.parse(raw);
+                              if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+                            } catch (e) {}
+                          }
+                          return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);
+                        })()
+                      : [],
+                }
+              : sg
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to update subject group:", error);
+    }
+  }
 }));

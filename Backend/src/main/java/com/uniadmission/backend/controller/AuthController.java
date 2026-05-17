@@ -1,53 +1,90 @@
 package com.uniadmission.backend.controller;
 
-import com.uniadmission.backend.dto.request.LoginRequest;
-import com.uniadmission.backend.dto.request.RegisterRequest;
-import com.uniadmission.backend.dto.response.ApiResponse;
-import com.uniadmission.backend.dto.response.AuthResponse;
-import com.uniadmission.backend.service.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import com.uniadmission.backend.dto.ApiResponse;
+import com.uniadmission.backend.dto.LoginRequest;
+import com.uniadmission.backend.dto.LoginResponse;
+import com.uniadmission.backend.dto.RegisterRequest;
+import com.uniadmission.backend.entity.Candidate;
+import com.uniadmission.backend.entity.User;
+import com.uniadmission.backend.repository.CandidateRepository;
+import com.uniadmission.backend.repository.UserRepository;
+import com.uniadmission.backend.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-        private final AuthService authService;
+        @Autowired
+        private UserRepository userRepository;
 
-        @PostMapping("/register")
-        public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-                AuthResponse authResponse = authService.register(request);
-                return ResponseEntity.status(HttpStatus.CREATED).body(
-                                ApiResponse.<AuthResponse>builder()
-                                                .success(true)
-                                                .message("Đăng ký tài khoản thành công")
-                                                .data(authResponse)
-                                                .build());
-        }
+        @Autowired
+        private CandidateRepository candidateRepository;
+
+        @Autowired
+        private PasswordEncoder passwordEncoder;
+
+        @Autowired
+        private JwtTokenProvider jwtTokenProvider;
 
         @PostMapping("/login")
-        public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-                AuthResponse authResponse = authService.login(request);
-                return ResponseEntity.ok(
-                                ApiResponse.<AuthResponse>builder()
-                                                .success(true)
-                                                .message("Đăng nhập thành công")
-                                                .data(authResponse)
-                                                .build());
+        public ResponseEntity<ApiResponse<Object>> login(@RequestBody LoginRequest request) {
+                Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+
+                if (!userOpt.isPresent()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Email hoặc mật khẩu không đúng!", null));
+                }
+
+                User user = userOpt.get();
+
+                boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword())
+                                || request.getPassword().equals(user.getPassword());
+
+                if (!isPasswordMatch) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Email hoặc mật khẩu không đúng!", null));
+                }
+
+                if ("inactive".equals(user.getStatus())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Tài khoản của bạn đã bị khóa!", null));
+                }
+
+                String token = jwtTokenProvider.generateToken(user.getEmail());
+                LoginResponse responseData = new LoginResponse(token, user);
+                return ResponseEntity.ok(new ApiResponse<>(true, "Đăng nhập thành công!", responseData));
         }
 
-        @GetMapping("/me")
-        public ResponseEntity<ApiResponse<String>> getCurrentUser() {
-                return ResponseEntity.ok(
-                                ApiResponse.<String>builder()
-                                                .success(true)
-                                                .message("Lấy thông tin thành công")
-                                                .data("Thông tin user sẽ được lấy từ JWT Token ở bước sau")
-                                                .build());
-        }
+        @PostMapping("/register")
+        @Transactional
+        public ResponseEntity<ApiResponse<User>> register(@RequestBody RegisterRequest request) {
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Email này đã được đăng ký!", null));
+                }
 
+                User user = new User();
+                user.setFullName(request.getFullName());
+                user.setEmail(request.getEmail());
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                user.setPhone(request.getPhone());
+                user.setRole("candidate");
+                user.setStatus("active");
+
+                userRepository.saveAndFlush(user);
+
+                Candidate candidate = new Candidate();
+                candidate.setUser(user);
+                candidate.setPhone(request.getPhone());
+                candidateRepository.saveAndFlush(candidate);
+
+                return ResponseEntity.ok(new ApiResponse<>(true, "Đăng ký tài khoản thành công!", user));
+        }
 }

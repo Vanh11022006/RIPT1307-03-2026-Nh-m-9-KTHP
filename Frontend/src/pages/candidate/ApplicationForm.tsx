@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
-  Card, Form, Select, InputNumber, Button, Upload, 
+  Card, Form, Select, Input, InputNumber, Button, Upload, 
   Checkbox, Alert, message, Typography, Row, Col, Space,
   Divider, Statistic
 } from "antd";
@@ -15,11 +15,12 @@ import { useMajorStore } from "../../stores/major.store";
 import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
-import { mockSubjectGroups } from "../../mocks/subjectGroups.mock";
+import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
+import axiosClient from "../../api/axiosClient";
 import { calculateTotalScore } from "../../utils/calculate";
 import { PRIORITY_GROUPS, getPriorityScore } from "../../constants/priorityGroups";
 import { EVIDENCE_CATEGORIES } from "../../constants/evidenceCategories";
-import type { Application, EvidenceFile } from "../../types/application.types";
+import type { EvidenceFile } from "../../types/application.types";
 import type { UploadFile } from "antd/es/upload/interface";
 
 const { Text } = Typography;
@@ -30,16 +31,20 @@ export const ApplicationForm: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultUniversityId = searchParams.get("universityId");
+  const editId = searchParams.get("editId");
 
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId } = useCandidateStore();
   const { getActiveUniversities } = useUniversityStore();
+  const { majors } = useMajorStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
   const { applications, createApplication } = useApplicationStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
+  const { subjectGroups } = useSubjectGroupStore();
+  const { fetchApplicationById, cancelApplication } = useApplicationStore();
 
   const activeRounds = useMemo(() => {
     const safeRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
@@ -54,10 +59,7 @@ export const ApplicationForm: React.FC = () => {
   const [totalScore, setTotalScore] = useState<number>(0);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
   const isProfileComplete = useMemo(() => {
     if (!candidate) return false;
@@ -69,7 +71,7 @@ export const ApplicationForm: React.FC = () => {
   const availableMajors = useMemo(() => {
     if (!selectedUniversityId) return [];
     return getActiveMajorsByUniversityId(selectedUniversityId);
-  }, [selectedUniversityId, getActiveMajorsByUniversityId]);
+  }, [selectedUniversityId, majors, getActiveMajorsByUniversityId]);
 
   const availableSubjectGroups = useMemo(() => {
     if (!selectedMajorId) return [];
@@ -78,14 +80,19 @@ export const ApplicationForm: React.FC = () => {
     
     // Fallback if missing
     const codes = Array.isArray(major.subjectGroupCodes) ? major.subjectGroupCodes : [];
-    return mockSubjectGroups.filter(sg => codes.includes(sg.code));
-  }, [selectedMajorId, availableMajors]);
+    const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+    if (codes.length === 0) {
+      return safeSubjectGroups;
+    }
+    return safeSubjectGroups.filter(sg => codes.includes(sg.code ?? ""));
+  }, [selectedMajorId, availableMajors, subjectGroups]);
 
   const requiredSubjects = useMemo(() => {
     if (!selectedSubjectGroupCode) return [];
-    const group = mockSubjectGroups.find(g => g.code === selectedSubjectGroupCode);
+    const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+    const group = safeSubjectGroups.find(g => g.code === selectedSubjectGroupCode);
     return group ? group.subjects : [];
-  }, [selectedSubjectGroupCode]);
+  }, [selectedSubjectGroupCode, subjectGroups]);
 
   useEffect(() => {
     if (defaultUniversityId) {
@@ -93,7 +100,34 @@ export const ApplicationForm: React.FC = () => {
     }
   }, [defaultUniversityId, form]);
 
+  useEffect(() => {
+    // If editing an existing pending application, prefill form
+    let mounted = true;
+    const loadForEdit = async () => {
+      if (!editId) return;
+      const app = await fetchApplicationById(editId);
+      if (!app || !mounted) return;
+      form.setFieldsValue({
+        universityId: app.universityId,
+        majorId: app.majorId,
+        subjectGroupCode: app.subjectGroupCode,
+        admissionRoundId: app.admissionRoundId,
+        scores: app.scores,
+        priorityGroup: app.priorityGroup ?? 'none'
+      });
+      setSelectedUniversityId(app.universityId);
+      setSelectedMajorId(app.majorId);
+      setSelectedSubjectGroupCode(app.subjectGroupCode);
+      setTotalScore(app.totalScore ?? 0);
+      setSelectedPriorityGroup(app.priorityGroup ?? 'none');
+    };
+    loadForEdit().catch(err => console.error(err));
+    return () => { mounted = false; };
+  }, [editId, fetchApplicationById, form]);
+
   const handleValuesChange = (changedValues: any, allValues: any) => {
+    console.log("📝 Form changed:", { changedValues, allValues });
+    
     if (changedValues.universityId) {
       setSelectedUniversityId(changedValues.universityId);
       setSelectedMajorId(undefined);
@@ -115,15 +149,12 @@ export const ApplicationForm: React.FC = () => {
       setTotalScore(0);
     }
 
-    if (changedValues.scores || allValues.scores) {
-      const currentScores = allValues.scores || {};
-      const scoreObj: any = {};
-      requiredSubjects.forEach(sub => {
-        if (currentScores[sub] !== undefined) {
-          scoreObj[sub] = currentScores[sub];
-        }
-      });
-      setTotalScore(calculateTotalScore(scoreObj));
+    // Always recalculate if allValues has scores
+    if (allValues.scores) {
+      console.log("📊 Calculating total score from:", allValues.scores);
+      const scoreTotal = calculateTotalScore(allValues.scores);
+      console.log("📊 Calculated total:", scoreTotal);
+      setTotalScore(scoreTotal);
     }
 
     if (changedValues.priorityGroup) {
@@ -144,7 +175,7 @@ export const ApplicationForm: React.FC = () => {
     setFileList(newFileList);
   };
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
     if (!candidate || !currentUser) return;
 
     // Check duplicate
@@ -164,33 +195,82 @@ export const ApplicationForm: React.FC = () => {
     const mockEvidences: EvidenceFile[] = fileList.map(file => ({
       id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: file.name,
-      url: "#",
+      url: file.originFileObj ? URL.createObjectURL(file.originFileObj as File) : "",
       type: file.type === "application/pdf" ? "pdf" : "image",
       category: selectedEvidenceCategory,
       size: file.size || 0,
       uploadedAt: new Date().toISOString()
     }));
 
-    const newApp: Application = {
-      id: `app_${Date.now()}`,
-      applicationCode: `HS${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`,
-      candidateId: candidate.id,
-      universityId: values.universityId,
-      majorId: values.majorId,
+    const selectedSubjectGroup = availableSubjectGroups.find(
+      (group) => String(group.code) === String(values.subjectGroupCode)
+    );
+
+    if (!selectedSubjectGroup?.id) {
+      message.error("Không tìm thấy tổ hợp xét tuyển phù hợp.");
+      return;
+    }
+
+    const submitPayload: any = {
+      candidateId: Number(candidate.id),
+      universityId: Number(values.universityId),
+      majorId: Number(values.majorId),
+      admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
+      subjectGroupId: Number(selectedSubjectGroup.id),
       subjectGroupCode: values.subjectGroupCode,
-      admissionRoundId: values.admissionRoundId,
+      scores: values.scores ?? {},
+      totalScore,
       priorityGroup: selectedPriorityGroup,
       priorityScore: currentPriorityScore,
-      scores: values.scores,
-      totalScore,
       evidenceFiles: mockEvidences,
-      status: "pending",
       submittedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      status: "pending",
     };
 
-    createApplication(newApp);
+    console.log("[ApplicationForm debug] submitPayload:", submitPayload);
+    const createdApplication = await createApplication(submitPayload);
+
+    if (!createdApplication) {
+      message.error("Nộp hồ sơ thất bại, vui lòng thử lại.");
+      return;
+    }
+
+      // If files were selected, upload them to backend and refresh application
+      if (fileList && fileList.length > 0) {
+        try {
+          const formData = new FormData();
+          fileList.forEach((f) => {
+            if (f.originFileObj) {
+              formData.append("files", f.originFileObj as File);
+            }
+          });
+
+          await axiosClient.post(`/applications/${createdApplication.id}/upload`, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+
+          // Refresh from server so attachments and scores (if persisted) are visible
+          try {
+            await fetchApplicationById(createdApplication.id);
+          } catch (err) {
+            console.warn("Failed to refresh application after upload", err);
+          }
+        } catch (err) {
+          console.error("Failed to upload files to server", err);
+          message.warning("Hồ sơ đã được tạo nhưng một số file không thể tải lên. Vui lòng thử lại sau.");
+        }
+      }
+
+    // If this was editing an existing application, cancel the old one
+    if (editId) {
+      try {
+        await cancelApplication(editId);
+      } catch (err) {
+        console.error('Failed to cancel original application after edit', err);
+      }
+    }
 
     try {
       const university = getUniversityById(values.universityId);
@@ -205,11 +285,11 @@ export const ApplicationForm: React.FC = () => {
         recipientUserId: currentUser.id,
         recipientEmail: candidate.email || currentUser.email,
         recipientName: candidate.fullName || "Không rõ thí sinh",
-        applicationId: newApp.id,
+        applicationId: createdApplication.id,
         type: "application_submitted",
         channel: "in_app",
         subject: "Bạn đã nộp hồ sơ xét tuyển thành công",
-        content: `Mã hồ sơ: ${newApp.applicationCode}\nTrường: ${uniName}\nNgành: ${majorName}\nĐợt xét tuyển: ${roundName}`,
+        content: `Mã hồ sơ: ${createdApplication.applicationCode || "Chưa cập nhật"}\nTrường: ${uniName}\nNgành: ${majorName}\nĐợt xét tuyển: ${roundName}`,
       });
     } catch (error) {
       console.error("Failed to create notification log", error);
@@ -266,17 +346,17 @@ export const ApplicationForm: React.FC = () => {
           <Row gutter={16}>
             <Col xs={24} sm={8}>
               <Form.Item label="Họ và tên">
-                <InputNumber disabled style={{ width: "100%" }} value={candidate?.fullName} controls={false} formatter={value => `${value}`} />
+                <Input disabled value={candidate?.fullName ?? ""} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
               <Form.Item label="Số CCCD">
-                <InputNumber disabled style={{ width: "100%" }} value={candidate?.citizenId} controls={false} formatter={value => `${value}`} />
+                <Input disabled value={candidate?.citizenId ?? ""} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
               <Form.Item label="Email">
-                <InputNumber disabled style={{ width: "100%" }} value={candidate?.email} controls={false} formatter={value => `${value}`} />
+                <Input disabled value={candidate?.email ?? ""} />
               </Form.Item>
             </Col>
           </Row>

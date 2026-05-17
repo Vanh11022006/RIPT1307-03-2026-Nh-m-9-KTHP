@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface MajorRepository extends JpaRepository<Major, Long> {
 
-    List<Major> findByUniversityId(Long universityId);
+    List<Major> findByUniversity_Id(Long universityId);
 }

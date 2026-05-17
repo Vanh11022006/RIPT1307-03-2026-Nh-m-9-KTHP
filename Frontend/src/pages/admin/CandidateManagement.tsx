@@ -12,8 +12,6 @@ import { useMajorStore } from "../../stores/major.store";
 import type { Candidate } from "../../types/candidate.types";
 import { formatDate, formatDateTime } from "../../utils/date";
 
-const { Option } = Select;
-
 export const CandidateManagement: React.FC = () => {
   const navigate = useNavigate();
   const { candidates } = useCandidateStore();
@@ -190,7 +188,10 @@ export const CandidateManagement: React.FC = () => {
       title: "Tổng điểm",
       dataIndex: "totalScore",
       key: "totalScore",
-      render: (val: number) => <Typography.Text type="danger" strong>{val.toFixed(2)}</Typography.Text>
+      render: (val: number, record: any) => {
+          const final = record?.finalScore ?? (Number(val ?? 0) + Number(record?.priorityScore ?? 0));
+          return <Typography.Text type="danger" strong>{(final ?? 0).toFixed(2)}</Typography.Text>;
+      }
     },
     {
       title: "Trạng thái",

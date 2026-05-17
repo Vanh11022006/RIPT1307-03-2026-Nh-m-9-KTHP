@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, Result, Button, Row, Col, Typography, Alert } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -19,18 +19,40 @@ export const Results: React.FC = () => {
   const { getApplicationsByCandidateId } = useApplicationStore();
   const { universities } = useUniversityStore();
   const { majors } = useMajorStore();
+  const [applications, setApplications] = useState<any[]>([]);
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
-  const applications = useMemo(() => {
-    if (!candidate) return [];
-    return getApplicationsByCandidateId(candidate.id).sort((a, b) => 
+  useEffect(() => {
+    let mounted = true;
+
+    const loadApplications = async () => {
+      if (!candidate?.id) {
+        if (mounted) setApplications([]);
+        return;
+      }
+
+      const data = await getApplicationsByCandidateId(candidate.id);
+      if (mounted) {
+        setApplications(Array.isArray(data) ? data : []);
+      }
+    };
+
+    loadApplications().catch((error) => {
+      console.error("Failed to load results applications", error);
+      if (mounted) setApplications([]);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [candidate?.id, getApplicationsByCandidateId]);
+
+  const sortedApplications = useMemo(() => {
+    return [...applications].sort((a, b) => 
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-  }, [candidate, getApplicationsByCandidateId]);
+  }, [applications]);
 
   const getUniversityName = (id: string) => {
     return universities.find(u => u.id === id)?.name || "N/A";
@@ -40,7 +62,7 @@ export const Results: React.FC = () => {
     return majors.find(m => m.id === id)?.name || "N/A";
   };
 
-  if (applications.length === 0) {
+  if (sortedApplications.length === 0) {
     return (
       <div>
         <PageHeader title="Kết quả xét tuyển" />
@@ -56,9 +78,9 @@ export const Results: React.FC = () => {
   }
 
   // Group applications by status
-  const approvedApps = applications.filter(app => app.status === "approved");
-  const rejectedApps = applications.filter(app => app.status === "rejected");
-  const pendingApps = applications.filter(app => app.status === "pending");
+  const approvedApps = sortedApplications.filter(app => app.status === "approved");
+  const rejectedApps = sortedApplications.filter(app => app.status === "rejected");
+  const pendingApps = sortedApplications.filter(app => app.status === "pending");
 
   return (
     <div>
@@ -84,7 +106,10 @@ export const Results: React.FC = () => {
                       <div style={{ marginTop: 16, textAlign: "left" }}>
                         <Paragraph><strong>Trường:</strong> {getUniversityName(app.universityId)}</Paragraph>
                         <Paragraph><strong>Ngành:</strong> {getMajorName(app.majorId)}</Paragraph>
-                        <Paragraph><strong>Tổ hợp:</strong> {app.subjectGroupCode} (Tổng điểm: <Text type="danger" strong>{app.totalScore.toFixed(2)}</Text>)</Paragraph>
+                        <Paragraph>
+                          <strong>Tổ hợp:</strong> {app.subjectGroupCode} (
+                          Tổng điểm: <Text type="danger" strong>{(Number(app.finalScore ?? (Number(app.totalScore ?? 0) + Number(app.priorityScore ?? 0)))).toFixed(2)}</Text>)
+                        </Paragraph>
                       </div>
                     }
                   />

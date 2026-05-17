@@ -18,41 +18,41 @@ public class MajorController {
     private final MajorService majorService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllMajors() {
+    public ResponseEntity<ApiResponse<List<Major>>> getAllMajors() {
         List<Major> majors = majorService.getAllMajors();
-        return ResponseEntity.ok(new ApiResponse(true, "Get all majors success", majors));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get all majors success", majors));
     }
 
     @GetMapping("/university/{universityId}")
-    public ResponseEntity<ApiResponse> getMajorsByUniversity(@PathVariable Long universityId) {
+    public ResponseEntity<ApiResponse<List<Major>>> getMajorsByUniversity(@PathVariable Long universityId) {
         List<Major> majors = majorService.getMajorsByUniversityId(universityId);
-        return ResponseEntity.ok(new ApiResponse(true, "Get majors by university success", majors));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get majors by university success", majors));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getMajorById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Major>> getMajorById(@PathVariable Long id) {
         Major major = majorService.getMajorById(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Get major detail success", major));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Get major detail success", major));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> createMajor(@RequestBody Major major) {
+    public ResponseEntity<ApiResponse<Major>> createMajor(@RequestBody Major major) {
         Major newMajor = majorService.createMajor(major);
-        return ResponseEntity.ok(new ApiResponse(true, "Create major success", newMajor));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Create major success", newMajor));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> updateMajor(@PathVariable Long id, @RequestBody Major major) {
+    public ResponseEntity<ApiResponse<Major>> updateMajor(@PathVariable Long id, @RequestBody Major major) {
         Major updatedMajor = majorService.updateMajor(id, major);
-        return ResponseEntity.ok(new ApiResponse(true, "Update major success", updatedMajor));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update major success", updatedMajor));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> deleteMajor(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteMajor(@PathVariable Long id) {
         majorService.deleteMajor(id);
-        return ResponseEntity.ok(new ApiResponse(true, "Delete major success", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Delete major success", null));
     }
 }

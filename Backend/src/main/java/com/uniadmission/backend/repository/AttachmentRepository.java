@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
+    java.util.List<Attachment> findByApplication_Id(Long applicationId);
 }

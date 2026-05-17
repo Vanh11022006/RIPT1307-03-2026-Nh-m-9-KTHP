@@ -37,10 +37,7 @@ export const CandidateDashboard: React.FC = () => {
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeAdmissionRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
 
-  const candidate = useMemo(() => {
-    if (!currentUser) return null;
-    return getCandidateByUserId(currentUser.id);
-  }, [currentUser, getCandidateByUserId]);
+  const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
   const safeApplications = useMemo(() => {
     if (!candidate) return [];
@@ -105,7 +102,10 @@ export const CandidateDashboard: React.FC = () => {
       dataIndex: "totalScore",
       key: "totalScore",
       align: "center" as const,
-      render: (score: number) => score?.toFixed(2)
+      render: (_: number, record: any) => {
+        const final = record?.finalScore ?? (Number(record?.totalScore ?? 0) + Number(record?.priorityScore ?? 0));
+        return <Text strong>{(final ?? 0).toFixed(2)}</Text>;
+      }
     },
     {
       title: "Trạng thái",

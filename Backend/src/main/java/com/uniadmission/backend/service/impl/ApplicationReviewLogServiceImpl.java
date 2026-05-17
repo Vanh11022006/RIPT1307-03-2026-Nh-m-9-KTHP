@@ -21,6 +21,6 @@ public class ApplicationReviewLogServiceImpl implements ApplicationReviewLogServ
 
     @Override
     public ApplicationReviewLog createLog(ApplicationReviewLog log) {
-        return repository.save(log);
+        return repository.save(java.util.Objects.requireNonNull(log));
     }
 }

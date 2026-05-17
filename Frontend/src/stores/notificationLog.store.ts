@@ -1,39 +1,89 @@
 import { create } from "zustand";
 import type { NotificationLog } from "../types/notification.types";
-import { mockNotificationLogs } from "../mocks/notificationLogs.mock";
+import axiosClient from "../api/axiosClient";
+
+const normalizeNotification = (notification: any): NotificationLog => ({
+  id: String(notification?.id ?? `noti_${Date.now()}`),
+  recipientUserId: String(notification?.recipientUserId ?? notification?.userId ?? ""),
+  recipientEmail: String(notification?.recipientEmail ?? ""),
+  recipientName: String(notification?.recipientName ?? ""),
+  applicationId: notification?.applicationId != null ? String(notification.applicationId) : undefined,
+  type: notification?.type ?? "system",
+  channel: notification?.channel ?? "in_app",
+  subject: String(notification?.subject ?? notification?.title ?? "Thông báo"),
+  content: String(notification?.content ?? notification?.message ?? ""),
+  status: notification?.status ?? "sent",
+  isRead: Boolean(notification?.isRead ?? notification?.read ?? false),
+  createdAt: notification?.createdAt ?? new Date().toISOString(),
+});
 
 interface NotificationLogState {
   notificationLogs: NotificationLog[];
-  createNotificationLog: (data: Omit<NotificationLog, "id" | "createdAt" | "status"> & { status?: NotificationLog["status"] }) => void;
-  getNotificationLogsByUserId: (userId: string) => NotificationLog[];
+  loading: boolean;
+  getNotificationLogs: () => Promise<void>;
+  createNotificationLog: (data: Omit<NotificationLog, "id" | "createdAt" | "status"> & { status?: NotificationLog["status"] }) => Promise<void>;
+  getNotificationLogsByUserId: (userId: string) => Promise<NotificationLog[]>;
   getNotificationLogsByApplicationId: (applicationId: string) => NotificationLog[];
   getAllNotificationLogs: () => NotificationLog[];
-  markNotificationAsRead: (notificationId: string) => void;
+  markNotificationAsRead: (notificationId: string) => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  deleteNotificationsByUserId: (userId: string) => Promise<void>;
 }
 
 export const useNotificationLogStore = create<NotificationLogState>((set, get) => ({
-  notificationLogs: mockNotificationLogs,
-  
-  createNotificationLog: (data) => {
-    const newLog: NotificationLog = {
-      ...data,
-      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      status: data.status || "sent",
-      isRead: false,
-      createdAt: new Date().toISOString()
-    };
-    
-    set((state) => {
-      const safeLogs = Array.isArray(state.notificationLogs) ? state.notificationLogs : [];
-      return {
-        notificationLogs: [newLog, ...safeLogs]
-      };
-    });
+  notificationLogs: [],
+  loading: false,
+
+  getNotificationLogs: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosClient.get("/notifications/user/0");
+      const data = response?.data?.data ?? response?.data ?? [];
+      const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
+      set({ notificationLogs: logs });
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      set({ loading: false });
+    }
   },
   
-  getNotificationLogsByUserId: (userId) => {
-    const safeLogs = Array.isArray(get().notificationLogs) ? get().notificationLogs : [];
-    return safeLogs.filter(log => log.recipientUserId === userId);
+  createNotificationLog: async (data) => {
+    try {
+      const response = await axiosClient.post("/notifications", {
+        userId: data.recipientUserId,
+        title: data.subject,
+        message: data.content,
+      });
+
+      const notification = normalizeNotification(response?.data?.data ?? response?.data);
+
+      set((state) => ({
+        notificationLogs: [notification, ...state.notificationLogs.filter((item) => item.id !== notification.id)]
+      }));
+    } catch (error) {
+      console.error("Failed to create notification log:", error);
+    }
+  },
+  
+  getNotificationLogsByUserId: async (userId) => {
+    try {
+      const response = await axiosClient.get(`/notifications/user/${userId}`);
+      const data = response?.data?.data ?? response?.data ?? [];
+      const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
+
+      set((state) => ({
+        notificationLogs: [
+          ...logs,
+          ...state.notificationLogs.filter((item) => !logs.some((log) => log.id === item.id)),
+        ]
+      }));
+
+      return logs;
+    } catch (error) {
+      console.error("Failed to fetch notifications by user:", error);
+      return [];
+    }
   },
   
   getNotificationLogsByApplicationId: (applicationId) => {
@@ -46,14 +96,38 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
     return safeLogs;
   },
   
-  markNotificationAsRead: (notificationId) => {
-    set((state) => {
-      const safeLogs = Array.isArray(state.notificationLogs) ? state.notificationLogs : [];
-      return {
-        notificationLogs: safeLogs.map(log => 
+  markNotificationAsRead: async (notificationId) => {
+    try {
+      await axiosClient.put(`/notifications/${notificationId}/read`);
+      set((state) => ({
+        notificationLogs: state.notificationLogs.map(log =>
           log.id === notificationId ? { ...log, isRead: true } : log
         )
-      };
-    });
+      }));
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  },
+
+  deleteNotification: async (notificationId) => {
+    try {
+      await axiosClient.delete(`/notifications/${notificationId}`);
+      set((state) => ({
+        notificationLogs: state.notificationLogs.filter(log => log.id !== notificationId)
+      }));
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  },
+
+  deleteNotificationsByUserId: async (userId) => {
+    try {
+      await axiosClient.delete(`/notifications/user/${userId}`);
+      set((state) => ({
+        notificationLogs: state.notificationLogs.filter(log => String(log.recipientUserId) !== String(userId))
+      }));
+    } catch (error) {
+      console.error("Failed to delete notifications by user:", error);
+    }
   }
 }));
