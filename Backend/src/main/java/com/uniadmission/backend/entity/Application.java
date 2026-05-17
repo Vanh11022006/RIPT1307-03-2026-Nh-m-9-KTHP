@@ -48,6 +48,8 @@ public class Application {
     private Double totalScore;
     private String priorityGroup;
     private Double priorityScore;
+    @Column(columnDefinition = "text")
+    private String scores;
     private LocalDateTime submissionDate;
 
     @Enumerated(EnumType.STRING)

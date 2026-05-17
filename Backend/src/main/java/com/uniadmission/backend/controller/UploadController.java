@@ -36,6 +36,7 @@ public class UploadController {
         fileData.put("fileType", file.getContentType());
         fileData.put("fileSize", file.getSize());
         fileData.put("category", category);
+        fileData.put("id", fileName);
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Tải file minh chứng lên thành công", fileData));
     }

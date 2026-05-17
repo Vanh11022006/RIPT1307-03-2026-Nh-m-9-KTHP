@@ -16,10 +16,11 @@ import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
+import axiosClient from "../../api/axiosClient";
 import { calculateTotalScore } from "../../utils/calculate";
 import { PRIORITY_GROUPS, getPriorityScore } from "../../constants/priorityGroups";
 import { EVIDENCE_CATEGORIES } from "../../constants/evidenceCategories";
-import type { Application, EvidenceFile } from "../../types/application.types";
+import type { EvidenceFile } from "../../types/application.types";
 import type { UploadFile } from "antd/es/upload/interface";
 
 const { Text } = Typography;
@@ -194,7 +195,7 @@ export const ApplicationForm: React.FC = () => {
     const mockEvidences: EvidenceFile[] = fileList.map(file => ({
       id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: file.name,
-      url: "#",
+      url: file.originFileObj ? URL.createObjectURL(file.originFileObj as File) : "",
       type: file.type === "application/pdf" ? "pdf" : "image",
       category: selectedEvidenceCategory,
       size: file.size || 0,
@@ -212,15 +213,55 @@ export const ApplicationForm: React.FC = () => {
 
     const submitPayload: any = {
       candidateId: Number(candidate.id),
+      universityId: Number(values.universityId),
       majorId: Number(values.majorId),
       admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
       subjectGroupId: Number(selectedSubjectGroup.id),
+      subjectGroupCode: values.subjectGroupCode,
+      scores: values.scores ?? {},
       totalScore,
       priorityGroup: selectedPriorityGroup,
       priorityScore: currentPriorityScore,
+      evidenceFiles: mockEvidences,
+      submittedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: "pending",
     };
 
-    await createApplication(submitPayload);
+    console.log("[ApplicationForm debug] submitPayload:", submitPayload);
+    const createdApplication = await createApplication(submitPayload);
+
+    if (!createdApplication) {
+      message.error("Nộp hồ sơ thất bại, vui lòng thử lại.");
+      return;
+    }
+
+      // If files were selected, upload them to backend and refresh application
+      if (fileList && fileList.length > 0) {
+        try {
+          const formData = new FormData();
+          fileList.forEach((f) => {
+            if (f.originFileObj) {
+              formData.append("files", f.originFileObj as File);
+            }
+          });
+
+          await axiosClient.post(`/applications/${createdApplication.id}/upload`, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+
+          // Refresh from server so attachments and scores (if persisted) are visible
+          try {
+            await fetchApplicationById(createdApplication.id);
+          } catch (err) {
+            console.warn("Failed to refresh application after upload", err);
+          }
+        } catch (err) {
+          console.error("Failed to upload files to server", err);
+          message.warning("Hồ sơ đã được tạo nhưng một số file không thể tải lên. Vui lòng thử lại sau.");
+        }
+      }
 
     // If this was editing an existing application, cancel the old one
     if (editId) {
@@ -230,27 +271,6 @@ export const ApplicationForm: React.FC = () => {
         console.error('Failed to cancel original application after edit', err);
       }
     }
-
-    const applicationCode = `HS${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`;
-    const submittedAt = new Date().toISOString();
-    const newApp: Application = {
-      id: `app_${Date.now()}`,
-      applicationCode,
-      candidateId: candidate.id,
-      universityId: values.universityId,
-      majorId: values.majorId,
-      subjectGroupCode: values.subjectGroupCode,
-      admissionRoundId: values.admissionRoundId,
-      priorityGroup: selectedPriorityGroup,
-      priorityScore: currentPriorityScore,
-      scores: values.scores,
-      totalScore,
-      evidenceFiles: mockEvidences,
-      status: "pending",
-      submittedAt,
-      createdAt: submittedAt,
-      updatedAt: submittedAt
-    };
 
     try {
       const university = getUniversityById(values.universityId);
@@ -265,11 +285,11 @@ export const ApplicationForm: React.FC = () => {
         recipientUserId: currentUser.id,
         recipientEmail: candidate.email || currentUser.email,
         recipientName: candidate.fullName || "Không rõ thí sinh",
-        applicationId: newApp.id,
+        applicationId: createdApplication.id,
         type: "application_submitted",
         channel: "in_app",
         subject: "Bạn đã nộp hồ sơ xét tuyển thành công",
-        content: `Mã hồ sơ: ${newApp.applicationCode}\nTrường: ${uniName}\nNgành: ${majorName}\nĐợt xét tuyển: ${roundName}`,
+        content: `Mã hồ sơ: ${createdApplication.applicationCode || "Chưa cập nhật"}\nTrường: ${uniName}\nNgành: ${majorName}\nĐợt xét tuyển: ${roundName}`,
       });
     } catch (error) {
       console.error("Failed to create notification log", error);

@@ -138,12 +138,25 @@ export const AdminApplicationDetail: React.FC = () => {
       title: "Tên file",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => (
-        <Space>
-          <PaperClipOutlined />
-          <Text>{text}</Text>
-        </Space>
-      )
+      render: (text: string, record: any) => {
+        const fileUrl = record?.url;
+
+        return (
+          <Space>
+            {fileUrl ? (
+              <a href={fileUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <PaperClipOutlined />
+                <span>{text || "Chưa cập nhật"}</span>
+              </a>
+            ) : (
+              <>
+                <PaperClipOutlined />
+                <Text>{text || "Chưa cập nhật"}</Text>
+              </>
+            )}
+          </Space>
+        );
+      }
     },
     {
       title: "Loại minh chứng",
@@ -169,17 +182,6 @@ export const AdminApplicationDetail: React.FC = () => {
       key: "uploadedAt",
       render: (date: string) => date ? formatDateTime(date) : "Chưa cập nhật"
     },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_: any, record: any) => (
-        record.url ? (
-          <Button type="link" href={record.url} target="_blank">Xem file</Button>
-        ) : (
-          <Text type="secondary">Không có liên kết</Text>
-        )
-      )
-    }
   ];
 
   const handleApprove = () => {
@@ -391,6 +393,9 @@ export const AdminApplicationDetail: React.FC = () => {
           </Card>
 
           <Card title="Điểm xét tuyển">
+            <div style={{ marginBottom: 12 }}>
+              <Tag color="cyan">Tổ hợp: {application.subjectGroupCode || "Chưa cập nhật"}</Tag>
+            </div>
             {scoreData.length > 0 ? (
               <>
                 <Table

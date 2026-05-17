@@ -12,5 +12,9 @@ public interface NotificationLogService {
 
     void markAsRead(Long id);
 
+    void deleteNotification(Long id);
+
+    void deleteNotificationsByUserId(Long userId);
+
     void markAllAsRead(Long userId);
 }

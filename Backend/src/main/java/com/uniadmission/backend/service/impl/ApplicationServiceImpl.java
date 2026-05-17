@@ -33,6 +33,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
 
+        private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(ApplicationServiceImpl.class);
+
         private final ApplicationRepository applicationRepository;
         private final EmailService emailService;
         private final ApplicationReviewLogRepository reviewLogRepository;
@@ -71,6 +73,17 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setTotalScore(request.getTotalScore());
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
+                try {
+                        LOGGER.info("Persisting scores for application candidateId={}: {}", request.getCandidateId(),
+                                        request.getScores());
+                        if (request.getScores() != null) {
+                                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                String json = mapper.writeValueAsString(request.getScores());
+                                application.setScores(json);
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Failed to serialize scores", e);
+                }
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.PENDING);
 
@@ -187,6 +200,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setTotalScore(request.getTotalScore());
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
+                try {
+                        LOGGER.info("Updating scores for application id={}: {}", id, request.getScores());
+                        if (request.getScores() != null) {
+                                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                String json = mapper.writeValueAsString(request.getScores());
+                                application.setScores(json);
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Failed to serialize scores on update", e);
+                }
                 applicationRepository.save(application);
                 return application;
         }

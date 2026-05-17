@@ -15,4 +15,5 @@ public class ApplicationSubmitRequest {
     private double totalScore;
     private String priorityGroup;
     private Double priorityScore;
+    private java.util.Map<String, Double> scores;
 }
