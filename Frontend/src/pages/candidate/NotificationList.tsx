@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty } from "antd";
-import { CheckOutlined, BellOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import React, { useEffect, useState } from "react";
+import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty, message, Popconfirm } from "antd";
+import { BellOutlined, CloseCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import { useAuthStore } from "../../stores/auth.store";
 import type { NotificationLog } from "../../types/notification.types";
@@ -9,16 +9,33 @@ const { Title, Text, Paragraph } = Typography;
 
 export const NotificationList: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { getAllNotificationLogs, markNotificationAsRead } = useNotificationLogStore();
-  
-  const allLogs = getAllNotificationLogs();
-  const safeLogs = Array.isArray(allLogs) ? allLogs : [];
+  const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId } = useNotificationLogStore();
+  const [myLogs, setMyLogs] = useState<NotificationLog[]>([]);
 
-  // Filter for current user. Fallback to email if userId matching fails for some reason in mock setup
-  const myLogs = safeLogs.filter(log => 
-    log.recipientUserId === currentUser?.id || 
-    (currentUser?.email && log.recipientEmail === currentUser?.email)
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  useEffect(() => {
+    let mounted = true;
+
+    const loadNotifications = async () => {
+      if (!currentUser?.id) {
+        if (mounted) setMyLogs([]);
+        return;
+      }
+
+      const logs = await getNotificationLogsByUserId(String(currentUser.id));
+      if (mounted) {
+        setMyLogs(Array.isArray(logs) ? logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
+      }
+    };
+
+    loadNotifications().catch((error) => {
+      console.error("Failed to load candidate notifications", error);
+      if (mounted) setMyLogs([]);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser?.id, getNotificationLogsByUserId]);
 
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
@@ -54,14 +71,46 @@ export const NotificationList: React.FC = () => {
   const handleViewDetail = (log: NotificationLog) => {
     if (!log.isRead) {
       markNotificationAsRead(log.id);
+      setMyLogs((current) => current.map((l) => (l.id === log.id ? { ...l, isRead: true } : l)));
+      setSelectedLog({ ...log, isRead: true });
+    } else {
+      setSelectedLog(log);
     }
-    setSelectedLog(log);
     setDetailVisible(true);
   };
 
   const handleMarkAsRead = (e: React.MouseEvent, logId: string) => {
     e.stopPropagation();
     markNotificationAsRead(logId);
+    setMyLogs((current) => current.map((log) => (log.id === logId ? { ...log, isRead: true } : log)));
+  };
+
+  const handleDelete = async (logId: string) => {
+    try {
+      await deleteNotification(logId);
+      setMyLogs((current) => current.filter((log) => log.id !== logId));
+      if (selectedLog?.id === logId) {
+        setSelectedLog(null);
+        setDetailVisible(false);
+      }
+      message.success("Đã xóa thông báo");
+    } catch (error) {
+      message.error("Không thể xóa thông báo");
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      await deleteNotificationsByUserId(String(currentUser.id));
+      setMyLogs([]);
+      setSelectedLog(null);
+      setDetailVisible(false);
+      message.success("Đã xóa tất cả thông báo");
+    } catch (error) {
+      message.error("Không thể xóa tất cả thông báo");
+    }
   };
 
   return (
@@ -70,6 +119,27 @@ export const NotificationList: React.FC = () => {
         <Title level={2} style={{ margin: 0 }}>Thông báo của tôi</Title>
         <Text type="secondary">Theo dõi các cập nhật liên quan đến hồ sơ xét tuyển của bạn</Text>
       </div>
+
+      {myLogs.length > 0 && (
+        <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+          <Popconfirm
+            title="Bạn có chắc muốn xóa tất cả thông báo không?"
+            description="Hành động này không thể hoàn tác."
+            okText="Xóa hết"
+            cancelText="Hủy"
+            onConfirm={handleDeleteAll}
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Xóa tất cả
+            </Button>
+          </Popconfirm>
+        </div>
+      )}
 
       <Card bordered={false}>
         {myLogs.length === 0 ? (
@@ -81,7 +151,6 @@ export const NotificationList: React.FC = () => {
             renderItem={(item) => (
               <List.Item
                 style={{ 
-                  cursor: "pointer", 
                   backgroundColor: item.isRead ? "rgba(255,255,255,0.02)" : "rgba(0, 240, 255, 0.1)",
                   border: item.isRead ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0, 240, 255, 0.3)",
                   padding: "16px",
@@ -89,54 +158,65 @@ export const NotificationList: React.FC = () => {
                   marginBottom: "8px",
                   transition: "all 0.3s"
                 }}
-                onClick={() => handleViewDetail(item)}
                 actions={[
                   <Text type="secondary" key="time">
                     {new Date(item.createdAt).toLocaleString("vi-VN")}
                   </Text>,
-                  !item.isRead && (
-                    <Button 
-                      key="read" 
-                      type="link" 
-                      size="small" 
-                      icon={<CheckOutlined />} 
-                      onClick={(e) => handleMarkAsRead(e, item.id)}
+                  null,
+                  <Popconfirm
+                    key="delete"
+                    title="Bạn có chắc muốn xóa thông báo này không?"
+                    description="Hành động này không thể hoàn tác."
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    onConfirm={() => handleDelete(item.id)}
+                    onCancel={(e) => e && e.stopPropagation?.()}
+                  >
+                    <Button
+                      type="link"
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      Đánh dấu đã đọc
+                      Xóa
                     </Button>
-                  )
+                  </Popconfirm>
                 ]}
               >
-                <List.Item.Meta
-                  avatar={
-                    <Badge dot={!item.isRead} offset={[-4, 4]}>
-                      <div style={{ 
-                        width: 40, 
-                        height: 40, 
-                        borderRadius: "50%", 
-                        background: item.isRead ? "rgba(255,255,255,0.1)" : "var(--neon-cyan)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: item.isRead ? "rgba(255,255,255,0.5)" : "#000"
-                      }}>
-                        <BellOutlined style={{ fontSize: 18 }} />
-                      </div>
-                    </Badge>
-                  }
-                  title={
-                    <Space size="middle" wrap>
-                      <Text strong style={{ fontSize: 16 }}>{item.subject}</Text>
-                      {getTypeTag(item.type)}
-                      {!item.isRead && <Tag color="processing" bordered={false}>Chưa đọc</Tag>}
-                    </Space>
-                  }
-                  description={
-                    <Paragraph ellipsis={{ rows: 2 }} style={{ margin: 0, marginTop: 8 }}>
-                      {item.content}
-                    </Paragraph>
-                  }
-                />
+                <div onClick={() => handleViewDetail(item)} style={{ cursor: "pointer" }}>
+                  <List.Item.Meta
+                    avatar={
+                      <Badge dot={!item.isRead} offset={[-4, 4]}>
+                        <div style={{ 
+                          width: 40, 
+                          height: 40, 
+                          borderRadius: "50%", 
+                          background: item.isRead ? "rgba(255,255,255,0.1)" : "var(--neon-cyan)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: item.isRead ? "rgba(255,255,255,0.5)" : "#000"
+                        }}>
+                          <BellOutlined style={{ fontSize: 18 }} />
+                        </div>
+                      </Badge>
+                    }
+                    title={
+                      <Space size="middle" wrap>
+                        <Text strong style={{ fontSize: 16 }}>{item.subject}</Text>
+                        {getTypeTag(item.type)}
+                        {!item.isRead && <Tag color="processing" bordered={false}>Chưa đọc</Tag>}
+                      </Space>
+                    }
+                    description={
+                      <Paragraph ellipsis={{ rows: 2 }} style={{ margin: 0, marginTop: 8 }}>
+                        {item.content}
+                      </Paragraph>
+                    }
+                  />
+                </div>
               </List.Item>
             )}
           />

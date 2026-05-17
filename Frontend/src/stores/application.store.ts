@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Application } from "../types/application.types";
+import type { Application, EvidenceFile } from "../types/application.types";
 import axiosClient from "../api/axiosClient";
 
 const formatApplicationCode = (id: string, submittedAt?: string, createdAt?: string): string => {
@@ -24,40 +24,91 @@ const resolveApplicationCode = (application: any): string => {
   return formatApplicationCode(String(application?.id ?? ""), application?.submittedAt ?? application?.submissionDate, application?.createdAt);
 };
 
+const normalizeEvidenceFiles = (files: any): EvidenceFile[] => {
+  if (!Array.isArray(files)) return [];
+
+  return files.map((file: any, index: number) => ({
+    id: String(file?.id ?? file?.fileName ?? `file-${index}`),
+    name: String(file?.name ?? file?.fileName ?? "Chưa cập nhật"),
+    url: String(file?.url ?? file?.fileUrl ?? ""),
+    type: file?.type ?? file?.fileType ?? (String(file?.fileType ?? file?.type ?? "").includes("pdf") ? "pdf" : "image"),
+    category: file?.category ?? undefined,
+    size: Number(file?.size ?? file?.fileSize ?? 0),
+    uploadedAt: file?.uploadedAt ?? file?.createdAt ?? new Date().toISOString(),
+  }));
+};
+
+const normalizeApplicationRecord = (application: any): Application => ({
+  id: String(application?.id ?? ""),
+  applicationCode: resolveApplicationCode(application),
+  candidateId: String(application?.candidateId ?? ""),
+  universityId: String(application?.universityId ?? ""),
+  majorId: String(application?.majorId ?? ""),
+  subjectGroupCode: application?.subjectGroupCode ?? (application?.subjectGroupName ?? ""),
+  admissionRoundId: application?.admissionRoundId != null ? String(application.admissionRoundId) : undefined,
+  priorityGroup: application?.priorityGroup ?? undefined,
+  // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
+  priorityScore: application?.priorityScore ?? 0,
+  scores: application?.scores ?? {},
+  totalScore: Number(application?.totalScore ?? 0),
+  finalScore: Number(application?.finalScore ?? (Number(application?.totalScore ?? 0) + Number(application?.priorityScore ?? 0))),
+  evidenceFiles: normalizeEvidenceFiles(application?.evidenceFiles),
+  status: (String(application?.status ?? "pending")).toLowerCase() as Application['status'],
+  candidateNote: application?.candidateNote ?? undefined,
+  adminNote: application?.adminNote ?? undefined,
+  submittedAt: application?.submittedAt ?? application?.submissionDate ?? application?.createdAt ?? "",
+  reviewedAt: application?.reviewedAt ?? undefined,
+  reviewedBy: application?.reviewedBy ?? undefined,
+  createdAt: application?.createdAt ?? "",
+  updatedAt: application?.updatedAt ?? "",
+});
+
 const normalizeApplicationArray = (payload: any): Application[] => {
   const data = payload?.data ?? payload;
   if (!Array.isArray(data)) return [];
 
-  return data.map((a: any) => ({
-    id: String(a?.id ?? ""),
-    applicationCode: resolveApplicationCode(a),
-    candidateId: String(a?.candidateId ?? ""),
-    universityId: String(a?.universityId ?? ""),
-    majorId: String(a?.majorId ?? ""),
-    subjectGroupCode: a?.subjectGroupCode ?? (a?.subjectGroupName ?? ""),
-    admissionRoundId: a?.admissionRoundId != null ? String(a.admissionRoundId) : undefined,
-    priorityGroup: a?.priorityGroup ?? undefined,
-  // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
-  priorityScore: a?.priorityScore ?? 0,
-  scores: a?.scores ?? {},
-  totalScore: Number(a?.totalScore ?? 0),
-  finalScore: Number(a?.totalScore ?? 0) + Number(a?.priorityScore ?? 0),
-    evidenceFiles: a?.evidenceFiles ?? [],
-    status: String(a?.status ?? "pending"),
-    candidateNote: a?.candidateNote ?? undefined,
-    adminNote: a?.adminNote ?? undefined,
-    submittedAt: a?.submittedAt ?? a?.submissionDate ?? a?.createdAt ?? "",
-    reviewedAt: a?.reviewedAt ?? undefined,
-    reviewedBy: a?.reviewedBy ?? undefined,
-    createdAt: a?.createdAt ?? "",
-    updatedAt: a?.updatedAt ?? "",
-  } as Application));
+  return data.map((a: any) => normalizeApplicationRecord(a));
 };
 
 const normalizeSingleApplication = (payload: any): Application | null => {
   const obj = payload?.data ?? payload;
   if (!obj) return null;
-  return normalizeApplicationArray([obj])[0] ?? null;
+  return normalizeApplicationRecord(obj);
+};
+
+const mergeApplicationRecords = (base?: Application | null, incoming?: Application | null): Application | null => {
+  if (!base && !incoming) return null;
+  if (!base) return incoming ?? null;
+  if (!incoming) return base;
+
+  const mergedScores = Object.keys(incoming.scores ?? {}).length > 0 ? incoming.scores : base.scores;
+  const mergedEvidenceFiles = (incoming.evidenceFiles ?? []).length > 0 ? incoming.evidenceFiles : base.evidenceFiles;
+
+  return {
+    ...base,
+    ...incoming,
+    id: incoming.id || base.id,
+    applicationCode: incoming.applicationCode || base.applicationCode,
+    candidateId: incoming.candidateId || base.candidateId,
+    universityId: incoming.universityId || base.universityId,
+    majorId: incoming.majorId || base.majorId,
+    subjectGroupCode: incoming.subjectGroupCode || base.subjectGroupCode,
+    admissionRoundId: incoming.admissionRoundId ?? base.admissionRoundId,
+    priorityGroup: incoming.priorityGroup ?? base.priorityGroup,
+    priorityScore: incoming.priorityScore ?? base.priorityScore,
+    scores: mergedScores,
+    totalScore: incoming.totalScore ?? base.totalScore,
+    finalScore: incoming.finalScore ?? base.finalScore,
+    evidenceFiles: mergedEvidenceFiles,
+    status: incoming.status || base.status,
+    candidateNote: incoming.candidateNote ?? base.candidateNote,
+    adminNote: incoming.adminNote ?? base.adminNote,
+    submittedAt: incoming.submittedAt || base.submittedAt,
+    reviewedAt: incoming.reviewedAt ?? base.reviewedAt,
+    reviewedBy: incoming.reviewedBy ?? base.reviewedBy,
+    createdAt: incoming.createdAt || base.createdAt,
+    updatedAt: incoming.updatedAt || base.updatedAt,
+  };
 };
 
 interface ApplicationState {
@@ -67,7 +118,7 @@ interface ApplicationState {
   getApplicationsByCandidateId: (candidateId: string) => Promise<Application[]>;
   getApplicationById: (id: string) => Application | undefined;
   fetchApplicationById: (id: string) => Promise<Application | null>;
-  createApplication: (app: Partial<Application>) => Promise<void>;
+  createApplication: (app: Partial<Application>) => Promise<Application | null>;
   updateApplication: (id: string, payload: any) => Promise<Application | null>;
   deleteApplication: (id: string) => Promise<void>;
   cancelApplication: (id: string) => Promise<void>;
@@ -84,7 +135,12 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     set({ loading: true });
     try {
       const response = await axiosClient.get("/applications");
-      set({ applications: normalizeApplicationArray(response) });
+      const fetchedApplications = normalizeApplicationArray(response);
+      set((state) => ({
+        applications: fetchedApplications
+          .map((item) => mergeApplicationRecords(state.applications.find((existing) => existing.id === item.id), item))
+          .filter((item): item is Application => Boolean(item)),
+      }));
     } catch (error) {
       console.error("Failed to fetch applications:", error);
     } finally {
@@ -95,7 +151,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   getApplicationsByCandidateId: async (candidateId) => {
     try {
       const response = await axiosClient.get(`/applications/candidate/${candidateId}`);
-      return normalizeApplicationArray(response);
+      const fetchedApplications = normalizeApplicationArray(response);
+      const localApplications = get().applications;
+      return fetchedApplications
+        .map((item) => mergeApplicationRecords(localApplications.find((existing) => existing.id === item.id), item))
+        .filter((item): item is Application => Boolean(item));
     } catch (error) {
       console.error("Failed to fetch applications by candidate:", error);
       return [];
@@ -113,11 +173,18 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
       if (application) {
         set((state) => {
-          const exists = state.applications.some((item) => item.id === application.id);
+          const existingApplication = state.applications.find((item) => item.id === application.id);
+          const mergedApplication = mergeApplicationRecords(existingApplication, application);
+
+          if (!mergedApplication) {
+            return state;
+          }
+
+          const exists = Boolean(existingApplication);
           return {
             applications: exists
-              ? state.applications.map((item) => (item.id === application.id ? application : item))
-              : [application, ...state.applications],
+              ? state.applications.map((item) => (item.id === mergedApplication.id ? mergedApplication : item))
+              : [mergedApplication, ...state.applications],
           };
         });
       }
@@ -131,15 +198,26 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
   createApplication: async (app) => {
     try {
+      console.log("[application.store] createApplication payload:", app);
       const response = await axiosClient.post("/applications", app);
-      const created = normalizeSingleApplication(response);
+      const createdFromServer = normalizeSingleApplication(response);
+      const localApplication = normalizeApplicationRecord({
+        ...app,
+        id: createdFromServer?.id ?? app.id ?? "",
+        applicationCode: app.applicationCode ?? createdFromServer?.applicationCode,
+      });
+      const created = mergeApplicationRecords(localApplication, createdFromServer);
+
       if (created) {
         set((state) => ({
-          applications: [created, ...state.applications]
+          applications: [created, ...state.applications.filter((item) => item.id !== created.id)]
         }));
       }
+
+      return created;
     } catch (error) {
       console.error("Failed to create application:", error);
+      return null;
     }
   },
 
@@ -154,7 +232,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       if (updated) {
         set((state) => ({
           applications: state.applications.map((a) =>
-            a.id === id ? updated : a
+            a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a
           )
         }));
       }
@@ -181,7 +259,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const updated = normalizeSingleApplication(response);
       if (updated) {
         set((state) => ({
-          applications: state.applications.map(a => a.id === id ? updated : a)
+          applications: state.applications.map(a => a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a)
         }));
       }
       return updated;
@@ -214,7 +292,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       if (updated) {
         set((state) => ({
           applications: state.applications.map((a) =>
-            a.id === id ? updated : a
+            a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a
           )
         }));
       }

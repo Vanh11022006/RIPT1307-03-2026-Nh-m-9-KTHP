@@ -27,6 +27,8 @@ public class ApplicationResponse {
     private Double totalScore;
     private String priorityGroup;
     private Double priorityScore;
+    private java.util.Map<String, Double> scores;
+    private java.util.List<java.util.Map<String, Object>> evidenceFiles;
     private String submittedAt;
     private String status;
 }

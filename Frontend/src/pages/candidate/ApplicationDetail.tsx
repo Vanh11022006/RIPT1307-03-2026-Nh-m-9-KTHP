@@ -172,12 +172,25 @@ export const ApplicationDetail: React.FC = () => {
       title: "Tên file",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => (
-        <Space>
-          <PaperClipOutlined />
-          <Text>{text || "Chưa cập nhật"}</Text>
-        </Space>
-      )
+      render: (text: string, record: any) => {
+        const fileUrl = record?.url;
+
+        return (
+          <Space>
+            {fileUrl ? (
+              <a href={fileUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <PaperClipOutlined />
+                <span>{text || "Chưa cập nhật"}</span>
+              </a>
+            ) : (
+              <>
+                <PaperClipOutlined />
+                <Text>{text || "Chưa cập nhật"}</Text>
+              </>
+            )}
+          </Space>
+        );
+      }
     },
     { 
       title: "Loại minh chứng", 
@@ -203,17 +216,6 @@ export const ApplicationDetail: React.FC = () => {
       key: "uploadedAt",
       render: (date: string) => date ? formatDateTime(date) : "Chưa cập nhật"
     },
-    { 
-      title: "Hành động", 
-      key: "action",
-      render: (_: any, record: any) => (
-        record.url ? (
-          <Button type="link" href={record.url} target="_blank">Xem file</Button>
-        ) : (
-          <Text type="secondary">Không có liên kết</Text>
-        )
-      )
-    }
   ];
 
   const priorityGroup = application.priorityGroup ?? "none";
@@ -338,17 +340,24 @@ export const ApplicationDetail: React.FC = () => {
             </Descriptions>
 
             <Title level={5}>Điểm thành phần</Title>
+            <div style={{ marginBottom: 12 }}>
+              <Tag color="cyan">Tổ hợp: {application.subjectGroupCode || "Chưa cập nhật"}</Tag>
+            </div>
             <Card type="inner" style={{ marginBottom: 24 }}>
-              <Row gutter={[16, 16]}>
-                {Object.entries(application.scores || {}).map(([subject, score]) => (
-                  <Col xs={12} sm={8} md={6} key={subject}>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <Text type="secondary">{subjectNames[subject] || subject}</Text>
-                      <Text strong style={{ fontSize: 16 }}>{score !== undefined ? score.toFixed(2) : "-"}</Text>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
+              {Object.keys(application.scores || {}).length > 0 ? (
+                <Row gutter={[16, 16]}>
+                  {Object.entries(application.scores || {}).map(([subject, score]) => (
+                    <Col xs={12} sm={8} md={6} key={subject}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <Text type="secondary">{subjectNames[subject] || subject}</Text>
+                        <Text strong style={{ fontSize: 16 }}>{score !== undefined ? score.toFixed(2) : "-"}</Text>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <Empty description="Chưa có dữ liệu điểm" />
+              )}
             </Card>
 
             <Title level={5}>Minh chứng đính kèm</Title>

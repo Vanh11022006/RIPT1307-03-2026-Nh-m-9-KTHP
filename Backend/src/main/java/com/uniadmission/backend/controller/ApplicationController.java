@@ -16,12 +16,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/applications")
 @RequiredArgsConstructor
 public class ApplicationController {
@@ -56,6 +59,8 @@ public class ApplicationController {
     @PostMapping
     public ResponseEntity<ApiResponse<ApplicationResponse>> submitApplication(
             @RequestBody ApplicationSubmitRequest request) {
+        log.info("Received submitApplication request payload: {}", request);
+        log.info("Received submitApplication request, scores={}", request.getScores());
         Application application = applicationService.submit(request);
         ApplicationResponse resp = mapToResponse(application);
         return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", resp));
@@ -142,6 +147,7 @@ public class ApplicationController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ApplicationResponse>> updateApplication(@PathVariable Long id,
             @RequestBody ApplicationSubmitRequest request) {
+        log.info("Received updateApplication id={}, payload={}", id, request);
         Application updated = applicationService.updateApplication(id, request);
         ApplicationResponse resp = mapToResponse(updated);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ thành công", resp));
@@ -156,6 +162,44 @@ public class ApplicationController {
     private ApplicationResponse mapToResponse(Application application) {
         if (application == null)
             return null;
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        java.util.Map<String, Double> parsedScores = new java.util.HashMap<>();
+        try {
+            if (application.getScores() != null && !application.getScores().trim().isEmpty()
+                    && !"null".equalsIgnoreCase(application.getScores().trim())) {
+                java.util.Map<String, Double> temp = mapper.readValue(application.getScores(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Double>>() {
+                        });
+                if (temp != null) {
+                    parsedScores.putAll(temp);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse scores JSON for application id={}: {}", application.getId(), e.getMessage());
+            // keep parsedScores as empty map
+        }
+
+        java.util.List<java.util.Map<String, Object>> evidence = new java.util.ArrayList<>();
+        try {
+            java.util.List<com.uniadmission.backend.entity.Attachment> atts = attachmentRepository
+                    .findByApplication_Id(application.getId());
+            atts.forEach(att -> {
+                String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/uploads/")
+                        .path(att.getFilePath() != null ? att.getFilePath() : "")
+                        .toUriString();
+                java.util.Map<String, Object> m = new java.util.HashMap<>();
+                m.put("id", att.getId());
+                m.put("fileName", att.getFileName());
+                m.put("fileUrl", fileUrl);
+                m.put("fileType", att.getFileType());
+                m.put("fileSize", null);
+                evidence.add(m);
+            });
+        } catch (Exception ex) {
+            // ignore
+        }
+
         return ApplicationResponse.builder()
                 .id(application.getId())
                 .candidateId(application.getCandidate() != null ? application.getCandidate().getId() : null)
@@ -177,6 +221,8 @@ public class ApplicationController {
                 .totalScore(application.getTotalScore())
                 .priorityGroup(application.getPriorityGroup())
                 .priorityScore(application.getPriorityScore())
+                .scores(parsedScores)
+                .evidenceFiles(evidence)
                 .submittedAt(
                         application.getSubmissionDate() != null ? application.getSubmissionDate().toString() : null)
                 .status(application.getStatus() != null ? application.getStatus().name().toLowerCase() : null)
