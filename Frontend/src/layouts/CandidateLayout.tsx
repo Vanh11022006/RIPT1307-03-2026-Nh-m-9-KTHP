@@ -80,19 +80,15 @@ export const CandidateLayout: React.FC = () => {
         width={260}
       >
         <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
-          {/* We reuse the gradient logo style here for consistency with Admin */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "#1f2937" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ 
-              background: "linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))", 
-              borderRadius: "12px", 
-              padding: "8px", 
               display: "flex", 
               alignItems: "center", 
               justifyContent: "center" 
             }}>
-              <BankOutlined style={{ fontSize: 24,  }} />
+              <img src="/favicon.svg" alt="Logo" style={{ width: 32, height: 32 }} />
             </div>
-            {!collapsed && <span className="glowing-text" style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "-0.5px" }}>UniAdmission</span>}
+            {!collapsed && <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--text-primary)" }}>UniAdmission</span>}
           </div>
         </div>
         <Menu 
