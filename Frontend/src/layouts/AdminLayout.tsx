@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Dropdown, Avatar, Space, Typography } from "antd";
+import { Layout, Menu, Dropdown, Avatar, Space, Typography, Input, Button, Badge } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
   DashboardOutlined, 
@@ -11,19 +11,24 @@ import {
   LogoutOutlined,
   AppstoreOutlined,
   CalendarOutlined,
-  BellOutlined
+  BellOutlined,
+  SearchOutlined,
+  BulbOutlined,
+  BulbFilled
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { Header, Sider, Content } = Layout;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const AdminLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout } = useAuthStore();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   useEffect(() => {
     document.body.classList.add("dashboard-body");
@@ -51,6 +56,14 @@ export const AdminLayout: React.FC = () => {
   const userMenu = {
     items: [
       {
+        key: "profile",
+        icon: <UserOutlined />,
+        label: "Hồ sơ cá nhân",
+      },
+      {
+        type: "divider" as const
+      },
+      {
         key: "logout",
         icon: <LogoutOutlined />,
         label: "Đăng xuất",
@@ -60,87 +73,146 @@ export const AdminLayout: React.FC = () => {
     ]
   };
 
-  return (
-    <>
-      {/* Ambient Background Orbs */}
-      <div className="ambient-background">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
+  // Modern SVG Icon for Graduation Cap
+  const ModernGraduationCap = () => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="28" 
+      height="28" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="url(#grad1)" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: "#38BDF8", stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: "#818CF8", stopOpacity: 1 }} />
+        </linearGradient>
+      </defs>
+      <path d="M21.42 10.922a2 2 0 0 1-.01 3.016l-7.1 7.255a2 2 0 0 1-2.815 0l-7.1-7.255a2 2 0 0 1-.01-3.016l7.1-7.255a2 2 0 0 1 2.815 0l7.1 7.255z"/>
+      <path d="m14 18 4-4"/>
+      <path d="M7 10v4.5a2.5 2.5 0 0 0 5 0V10"/>
+      <path d="M22 10v6"/>
+    </svg>
+  );
 
-      <Layout style={{ minHeight: "100vh", background: "transparent", position: "relative", zIndex: 1 }}>
-        <Sider 
-          collapsible 
-          collapsed={collapsed} 
-          onCollapse={(value) => setCollapsed(value)}
-          theme="light"
-          className="floating-sidebar acrylic-sidebar"
-          width={260}
-        >
-        <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "#1f2937" }}>
+  return (
+    <Layout style={{ minHeight: "100vh", background: "transparent" }}>
+      <Sider 
+        collapsible 
+        collapsed={collapsed} 
+        onCollapse={(value) => setCollapsed(value)}
+        width={260}
+        className="saas-sidebar"
+        trigger={null}
+      >
+        <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px", cursor: "pointer" }} onClick={() => navigate("/admin/dashboard")}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ 
-              background: "linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))", 
+              background: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9", 
               borderRadius: "12px", 
               padding: "8px", 
               display: "flex", 
               alignItems: "center", 
-              justifyContent: "center" 
+              justifyContent: "center",
+              border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E2E8F0"
             }}>
-              <BankOutlined style={{ fontSize: 24, color: "white" }} />
+              <ModernGraduationCap />
             </div>
-            {!collapsed && <span className="glowing-text" style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "-0.5px" }}>UniAdmission</span>}
+            {!collapsed && (
+              <span style={{ 
+                fontSize: "20px", 
+                fontWeight: 800, 
+                letterSpacing: "-0.5px",
+                background: "linear-gradient(90deg, #2563EB, #06B6D4)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent"
+              }}>
+                UniAdmission
+              </span>
+            )}
           </div>
         </div>
+        
         <Menu 
-          theme="light" 
           mode="inline" 
           selectedKeys={[location.pathname]} 
           items={menuItems} 
           onClick={({ key }) => navigate(key)}
-          style={{ borderRight: "none", padding: "0 12px" }}
+          style={{ borderRight: "none", padding: "12px 12px", background: "transparent" }}
         />
       </Sider>
       
       <Layout style={{ background: "transparent" }}>
-        <Header className="glass-header acrylic-sidebar" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "0 24px" }}>
-
-          <Dropdown menu={userMenu} placement="bottomRight" arrow>
-            <Space style={{ cursor: "pointer", padding: "4px 12px", borderRadius: "30px", transition: "background 0.3s" }} className="hover-bg-gray">
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
-              <span style={{ fontWeight: 600, color: "#ffffff" }}>{currentUser?.fullName}</span>
-            </Space>
-          </Dropdown>
-        </Header>
-        
-        <Content style={{ margin: "24px 16px", display: "flex", flexDirection: "column" }}>
-          {/* Welcome Banner */}
-          <div style={{ 
-            background: "linear-gradient(120deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 240, 255, 0.15) 100%)", 
-            border: "1px solid rgba(0, 240, 255, 0.2)",
-            borderRadius: "20px", 
-            padding: "32px 40px",
-            marginBottom: "24px",
-            boxShadow: "0 0 20px rgba(0, 240, 255, 0.1)",
-            position: "relative",
-            overflow: "hidden"
-          }}>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <Title level={3} style={{ color: "#fff", margin: 0, textShadow: "0 2px 10px rgba(0,240,255,0.3)" }}>Chào ngày mới, {currentUser?.fullName}! 👋</Title>
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: "16px" }}>Hôm nay là một ngày tuyệt vời để phê duyệt các hồ sơ tuyển sinh mới.</Text>
-            </div>
-            {/* Abstract background shapes for banner */}
-            <div style={{ position: "absolute", top: "-50px", right: "-50px", width: "200px", height: "200px", background: "rgba(0, 240, 255, 0.2)", borderRadius: "50%", filter: "blur(40px)" }}></div>
-            <div style={{ position: "absolute", bottom: "-50px", right: "100px", width: "150px", height: "150px", background: "rgba(138, 43, 226, 0.2)", borderRadius: "50%", filter: "blur(40px)" }}></div>
+        <Header 
+          className="saas-header" 
+          style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            padding: "0 24px",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            height: 72,
+            background: isDarkMode ? "rgba(17, 24, 39, 0.7)" : "rgba(255, 255, 255, 0.8)",
+          }}
+        >
+          {/* LEFT: Breadcrumb-like title */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text style={{ color: "var(--admin-text-secondary)", fontSize: "14px" }}>Dashboard</Text>
+            <span style={{ margin: "0 8px", color: "var(--admin-border)" }}>/</span>
+            <Text strong style={{ color: "var(--admin-text-primary)", fontSize: "14px" }}>Admin</Text>
           </div>
 
+          {/* CENTER: Search Bar */}
+          <div className="saas-header-search" style={{ flex: 1, maxWidth: 400, margin: "0 24px" }}>
+            <Input 
+              prefix={<SearchOutlined style={{ color: "var(--admin-text-secondary)" }} />}
+              placeholder="Tìm kiếm trường, ngành, hồ sơ..." 
+              size="large"
+              style={{ width: "100%" }}
+              bordered={false}
+            />
+          </div>
+
+          {/* RIGHT: Actions */}
+          <Space size="large" align="center">
+            <Button 
+              type="text" 
+              icon={isDarkMode ? <BulbFilled style={{ color: "#F59E0B", fontSize: 18 }} /> : <BulbOutlined style={{ fontSize: 18 }} />} 
+              onClick={toggleTheme}
+              style={{ color: "var(--admin-text-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            />
+            
+            <Badge dot color="#2563EB">
+              <Button 
+                type="text" 
+                icon={<BellOutlined style={{ fontSize: 18 }} />} 
+                style={{ color: "var(--admin-text-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}
+              />
+            </Badge>
+
+            <Dropdown menu={userMenu} placement="bottomRight" arrow trigger={['click']}>
+              <Space style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "30px", border: "1px solid var(--admin-border)", background: "var(--admin-bg)" }}>
+                <Badge dot color="#10B981" offset={[-4, 28]}>
+                  <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#2563EB" }} />
+                </Badge>
+                <span style={{ fontWeight: 600, color: "var(--admin-text-primary)", paddingRight: 4 }}>{currentUser?.fullName}</span>
+              </Space>
+            </Dropdown>
+          </Space>
+        </Header>
+        
+        <Content style={{ margin: "24px", display: "flex", flexDirection: "column" }}>
           <div style={{ flex: 1, position: "relative", zIndex: 2 }}>
             <Outlet />
           </div>
         </Content>
       </Layout>
     </Layout>
-    </>
   );
 };

@@ -1,18 +1,16 @@
-import React, { useMemo, useState } from "react";
-import { Card, Statistic, Row, Col, Table, Typography, Button, Progress, Tag, Select, Space } from "antd";
+import React, { useMemo, useState, useEffect } from "react";
+import { Card, Statistic, Row, Col, Table, Typography, Button, Progress, Tag, Select, Space, Avatar } from "antd";
 import { 
   TeamOutlined, 
   BankOutlined, 
   BookOutlined, 
   FileTextOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  FilterOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  RightOutlined
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useCandidateStore } from "../../stores/candidate.store";
@@ -20,6 +18,7 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
+import { useAuthStore } from "../../stores/auth.store";
 import { formatDate } from "../../utils/date";
 
 const { Title, Text } = Typography;
@@ -27,6 +26,14 @@ const { Option } = Select;
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuthStore();
+  
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { candidates, getCandidateById } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
@@ -85,42 +92,12 @@ export const AdminDashboard: React.FC = () => {
     }).sort((a, b) => b.total - a.total).filter(stat => stat.total > 0);
   }, [safeUniversities, filteredApplications]);
 
-  const majorStats = useMemo(() => {
-    return safeMajors.map(major => {
-      const uni = safeUniversities.find(u => u.id === major.universityId);
-      const apps = filteredApplications.filter(a => a.majorId === major.id);
-      return {
-        id: major.id,
-        name: major.name,
-        uniName: uni?.name || "Không rõ trường",
-        total: apps.length,
-        pending: apps.filter(a => a.status === 'pending').length,
-        approved: apps.filter(a => a.status === 'approved').length,
-        rejected: apps.filter(a => a.status === 'rejected').length,
-      };
-    }).sort((a, b) => b.total - a.total).filter(stat => stat.total > 0);
-  }, [safeMajors, safeUniversities, filteredApplications]);
-
-  const admissionRoundStats = useMemo(() => {
-    return safeAdmissionRounds.map(round => {
-      const apps = filteredApplications.filter(a => a.admissionRoundId === round.id);
-      return {
-        id: round.id,
-        name: `${round.code} - ${round.name}`,
-        total: apps.length,
-        pending: apps.filter(a => a.status === 'pending').length,
-        approved: apps.filter(a => a.status === 'approved').length,
-        rejected: apps.filter(a => a.status === 'rejected').length,
-      };
-    }).sort((a, b) => b.total - a.total).filter(stat => stat.total > 0);
-  }, [safeAdmissionRounds, filteredApplications]);
-
   const columns = [
     {
       title: "Mã hồ sơ",
       dataIndex: "applicationCode",
       key: "applicationCode",
-      render: (text: string) => <strong>{text}</strong>
+      render: (text: string) => <Text strong>{text}</Text>
     },
     {
       title: "Thí sinh",
@@ -128,7 +105,7 @@ export const AdminDashboard: React.FC = () => {
       key: "candidateId",
       render: (id: string) => {
         const candidate = getCandidateById(id);
-        return candidate ? candidate.fullName : "Không rõ thí sinh";
+        return candidate ? <Space><Avatar size="small" src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate.fullName}`} /> {candidate.fullName}</Space> : "Không rõ thí sinh";
       }
     },
     {
@@ -156,7 +133,7 @@ export const AdminDashboard: React.FC = () => {
       align: "center" as const,
       render: (score: number, record: any) => {
         const final = record?.finalScore ?? (Number(score ?? 0) + Number(record?.priorityScore ?? 0));
-        return final !== undefined ? <Text strong>{(final ?? 0).toFixed(2)}</Text> : "-";
+        return final !== undefined ? <Text strong style={{ color: "var(--admin-accent)" }}>{(final ?? 0).toFixed(2)}</Text> : "-";
       }
     },
     {
@@ -170,43 +147,96 @@ export const AdminDashboard: React.FC = () => {
       title: "Ngày nộp",
       dataIndex: "submittedAt",
       key: "submittedAt",
-      render: (date: string) => formatDate(date)
+      render: (date: string) => <Text type="secondary">{formatDate(date)}</Text>
     },
     {
-      title: "Hành động",
+      title: "",
       key: "action",
       render: (_: any, record: any) => (
-        <Button type="link" onClick={() => navigate(`/admin/applications/${record.id}`)}>
-          Xem chi tiết
+        <Button type="text" style={{ color: "var(--admin-accent)" }} onClick={() => navigate(`/admin/applications/${record.id}`)}>
+          Chi tiết <RightOutlined />
         </Button>
       )
     }
   ];
 
   const commonStatColumns = [
-    { title: "Tổng hồ sơ", dataIndex: "total", key: "total", align: "center" as const, render: (val: number) => <Typography.Text strong>{val}</Typography.Text> },
-    { title: "Chờ duyệt", dataIndex: "pending", key: "pending", align: "center" as const, render: (val: number) => <Tag color="warning">{val}</Tag> },
-    { title: "Đã duyệt", dataIndex: "approved", key: "approved", align: "center" as const, render: (val: number) => <Tag color="success">{val}</Tag> },
-    { title: "Từ chối", dataIndex: "rejected", key: "rejected", align: "center" as const, render: (val: number) => <Tag color="error">{val}</Tag> },
+    { title: "Tổng", dataIndex: "total", key: "total", align: "center" as const, render: (val: number) => <Text strong>{val}</Text> },
+    { title: "Chờ duyệt", dataIndex: "pending", key: "pending", align: "center" as const, render: (val: number) => <Tag color="warning" bordered={false}>{val}</Tag> },
+    { title: "Đã duyệt", dataIndex: "approved", key: "approved", align: "center" as const, render: (val: number) => <Tag color="success" bordered={false}>{val}</Tag> },
+    { title: "Từ chối", dataIndex: "rejected", key: "rejected", align: "center" as const, render: (val: number) => <Tag color="error" bordered={false}>{val}</Tag> },
   ];
 
   return (
-    <div>
-      <PageHeader 
-        title="Bảng điều khiển quản trị" 
-        breadcrumbs={[
-          { title: "Tổng quan dữ liệu xét tuyển trong hệ thống" }
-        ]}
-      />
+    <div style={{ paddingBottom: 40 }} className="animate-fade-up">
+      {/* Hero Banner Section */}
+      <div style={{ 
+        background: "linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)",
+        borderRadius: "24px", 
+        padding: "40px",
+        marginBottom: "32px",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      }}>
+        {/* Background glow effects */}
+        <div style={{ position: "absolute", top: "-50px", right: "10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(56,189,248,0.2) 0%, rgba(0,0,0,0) 70%)", borderRadius: "50%", filter: "blur(40px)" }}></div>
+        <div style={{ position: "absolute", bottom: "-100px", right: "25%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(124,58,237,0.2) 0%, rgba(0,0,0,0) 70%)", borderRadius: "50%", filter: "blur(60px)" }}></div>
+        
+        <Row justify="space-between" align="middle" style={{ position: "relative", zIndex: 1 }}>
+          <Col xs={24} md={16}>
+            <Title level={2} style={{ color: "#F8FAFC", margin: "0 0 16px 0", fontWeight: 700 }}>
+              Chào mừng trở lại, {currentUser?.fullName}! 👋
+            </Title>
+            <Text style={{ color: "#94A3B8", fontSize: "16px", display: "block", marginBottom: 24, maxWidth: 600 }}>
+              Theo dõi và quản lý toàn bộ hệ thống xét tuyển. Bạn có <strong style={{ color: "#38BDF8" }}>{stats.pending}</strong> hồ sơ đang chờ phê duyệt hôm nay.
+            </Text>
+            
+            <Space size="middle" wrap>
+              <Button 
+                type="primary"
+                size="large"
+                style={{ 
+                  background: "linear-gradient(90deg, #2563EB, #06B6D4)", 
+                  border: "none",
+                  borderRadius: 12,
+                  fontWeight: 600,
+                  boxShadow: "0 4px 14px 0 rgba(6, 182, 212, 0.39)"
+                }}
+                onClick={() => navigate("/admin/applications")}
+              >
+                Xử lý hồ sơ ngay
+              </Button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }}></div>
+                <Text style={{ color: "#E2E8F0" }}>Hệ thống ổn định</Text>
+              </div>
+            </Space>
+          </Col>
+          <Col xs={24} md={8} style={{ textAlign: "right" }}>
+            <div style={{ background: "rgba(255,255,255,0.03)", padding: "20px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)", display: "inline-block", backdropFilter: "blur(10px)" }}>
+              <Title level={4} style={{ color: "#F8FAFC", margin: 0, fontWeight: 700 }}>
+                {currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              </Title>
+              <Text style={{ color: "#94A3B8" }}>
+                {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </Text>
+            </div>
+          </Col>
+        </Row>
+      </div>
 
-      <Card title={<Space><FilterOutlined /> Bộ lọc thống kê</Space>} style={{ marginBottom: 24 }}>
-        <Row gutter={[16, 16]} align="bottom">
-          <Col xs={24} sm={12} md={8}>
-            <div style={{ marginBottom: 8 }}><Typography.Text strong>Đợt xét tuyển</Typography.Text></div>
+      {/* FILTER SECTION */}
+      <div className="saas-filter-card" style={{ marginBottom: 32 }}>
+        <Row gutter={[24, 24]} align="bottom">
+          <Col xs={24} sm={12} md={9}>
+            <div style={{ marginBottom: 8 }}><Text type="secondary" strong>Lọc theo Đợt xét tuyển</Text></div>
             <Select 
+              size="large"
               style={{ width: '100%' }} 
               value={selectedAdmissionRoundId}
               onChange={setSelectedAdmissionRoundId}
+              dropdownStyle={{ borderRadius: 12 }}
             >
               <Option value="all">Tất cả đợt xét tuyển</Option>
               {safeAdmissionRounds.map(round => (
@@ -216,12 +246,14 @@ export const AdminDashboard: React.FC = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <div style={{ marginBottom: 8 }}><Typography.Text strong>Trường đại học</Typography.Text></div>
+          <Col xs={24} sm={12} md={9}>
+            <div style={{ marginBottom: 8 }}><Text type="secondary" strong>Lọc theo Trường đại học</Text></div>
             <Select 
+              size="large"
               style={{ width: '100%' }} 
               value={selectedUniversityId}
               onChange={setSelectedUniversityId}
+              dropdownStyle={{ borderRadius: 12 }}
             >
               <Option value="all">Tất cả trường</Option>
               {safeUniversities.map(uni => (
@@ -231,225 +263,152 @@ export const AdminDashboard: React.FC = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={24} md={8}>
+          <Col xs={24} sm={24} md={6}>
             <Button 
+              size="large"
+              block
               icon={<ReloadOutlined />} 
               onClick={() => {
                 setSelectedAdmissionRoundId("all");
                 setSelectedUniversityId("all");
               }}
+              style={{ borderRadius: 8, fontWeight: 500 }}
             >
               Đặt lại bộ lọc
             </Button>
           </Col>
         </Row>
-      </Card>
+      </div>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
+      {/* STATISTIC CARDS */}
+      <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ background: "rgba(56, 189, 248, 0.15)", padding: 12, borderRadius: 16 }}>
+                <TeamOutlined style={{ fontSize: 24, color: "#38BDF8" }} />
+              </div>
+              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 12%</Tag>
+            </div>
             <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Tổng thí sinh</span>}
+              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng thí sinh</Text>}
               value={safeCandidates.length} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(138, 43, 226, 0.2))", border: "1px solid rgba(0, 240, 255, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <TeamOutlined style={{ color: "var(--neon-cyan)", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#fff", textShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ background: "rgba(139, 92, 246, 0.15)", padding: 12, borderRadius: 16 }}>
+                <BankOutlined style={{ fontSize: 24, color: "#8B5CF6" }} />
+              </div>
+              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 8%</Tag>
+            </div>
             <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Tổng trường</span>}
+              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng trường ĐH</Text>}
               value={safeUniversities.length} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 240, 255, 0.2))", border: "1px solid rgba(138, 43, 226, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <BankOutlined style={{ color: "var(--neon-purple)", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#fff", textShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ background: "rgba(16, 185, 129, 0.15)", padding: 12, borderRadius: 16 }}>
+                <BookOutlined style={{ fontSize: 24, color: "#10B981" }} />
+              </div>
+              <Tag color="error" bordered={false} style={{ borderRadius: 12 }}><ArrowDownOutlined /> 2%</Tag>
+            </div>
             <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Tổng ngành</span>}
+              title={<Text type="secondary" style={{ fontSize: 14 }}>Ngành đào tạo</Text>}
               value={safeMajors.length} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.2))", border: "1px solid rgba(0, 240, 255, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <BookOutlined style={{ color: "var(--neon-cyan)", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#fff", textShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ background: "rgba(245, 158, 11, 0.15)", padding: 12, borderRadius: 16 }}>
+                <FileTextOutlined style={{ fontSize: 24, color: "#F59E0B" }} />
+              </div>
+              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 24%</Tag>
+            </div>
             <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Tổng hồ sơ</span>}
+              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng hồ sơ</Text>}
               value={stats.total} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(138, 43, 226, 0.2))", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <FileTextOutlined style={{ color: "#10b981", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#fff", textShadow: "0 0 10px rgba(255,255,255,0.3)" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
-            <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Chờ duyệt</span>}
-              value={stats.pending} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "rgba(0, 240, 255, 0.15)", border: "1px solid rgba(0, 240, 255, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <ClockCircleOutlined style={{ color: "var(--neon-cyan)", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "var(--neon-cyan)", textShadow: "0 0 10px rgba(0,240,255,0.3)" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
-            <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Đã duyệt</span>}
-              value={stats.approved} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <CheckCircleOutlined style={{ color: "#10b981", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#10b981", textShadow: "0 0 10px rgba(16, 185, 129, 0.3)" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false}>
-            <Statistic 
-              title={<span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Từ chối</span>}
-              value={stats.rejected} 
-              prefix={
-                <div className="hover-pulse" style={{ background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "10px", borderRadius: "12px", display: "inline-flex", marginRight: "8px" }}>
-                  <CloseCircleOutlined style={{ color: "#ef4444", fontSize: "20px" }} />
-                </div>
-              }
-              valueStyle={{ fontWeight: 800, fontSize: "28px", color: "#ef4444", textShadow: "0 0 10px rgba(239, 68, 68, 0.3)" }}
+              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
             />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+      {/* DETAILED STATS */}
+      <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
         <Col xs={24} lg={8}>
-          <Card title={<Title level={5} style={{ margin: 0 }}>Thống kê hồ sơ theo trạng thái</Title>} bordered={false} style={{ height: '100%' }}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Typography.Text style={{ color: 'rgba(255,255,255,0.8)' }}>Chờ duyệt</Typography.Text>
-                <Typography.Text strong style={{ color: '#fff' }}>{stats.pending} ({percentPending.toFixed(1)}%)</Typography.Text>
+          <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Trạng thái xét duyệt</Title>} bordered={false} style={{ height: '100%' }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#38BDF8" }}></div><Text type="secondary">Chờ duyệt</Text></Space>
+                <Text strong>{stats.pending} ({percentPending.toFixed(1)}%)</Text>
               </div>
-              <Progress percent={percentPending} strokeColor="#00F0FF" showInfo={false} trailColor="rgba(255,255,255,0.1)" />
+              <Progress percent={percentPending} strokeColor="#38BDF8" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Typography.Text style={{ color: 'rgba(255,255,255,0.8)' }}>Đã duyệt</Typography.Text>
-                <Typography.Text strong style={{ color: '#fff' }}>{stats.approved} ({percentApproved.toFixed(1)}%)</Typography.Text>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#10B981" }}></div><Text type="secondary">Đã duyệt</Text></Space>
+                <Text strong>{stats.approved} ({percentApproved.toFixed(1)}%)</Text>
               </div>
-              <Progress percent={percentApproved} strokeColor="#10b981" showInfo={false} trailColor="rgba(255,255,255,0.1)" />
+              <Progress percent={percentApproved} strokeColor="#10B981" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
             </div>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Typography.Text style={{ color: 'rgba(255,255,255,0.8)' }}>Từ chối</Typography.Text>
-                <Typography.Text strong style={{ color: '#fff' }}>{stats.rejected} ({percentRejected.toFixed(1)}%)</Typography.Text>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#EF4444" }}></div><Text type="secondary">Từ chối</Text></Space>
+                <Text strong>{stats.rejected} ({percentRejected.toFixed(1)}%)</Text>
               </div>
-              <Progress percent={percentRejected} strokeColor="#ef4444" showInfo={false} trailColor="rgba(255,255,255,0.1)" />
+              <Progress percent={percentRejected} strokeColor="#EF4444" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
             </div>
           </Card>
         </Col>
         
         <Col xs={24} lg={16}>
-          <Card title={<Title level={5} style={{ margin: 0 }}>Hồ sơ theo trường đại học</Title>} bordered={false} style={{ height: '100%' }}>
+          <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Thống kê theo trường</Title>} bordered={false} style={{ height: '100%' }}>
             {universityStats.length > 0 ? (
               <Table
                 columns={[
-                  { title: "Trường", dataIndex: "name", key: "name" },
+                  { title: "Trường Đại học", dataIndex: "name", key: "name", render: text => <Text strong>{text}</Text> },
                   ...commonStatColumns
                 ]}
                 dataSource={universityStats}
                 rowKey="id"
-                pagination={{ pageSize: 5 }}
-                size="small"
+                pagination={{ pageSize: 4, position: ["bottomCenter"] }}
+                size="middle"
                 scroll={{ x: true }}
               />
             ) : (
-              <EmptyState description="Không có hồ sơ phù hợp với bộ lọc" />
+              <EmptyState description="Không có hồ sơ phù hợp" />
             )}
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-        <Col xs={24} lg={12}>
-          <Card title={<Title level={5} style={{ margin: 0 }}>Hồ sơ theo ngành học</Title>} bordered={false} style={{ height: '100%' }}>
-            {majorStats.length > 0 ? (
-              <Table
-                columns={[
-                  { title: "Ngành", dataIndex: "name", key: "name" },
-                  { title: "Trường", dataIndex: "uniName", key: "uniName" },
-                  ...commonStatColumns
-                ]}
-                dataSource={majorStats}
-                rowKey="id"
-                pagination={{ pageSize: 5 }}
-                size="small"
-                scroll={{ x: true }}
-              />
-            ) : (
-              <EmptyState description="Không có hồ sơ phù hợp với bộ lọc" />
-            )}
-          </Card>
-        </Col>
-
-        {safeAdmissionRounds.length > 0 && (
-          <Col xs={24} lg={12}>
-            <Card title={<Title level={5} style={{ margin: 0 }}>Hồ sơ theo đợt xét tuyển</Title>} bordered={false} style={{ height: '100%' }}>
-              {admissionRoundStats.length > 0 ? (
-                <Table
-                  columns={[
-                    { title: "Đợt xét tuyển", dataIndex: "name", key: "name" },
-                    ...commonStatColumns
-                  ]}
-                  dataSource={admissionRoundStats}
-                  rowKey="id"
-                  pagination={{ pageSize: 5 }}
-                  size="small"
-                  scroll={{ x: true }}
-                />
-              ) : (
-                <EmptyState description="Không có hồ sơ phù hợp với bộ lọc" />
-              )}
-            </Card>
-          </Col>
-        )}
-      </Row>
-
-      <Card title={<Title level={4} style={{ margin: 0 }}>Hồ sơ mới nhất</Title>} bordered={false}>
+      {/* LATEST APPLICATIONS */}
+      <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Hồ sơ mới nộp gần đây</Title>} bordered={false}>
         {latestApplications.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={latestApplications} 
             rowKey="id"
             pagination={false}
+            size="middle"
             scroll={{ x: true }}
           />
         ) : (
-          <EmptyState description="Không có hồ sơ phù hợp với bộ lọc" />
+          <EmptyState description="Chưa có hồ sơ nào" />
         )}
       </Card>
     </div>
