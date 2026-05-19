@@ -503,18 +503,18 @@ export const ApplicationForm: React.FC = () => {
               </Row>
               <Row gutter={16}>
                 <Col xs={24} sm={8}>
-                  <Card size="small" style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" }}>
-                    <Statistic title={<span style={{color: "rgba(255,255,255,0.8)"}}>Tổng điểm thi</span>} value={totalScore} precision={2} valueStyle={{ color: "#fff" }} />
+                  <Card size="small" style={{ background: "transparent", borderColor: "var(--border-color)" }}>
+                    <Statistic title={<span style={{color: "var(--text-secondary)"}}>Tổng điểm thi</span>} value={totalScore} precision={2} />
                   </Card>
                 </Col>
                 <Col xs={24} sm={8}>
                   <Card size="small" style={{ background: "rgba(0,240,255,0.1)", borderColor: "rgba(0,240,255,0.3)" }}>
-                    <Statistic title={<span style={{color: "rgba(255,255,255,0.8)"}}>Điểm ưu tiên</span>} value={currentPriorityScore} precision={2} valueStyle={{ color: "var(--neon-cyan)" }} />
+                    <Statistic title={<span style={{color: "var(--text-secondary)"}}>Điểm ưu tiên</span>} value={currentPriorityScore} precision={2} valueStyle={{ color: "var(--accent-blue)" }} />
                   </Card>
                 </Col>
                 <Col xs={24} sm={8}>
                   <Card size="small" style={{ background: "rgba(16,185,129,0.1)", borderColor: "rgba(16,185,129,0.3)" }}>
-                    <Statistic title={<span style={{color: "rgba(255,255,255,0.8)"}}>Tổng điểm xét tuyển</span>} value={finalAdmissionScore} precision={2} valueStyle={{ color: "#10b981", fontWeight: "bold", textShadow: "0 0 10px rgba(16,185,129,0.3)" }} />
+                    <Statistic title={<span style={{color: "var(--text-secondary)"}}>Tổng điểm xét tuyển</span>} value={finalAdmissionScore} precision={2} valueStyle={{ color: "var(--accent-green)", fontWeight: "bold" }} />
                   </Card>
                 </Col>
               </Row>

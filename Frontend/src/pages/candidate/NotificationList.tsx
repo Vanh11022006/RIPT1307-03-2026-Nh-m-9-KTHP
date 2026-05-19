@@ -79,11 +79,6 @@ export const NotificationList: React.FC = () => {
     setDetailVisible(true);
   };
 
-  const handleMarkAsRead = (e: React.MouseEvent, logId: string) => {
-    e.stopPropagation();
-    markNotificationAsRead(logId);
-    setMyLogs((current) => current.map((log) => (log.id === logId ? { ...log, isRead: true } : log)));
-  };
 
   const handleDelete = async (logId: string) => {
     try {
@@ -151,8 +146,8 @@ export const NotificationList: React.FC = () => {
             renderItem={(item) => (
               <List.Item
                 style={{ 
-                  backgroundColor: item.isRead ? "rgba(255,255,255,0.02)" : "rgba(0, 240, 255, 0.1)",
-                  border: item.isRead ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0, 240, 255, 0.3)",
+                  backgroundColor: item.isRead ? "var(--bg-primary)" : "var(--bg-secondary)",
+                  border: item.isRead ? "1px solid var(--border-color)" : "1px solid var(--accent-green)",
                   padding: "16px",
                   borderRadius: "8px",
                   marginBottom: "8px",
@@ -193,11 +188,11 @@ export const NotificationList: React.FC = () => {
                           width: 40, 
                           height: 40, 
                           borderRadius: "50%", 
-                          background: item.isRead ? "rgba(255,255,255,0.1)" : "var(--neon-cyan)",
+                          background: item.isRead ? "var(--border-color)" : "var(--accent-green)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: item.isRead ? "rgba(255,255,255,0.5)" : "#000"
+                          color: item.isRead ? "var(--text-secondary)" : "var(--text-primary)"
                         }}>
                           <BellOutlined style={{ fontSize: 18 }} />
                         </div>
@@ -230,11 +225,11 @@ export const NotificationList: React.FC = () => {
         onClose={() => setDetailVisible(false)}
         open={detailVisible}
         styles={{
-          content: { background: "#0f172a" },
-          header: { background: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.1)" },
-          body: { background: "#0f172a" }
+          content: { background: "var(--bg-secondary)" },
+          header: { background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-color)" },
+          body: { background: "var(--bg-secondary)" }
         }}
-        closeIcon={<CloseCircleOutlined style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }} />}
+        closeIcon={<CloseCircleOutlined style={{ color: "var(--text-secondary)", fontSize: 18 }} />}
       >
         {selectedLog && (
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -249,8 +244,8 @@ export const NotificationList: React.FC = () => {
               </Space>
               
               <div style={{ 
-                background: "rgba(255,255,255,0.05)", 
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "var(--border-color)", 
+                border: "1px solid var(--border-color)",
                 padding: "16px", 
                 borderRadius: "8px", 
                 whiteSpace: "pre-wrap",
@@ -261,7 +256,7 @@ export const NotificationList: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 16 }}>
+            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: 16 }}>
               <Space direction="vertical" size="small">
                 <Text type="secondary">
                   Thời gian: {new Date(selectedLog.createdAt).toLocaleString("vi-VN")}

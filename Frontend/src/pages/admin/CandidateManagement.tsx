@@ -12,10 +12,12 @@ import { useMajorStore } from "../../stores/major.store";
 import type { Candidate } from "../../types/candidate.types";
 import { formatDate, formatDateTime } from "../../utils/date";
 
+const { Option } = Select;
+
 export const CandidateManagement: React.FC = () => {
   const navigate = useNavigate();
   const { candidates } = useCandidateStore();
-  const { applications, getApplicationsByCandidateId } = useApplicationStore();
+  const { applications } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
 
@@ -142,14 +144,10 @@ export const CandidateManagement: React.FC = () => {
     }
   ];
 
-  // Selected candidate's applications
   const selectedCandidateApps = useMemo(() => {
     if (!selectedCandidate) return [];
-    if (getApplicationsByCandidateId) {
-      return getApplicationsByCandidateId(selectedCandidate.id);
-    }
     return safeApplications.filter(a => a.candidateId === selectedCandidate.id);
-  }, [selectedCandidate, getApplicationsByCandidateId, safeApplications]);
+  }, [selectedCandidate, safeApplications]);
 
   const appStats = useMemo(() => {
     return {
