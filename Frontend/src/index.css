@@ -1142,3 +1142,134 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* =========================================================
+   ADMIN DASHBOARD SAAS REDESIGN (LIGHT & DARK MODE)
+   ========================================================= */
+
+/* Default Light Mode */
+:root {
+  --admin-bg: #F4F7FB;
+  --admin-card: #FFFFFF;
+  --admin-border: #E2E8F0;
+  --admin-text-primary: #0F172A;
+  --admin-text-secondary: #64748B;
+  --admin-accent: #2563EB;
+  --admin-hover: #F1F5F9;
+  --admin-sidebar-hover: #E0E7FF;
+  --admin-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] {
+  --admin-bg: #071029;
+  --admin-card: #111827;
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-text-primary: #F8FAFC;
+  --admin-text-secondary: #94A3B8;
+  --admin-accent: #38BDF8;
+  --admin-hover: rgba(255, 255, 255, 0.05);
+  --admin-sidebar-hover: rgba(56, 189, 248, 0.1);
+  --admin-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Base Body Application */
+.dashboard-body {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Admin SaaS Cards */
+.saas-card {
+  background: var(--admin-card) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--admin-shadow) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.saas-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Admin Sidebar */
+.saas-sidebar {
+  background: var(--admin-card) !important;
+  border-right: 1px solid var(--admin-border) !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+/* Override AntD Menu in SaaS Sidebar */
+.saas-sidebar .ant-menu {
+  background: transparent !important;
+  color: var(--admin-text-secondary) !important;
+}
+.saas-sidebar .ant-menu-item {
+  border-radius: 12px !important;
+  margin: 8px 12px !important;
+  width: calc(100% - 24px) !important;
+  transition: all 0.3s ease;
+}
+.saas-sidebar .ant-menu-item:hover {
+  background: var(--admin-sidebar-hover) !important;
+  color: var(--admin-accent) !important;
+}
+.saas-sidebar .ant-menu-item-selected {
+  background: linear-gradient(90deg, var(--admin-sidebar-hover), transparent) !important;
+  color: var(--admin-accent) !important;
+  border-left: 3px solid var(--admin-accent) !important;
+}
+
+/* Admin Header */
+.saas-header {
+  background: var(--admin-card) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Modern Header Search */
+.saas-header-search .ant-input-affix-wrapper {
+  background: var(--admin-bg) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 12px !important;
+  color: var(--admin-text-primary) !important;
+}
+.saas-header-search .ant-input {
+  background: transparent !important;
+  color: var(--admin-text-primary) !important;
+}
+.saas-header-search .ant-input::placeholder {
+  color: var(--admin-text-secondary) !important;
+}
+
+/* Tables in Admin */
+.saas-card .ant-table {
+  background: transparent !important;
+  color: var(--admin-text-primary) !important;
+}
+.saas-card .ant-table-thead > tr > th {
+  background: var(--admin-bg) !important;
+  color: var(--admin-text-secondary) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+}
+.saas-card .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--admin-border) !important;
+}
+.saas-card .ant-table-tbody > tr:hover > td {
+  background: var(--admin-hover) !important;
+}
+
+/* Stats Value Override */
+.saas-card .ant-statistic-content-value {
+  color: var(--admin-text-primary) !important;
+}
+
+/* Filter Card Background */
+.saas-filter-card {
+  background: var(--admin-bg) !important;
+  border: 1px dashed var(--admin-border) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+}
