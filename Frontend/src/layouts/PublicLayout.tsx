@@ -12,7 +12,7 @@ export const PublicLayout: React.FC = () => {
   const isLogin = location.pathname === "/login";
   const isRegister = location.pathname === "/register";
   const isLanding = location.pathname === "/";
-  const isDarkTheme = isLanding || isLogin || isRegister;
+  const isDarkTheme = isLanding;
 
   // Add a class to body when on landing or auth pages to apply dark mode specifically
   useEffect(() => {
@@ -79,24 +79,20 @@ export const PublicLayout: React.FC = () => {
           <AppLogo />
         </div>
         <div style={{ display: "flex", gap: "16px" }}>
-          {!isLogin && (
-            <Button 
-              type={isDarkTheme ? "text" : "default"} 
-              onClick={() => navigate("/login")}
-              style={isDarkTheme ? { color: "white" } : {}}
-            >
-              Đăng nhập
-            </Button>
-          )}
-          {!isRegister && (
-            <Button 
-              className={isDarkTheme ? "btn-glow" : ""}
-              type={isDarkTheme ? "default" : "primary"} 
-              onClick={() => navigate("/register")}
-            >
-              Đăng ký
-            </Button>
-          )}
+          <Button 
+            type={isLogin ? "primary" : (isDarkTheme ? "text" : "default")} 
+            onClick={() => navigate("/login")}
+            style={isDarkTheme && !isLogin ? { color: "white" } : {}}
+          >
+            Đăng nhập
+          </Button>
+          <Button 
+            type={isRegister ? "primary" : (isDarkTheme ? "default" : "primary")} 
+            onClick={() => navigate("/register")}
+            style={isDarkTheme && !isRegister ? { color: "black" } : {}}
+          >
+            Đăng ký
+          </Button>
         </div>
       </Header>
       

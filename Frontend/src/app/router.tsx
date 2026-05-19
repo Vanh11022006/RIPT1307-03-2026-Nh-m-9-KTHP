@@ -8,8 +8,7 @@ import { RoleBasedRoute } from "../components/layout/RoleBasedRoute";
 
 // Public Pages
 import { LandingPage } from "../pages/public/LandingPage";
-import { LoginPage } from "../pages/public/LoginPage";
-import { RegisterPage } from "../pages/public/RegisterPage";
+import { AuthPage } from "../pages/public/AuthPage";
 
 // Candidate Pages
 import { CandidateDashboard } from "../pages/candidate/Dashboard";
@@ -43,8 +42,8 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <LandingPage /> },
-      { path: "login", element: <LoginPage /> },
-      { path: "register", element: <RegisterPage /> },
+      { path: "login", element: <AuthPage /> },
+      { path: "register", element: <AuthPage /> },
       { path: "universities", element: <UniversityList /> },
       { path: "universities/:id", element: <UniversityDetail /> },
     ],

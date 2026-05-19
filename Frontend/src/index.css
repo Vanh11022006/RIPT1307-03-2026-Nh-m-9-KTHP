@@ -1056,3 +1056,40 @@ body {
 }
 
 
+
+/* Force light mode inputs for Auth Pages */
+.auth-light-container .ant-input,
+.auth-light-container .ant-input-password {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important; /* bo tròn hơn 1 chút */
+}
+
+.auth-light-container .ant-input::placeholder,
+.auth-light-container .ant-input-password input::placeholder {
+  color: #9ca3af !important;
+}
+
+.auth-light-container .ant-input-prefix {
+  color: #6b7280 !important;
+}
+
+.auth-light-container .ant-btn {
+  border-radius: 12px !important; /* bo tròn hơn 1 chút */
+}
+
+/* Override global dark mode for Auth Typography and Buttons */
+.auth-light-container .ant-typography,
+.auth-light-container .ant-typography strong {
+  color: #1f2937 !important;
+}
+
+.auth-light-container .ant-btn-primary {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.auth-light-container .ant-btn-primary:hover {
+  background: #1d4ed8 !important;
+}
