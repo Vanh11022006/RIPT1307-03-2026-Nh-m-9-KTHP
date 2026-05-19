@@ -128,12 +128,7 @@ export const AuthPage: React.FC = () => {
                     
                     <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 4 }}>
                       <Text style={{ color: "#6b7280", fontSize: 14 }}>Chưa có tài khoản?</Text>
-                      <Link to="/register" onClick={(e) => {
-                        if (window.innerWidth >= 768) {
-                          e.preventDefault();
-                          registerForm.getFieldInstance("fullName")?.focus();
-                        }
-                      }} style={{ color: "#2563eb", fontWeight: 600, fontSize: 14 }}>
+                      <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14 }}>
                         Đăng ký ngay
                       </Link>
                     </div>
@@ -208,12 +203,7 @@ export const AuthPage: React.FC = () => {
 
                     <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 4 }}>
                       <Text style={{ color: "#6b7280", fontSize: 14 }}>Đã có tài khoản?</Text>
-                      <Link to="/login" onClick={(e) => {
-                        if (window.innerWidth >= 768) {
-                          e.preventDefault();
-                          loginForm.getFieldInstance("email")?.focus();
-                        }
-                      }} style={{ color: "#2563eb", fontWeight: 600, fontSize: 14 }}>
+                      <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14 }}>
                         Đăng nhập ngay
                       </Link>
                     </div>
