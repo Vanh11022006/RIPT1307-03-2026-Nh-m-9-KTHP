@@ -74,13 +74,6 @@ export const UniversityList: React.FC = () => {
               allowClear
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{
-                color: '#1e293b',
-                fontSize: 14,
-                textIndent: 0,
-                opacity: 1,
-                caretColor: '#111827'
-              }}
             />
           </Col>
           <Col xs={24} sm={8} md={6}>
@@ -122,15 +115,15 @@ export const UniversityList: React.FC = () => {
                   <div style={{ 
                     width: 48, 
                     height: 48, 
-                    borderRadius: 8, 
-                    background: "#f0f2f5", 
+                    borderRadius: 12, 
+                    background: "rgba(16, 185, 129, 0.1)", 
                     display: "flex", 
                     alignItems: "center", 
                     justifyContent: "center",
                     marginRight: 16,
                     flexShrink: 0
                   }}>
-                    <BankOutlined style={{ fontSize: 24, color: "#1677ff" }} />
+                    <BankOutlined style={{ fontSize: 24, color: "#10b981" }} />
                   </div>
                   <div>
                     <Title level={5} style={{ margin: 0, lineHeight: 1.4 }}>

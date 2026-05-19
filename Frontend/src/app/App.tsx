@@ -9,6 +9,8 @@ import { useMajorStore } from "../stores/major.store";
 import { useAdmissionRoundStore } from "../stores/admissionRound.store";
 import { useSubjectGroupStore } from "../stores/subjectGroup.store";
 import { useCandidateStore } from "../stores/candidate.store";
+import { useTheme } from "../contexts/ThemeContext";
+import { theme as antTheme } from "antd";
 
 export const App: React.FC = () => {
   const { loadCurrentUserFromStorage, currentUser } = useAuthStore();
@@ -17,6 +19,7 @@ export const App: React.FC = () => {
   const { getAdmissionRounds } = useAdmissionRoundStore();
   const { getAllSubjectGroups } = useSubjectGroupStore();
   const { getProfile } = useCandidateStore();
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     loadCurrentUserFromStorage();
@@ -39,10 +42,26 @@ export const App: React.FC = () => {
     <ConfigProvider
       locale={viVN}
       theme={{
+        algorithm: isDarkMode ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {
-          colorPrimary: "#1677ff",
-          borderRadius: 6,
+          colorPrimary: "#10b981", // Eco-friendly green
+          borderRadius: 8,
+          colorBgContainer: isDarkMode ? "#0f172a" : "#ffffff", // slate-900 or white
+          colorBgElevated: isDarkMode ? "#1e293b" : "#ffffff", // slate-800 or white
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         },
+        components: {
+          Card: {
+            colorBgContainer: isDarkMode ? "rgba(30, 41, 59, 0.7)" : "#ffffff",
+            colorBorderSecondary: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#f0f0f0",
+            boxShadowTertiary: isDarkMode ? "0 4px 20px rgba(0, 0, 0, 0.4)" : "0 4px 20px rgba(0, 0, 0, 0.05)",
+          },
+          Layout: {
+            bodyBg: "transparent",
+            headerBg: "transparent",
+            siderBg: isDarkMode ? "rgba(15, 23, 42, 0.8)" : "rgba(255, 255, 255, 0.8)",
+          }
+        }
       }}
     >
       <RouterProvider router={router} />

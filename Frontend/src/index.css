@@ -1,29 +1,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-:root {
-  /* Modern Typography */
+:root, [data-theme="light"] {
+  /* Typography */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   
-  /* Landing Page Neon Variables */
-  --space-dark: #07090F;
-  --neon-cyan: #00F0FF;
-  --neon-purple: #8A2BE2;
-  --neon-blue: #1677ff;
-  --glass-bg: rgba(255, 255, 255, 0.03);
+  /* Light Mode Colors */
+  --bg-primary: #f8fafc; /* slate-50 */
+  --bg-secondary: #f1f5f9; /* slate-100 */
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #475569; /* slate-600 */
+  --border-color: #e2e8f0; /* slate-200 */
+  
+  /* Brand/Accent Colors */
+  --accent-green: #10b981;
+  --accent-blue: #3b82f6;
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode Colors */
+  --bg-primary: #020617; /* slate-950 */
+  --bg-secondary: #0f172a; /* slate-900 */
+  --text-primary: #f8fafc; /* slate-50 */
+  --text-secondary: #94a3b8; /* slate-400 */
+  --border-color: #1e293b; /* slate-800 */
+  
+  --glass-bg: rgba(15, 23, 42, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
-  
-  /* Dashboard Variables (Cyber Dark Mode) */
-  --dashboard-bg: var(--space-dark);
-  --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --glass-header-bg: rgba(7, 9, 15, 0.5);
-  
-  color-scheme: light dark;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
 }
 
 body {
@@ -31,7 +44,9 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f5f7fa; /* Default light mode for app */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Base root wrapper */
@@ -190,7 +205,7 @@ body {
    ========================================================= */
 
 /* Cards (Holographic Glassmorphism) */
-.dashboard-body .ant-card {
+[data-theme="dark"] .ant-card {
   border-radius: 16px !important;
   background: var(--glass-bg) !important;
   backdrop-filter: blur(16px);
@@ -201,34 +216,34 @@ body {
   color: #fff !important;
 }
 
-.dashboard-body .ant-card:hover {
+[data-theme="dark"] .ant-card:hover {
   transform: translateY(-5px);
   border-color: rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0 12px 40px 0 rgba(0, 240, 255, 0.1) !important;
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-.dashboard-body .ant-card-head {
+[data-theme="dark"] .ant-card-head {
   border-bottom: 1px solid var(--glass-border) !important;
   padding: 0 24px !important;
   color: #fff !important;
 }
 
-.dashboard-body .ant-card-head-title {
+[data-theme="dark"] .ant-card-head-title {
   color: #fff !important;
 }
 
 /* Tables (Holographic Stealth Mode) */
-.dashboard-body .ant-table-wrapper {
+[data-theme="dark"] .ant-table-wrapper {
   background: transparent !important;
 }
 
-.dashboard-body .ant-table {
+[data-theme="dark"] .ant-table {
   background: transparent !important;
   color: #e2e8f0 !important;
 }
 
-.dashboard-body .ant-table-thead > tr > th {
+[data-theme="dark"] .ant-table-thead > tr > th {
   background: rgba(255, 255, 255, 0.03) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #94a3b8 !important;
@@ -238,38 +253,38 @@ body {
   letter-spacing: 0.5px;
 }
 
-.dashboard-body .ant-table-thead > tr > th::before {
+[data-theme="dark"] .ant-table-thead > tr > th::before {
   display: none !important; /* Hide vertical separator */
 }
 
-.dashboard-body .ant-table-tbody > tr > td {
+[data-theme="dark"] .ant-table-tbody > tr > td {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
   transition: background 0.2s, box-shadow 0.2s;
 }
 
-.dashboard-body .ant-table-tbody > tr:hover > td {
+[data-theme="dark"] .ant-table-tbody > tr:hover > td {
   background: rgba(0, 240, 255, 0.05) !important;
 }
 
-.dashboard-body .ant-table-tbody > tr:hover {
+[data-theme="dark"] .ant-table-tbody > tr:hover {
   box-shadow: inset 2px 0 0 var(--neon-cyan);
 }
 
-.dashboard-body .ant-pagination-item a,
-.dashboard-body .ant-pagination-item-link {
+[data-theme="dark"] .ant-pagination-item a,
+[data-theme="dark"] .ant-pagination-item-link {
   color: #94a3b8 !important;
 }
 
-.dashboard-body .ant-pagination-item-active {
+[data-theme="dark"] .ant-pagination-item-active {
   background: transparent !important;
   border-color: var(--neon-cyan) !important;
 }
-.dashboard-body .ant-pagination-item-active a {
+[data-theme="dark"] .ant-pagination-item-active a {
   color: var(--neon-cyan) !important;
 }
 
 /* Tags (Neon Glow) */
-.dashboard-body .ant-tag {
+[data-theme="dark"] .ant-tag {
   border-radius: 100px !important;
   padding: 2px 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -279,28 +294,28 @@ body {
   letter-spacing: 0.2px;
 }
 
-.dashboard-body .ant-tag-success {
+[data-theme="dark"] .ant-tag-success {
   background: rgba(16, 185, 129, 0.1) !important;
   color: #10b981 !important;
   border-color: rgba(16, 185, 129, 0.5) !important;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
 }
 
-.dashboard-body .ant-tag-processing, .dashboard-body .ant-tag-blue {
+[data-theme="dark"] .ant-tag-processing, [data-theme="dark"] .ant-tag-blue {
   background: rgba(0, 240, 255, 0.1) !important;
   color: var(--neon-cyan) !important;
   border-color: rgba(0, 240, 255, 0.5) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
 }
 
-.dashboard-body .ant-tag-warning {
+[data-theme="dark"] .ant-tag-warning {
   background: rgba(245, 158, 11, 0.1) !important;
   color: #f59e0b !important;
   border-color: rgba(245, 158, 11, 0.5) !important;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
 }
 
-.dashboard-body .ant-tag-error {
+[data-theme="dark"] .ant-tag-error {
   background: rgba(239, 68, 68, 0.1) !important;
   color: #ef4444 !important;
   border-color: rgba(239, 68, 68, 0.5) !important;
@@ -308,33 +323,33 @@ body {
 }
 
 /* Buttons */
-.dashboard-body .ant-btn {
+[data-theme="dark"] .ant-btn {
   border-radius: 8px !important;
   box-shadow: none !important;
   transition: all 0.3s ease !important;
 }
 
-.dashboard-body .ant-btn:not(.ant-btn-primary):not(.ant-btn-text) {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary):not(.ant-btn-text) {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: #e2e8f0 !important;
 }
 
-.dashboard-body .ant-btn:not(.ant-btn-primary):not(.ant-btn-text):hover {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary):not(.ant-btn-text):hover {
   background: rgba(0, 240, 255, 0.1) !important;
   color: var(--neon-cyan) !important;
   border-color: var(--neon-cyan) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
 }
 
-.dashboard-body .ant-btn-primary {
+[data-theme="dark"] .ant-btn-primary {
   background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue)) !important;
   border: none !important;
   color: white !important;
   box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2) !important;
 }
 
-.dashboard-body .ant-btn-primary:hover {
+[data-theme="dark"] .ant-btn-primary:hover {
   box-shadow: 0 6px 20px rgba(0, 240, 255, 0.4) !important;
   transform: translateY(-1px);
 }
@@ -448,21 +463,21 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.dashboard-body .ant-table-tbody > tr {
+[data-theme="dark"] .ant-table-tbody > tr {
   animation: staggerFadeUpRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-.dashboard-body .ant-table-tbody > tr:nth-child(1) { animation-delay: 0.05s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(2) { animation-delay: 0.1s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(3) { animation-delay: 0.15s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(4) { animation-delay: 0.2s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(5) { animation-delay: 0.25s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(6) { animation-delay: 0.3s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(7) { animation-delay: 0.35s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(8) { animation-delay: 0.4s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(9) { animation-delay: 0.45s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(10) { animation-delay: 0.5s; }
-.dashboard-body .ant-table-tbody > tr:nth-child(n+11) { animation-delay: 0.5s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(1) { animation-delay: 0.05s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(2) { animation-delay: 0.1s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(3) { animation-delay: 0.15s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(4) { animation-delay: 0.2s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(5) { animation-delay: 0.25s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(6) { animation-delay: 0.3s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(7) { animation-delay: 0.35s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(8) { animation-delay: 0.4s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(9) { animation-delay: 0.45s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(10) { animation-delay: 0.5s; }
+[data-theme="dark"] .ant-table-tbody > tr:nth-child(n+11) { animation-delay: 0.5s; }
 
 /* Ant Design specific overrides for dark form */
 .dark-form .ant-form-item-label > label {
@@ -493,33 +508,33 @@ body {
    DASHBOARD MASTERPIECE CSS (Floating Glass)
    ========================================================= */
 
-.dashboard-body {
+[data-theme="dark"] {
   background-color: var(--dashboard-bg) !important;
   color: rgba(255, 255, 255, 0.85);
   min-height: 100vh;
 }
 
 /* Dashboard Global Typography Fixes */
-.dashboard-body .ant-typography,
-.dashboard-body .ant-typography strong,
-.dashboard-body .ant-select-selection-item,
-.dashboard-body .ant-select-item-option-content,
-.dashboard-body .ant-table-cell {
+[data-theme="dark"] .ant-typography,
+[data-theme="dark"] .ant-typography strong,
+[data-theme="dark"] .ant-select-selection-item,
+[data-theme="dark"] .ant-select-item-option-content,
+[data-theme="dark"] .ant-table-cell {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-.dashboard-body .ant-page-header-heading-title {
+[data-theme="dark"] .ant-page-header-heading-title {
   color: #fff !important;
 }
 
-.dashboard-body .ant-breadcrumb li:last-child {
+[data-theme="dark"] .ant-breadcrumb li:last-child {
   color: #fff !important;
 }
 
-.dashboard-body .ant-breadcrumb a {
+[data-theme="dark"] .ant-breadcrumb a {
   color: rgba(255, 255, 255, 0.6) !important;
 }
-.dashboard-body .ant-breadcrumb a:hover {
+[data-theme="dark"] .ant-breadcrumb a:hover {
   color: var(--neon-cyan) !important;
 }
 
@@ -579,87 +594,87 @@ body {
 }
 
 /* Fix Input/Select components inside dashboard */
-.dashboard-body .ant-input,
-.dashboard-body .ant-select-selector {
+[data-theme="dark"] .ant-input,
+[data-theme="dark"] .ant-select-selector {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
   backdrop-filter: blur(4px);
 }
 
-.dashboard-body .ant-input:hover, 
-.dashboard-body .ant-input:focus,
-.dashboard-body .ant-select:hover .ant-select-selector,
-.dashboard-body .ant-select-focused .ant-select-selector {
+[data-theme="dark"] .ant-input:hover, 
+[data-theme="dark"] .ant-input:focus,
+[data-theme="dark"] .ant-select:hover .ant-select-selector,
+[data-theme="dark"] .ant-select-focused .ant-select-selector {
   border-color: var(--neon-cyan) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.dashboard-body .ant-input::placeholder,
-.dashboard-body .ant-select-selection-placeholder {
+[data-theme="dark"] .ant-input::placeholder,
+[data-theme="dark"] .ant-select-selection-placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
-.dashboard-body .ant-select-dropdown {
+[data-theme="dark"] .ant-select-dropdown {
   background: #1e293b !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.dashboard-body .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+[data-theme="dark"] .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
   background: rgba(0, 240, 255, 0.1) !important;
 }
-.dashboard-body .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+[data-theme="dark"] .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
   background: rgba(0, 240, 255, 0.2) !important;
   color: var(--neon-cyan) !important;
   font-weight: 600;
 }
 
 /* Cyber Steps Timeline */
-.dashboard-body .cyber-steps .ant-steps-item-title {
+[data-theme="dark"] .cyber-steps .ant-steps-item-title {
   color: #fff !important;
   font-weight: 600 !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-description {
+[data-theme="dark"] .cyber-steps .ant-steps-item-description {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-process .ant-steps-item-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-process .ant-steps-item-icon {
   background: rgba(0, 240, 255, 0.2) !important;
   border-color: var(--neon-cyan) !important;
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.5) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-process .ant-steps-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-process .ant-steps-icon {
   color: var(--neon-cyan) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-finish .ant-steps-item-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-finish .ant-steps-item-icon {
   background: rgba(16, 185, 129, 0.2) !important;
   border-color: #10b981 !important;
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
   color: #10b981 !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-error .ant-steps-item-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-error .ant-steps-item-icon {
   background: rgba(239, 68, 68, 0.2) !important;
   border-color: #ef4444 !important;
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-error .ant-steps-item-icon > .ant-steps-icon {
+[data-theme="dark"] .cyber-steps .ant-steps-item-error .ant-steps-item-icon > .ant-steps-icon {
   color: #ef4444 !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-tail::after {
+[data-theme="dark"] .cyber-steps .ant-steps-item-tail::after {
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.dashboard-body .cyber-steps .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-tail::after {
+[data-theme="dark"] .cyber-steps .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-tail::after {
   background-color: #10b981 !important;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.5) !important;
 }
@@ -669,93 +684,93 @@ body {
    ========================================================= */
 
 /* Base Headings */
-.dashboard-body h1, .dashboard-body h2, .dashboard-body h3, .dashboard-body h4, .dashboard-body h5, .dashboard-body h6 {
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
   color: #fff !important;
 }
 
 /* Descriptions Component (e.g., Application Detail) */
-.dashboard-body .ant-descriptions-item-label {
+[data-theme="dark"] .ant-descriptions-item-label {
   background-color: rgba(255, 255, 255, 0.04) !important;
   color: rgba(255, 255, 255, 0.6) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
-.dashboard-body .ant-descriptions-item-content {
+[data-theme="dark"] .ant-descriptions-item-content {
   color: #fff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   background-color: transparent !important;
 }
-.dashboard-body .ant-descriptions-view {
+[data-theme="dark"] .ant-descriptions-view {
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Forms */
-.dashboard-body .ant-form-item-label > label {
+[data-theme="dark"] .ant-form-item-label > label {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* Disabled Input/Select Fixes */
-.dashboard-body .ant-input-disabled,
-.dashboard-body .ant-select-disabled .ant-select-selector {
+[data-theme="dark"] .ant-input-disabled,
+[data-theme="dark"] .ant-select-disabled .ant-select-selector {
   background: rgba(255, 255, 255, 0.05) !important;
   color: rgba(255, 255, 255, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   cursor: not-allowed !important;
 }
 
-.dashboard-body .ant-input-disabled::placeholder,
-.dashboard-body .ant-select-disabled .ant-select-selection-placeholder {
+[data-theme="dark"] .ant-input-disabled::placeholder,
+[data-theme="dark"] .ant-select-disabled .ant-select-selection-placeholder {
   color: rgba(255, 255, 255, 0.3) !important;
 }
 
-.dashboard-body .ant-select-disabled .ant-select-arrow {
+[data-theme="dark"] .ant-select-disabled .ant-select-arrow {
   color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Force visible-search text to be visible even inside dashboard-body (override stronger rules) */
 
 /* List / Empty / Result Components */
-.dashboard-body .ant-empty-description,
-.dashboard-body .ant-result-title,
-.dashboard-body .ant-result-subtitle {
+[data-theme="dark"] .ant-empty-description,
+[data-theme="dark"] .ant-result-title,
+[data-theme="dark"] .ant-result-subtitle {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* Alerts - Keep text legible against light alert backgrounds, or make alerts dark */
-.dashboard-body .ant-alert {
+[data-theme="dark"] .ant-alert {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
-.dashboard-body .ant-alert-success {
+[data-theme="dark"] .ant-alert-success {
   background-color: rgba(16, 185, 129, 0.1) !important;
   border-color: rgba(16, 185, 129, 0.3) !important;
 }
-.dashboard-body .ant-alert-success .ant-alert-message, 
-.dashboard-body .ant-alert-success .ant-alert-description {
+[data-theme="dark"] .ant-alert-success .ant-alert-message, 
+[data-theme="dark"] .ant-alert-success .ant-alert-description {
   color: #10b981 !important;
 }
-.dashboard-body .ant-alert-error {
+[data-theme="dark"] .ant-alert-error {
   background-color: rgba(239, 68, 68, 0.1) !important;
   border-color: rgba(239, 68, 68, 0.3) !important;
 }
-.dashboard-body .ant-alert-error .ant-alert-message, 
-.dashboard-body .ant-alert-error .ant-alert-description {
+[data-theme="dark"] .ant-alert-error .ant-alert-message, 
+[data-theme="dark"] .ant-alert-error .ant-alert-description {
   color: #ef4444 !important;
 }
-.dashboard-body .ant-alert-info {
+[data-theme="dark"] .ant-alert-info {
   background-color: rgba(0, 240, 255, 0.1) !important;
   border-color: rgba(0, 240, 255, 0.3) !important;
 }
-.dashboard-body .ant-alert-info .ant-alert-message, 
-.dashboard-body .ant-alert-info .ant-alert-description {
+[data-theme="dark"] .ant-alert-info .ant-alert-message, 
+[data-theme="dark"] .ant-alert-info .ant-alert-description {
   color: var(--neon-cyan) !important;
 }
 
 /* Inner Cards (e.g. Điểm thành phần) */
-.dashboard-body .ant-card-type-inner {
+[data-theme="dark"] .ant-card-type-inner {
   background: rgba(0, 0, 0, 0.2) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
-.dashboard-body .ant-card-type-inner .ant-card-head {
+[data-theme="dark"] .ant-card-type-inner .ant-card-head {
   background: rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -927,7 +942,7 @@ body {
 :root .ant-modal .ant-modal-content,
 .ant-modal-content, 
 .ant-drawer-content,
-.dashboard-body .ant-drawer-content {
+[data-theme="dark"] .ant-drawer-content {
   background: #0f172a !important;
   color: #fff !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -997,18 +1012,18 @@ body {
 }
 
 /* Card Actions Fix (Results Page) */
-.dashboard-body .ant-card-actions {
+[data-theme="dark"] .ant-card-actions {
   background: rgba(0, 0, 0, 0.2) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
-.dashboard-body .ant-card-actions > li {
+[data-theme="dark"] .ant-card-actions > li {
   border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
   margin: 0 !important;
 }
-.dashboard-body .ant-card-actions > li > span {
+[data-theme="dark"] .ant-card-actions > li > span {
   color: rgba(255, 255, 255, 0.6) !important;
 }
-.dashboard-body .ant-card-actions > li > span:hover {
+[data-theme="dark"] .ant-card-actions > li > span:hover {
   color: #fff !important;
 }
 

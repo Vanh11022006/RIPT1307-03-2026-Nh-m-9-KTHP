@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Layout, Menu, Dropdown, Avatar, Space, Typography } from "antd";
+import React, { useState } from "react";
+import { Layout, Menu, Dropdown, Avatar, Space } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
   DashboardOutlined, 
@@ -9,26 +9,23 @@ import {
   FolderOpenOutlined, 
   CheckCircleOutlined,
   LogoutOutlined,
-  BellOutlined
+  BellOutlined,
+  BulbOutlined,
+  MoonOutlined
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { Header, Sider, Content } = Layout;
-const { Title, Text } = Typography;
 
 export const CandidateLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
+
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout } = useAuthStore();
-
-  useEffect(() => {
-    document.body.classList.add("dashboard-body");
-    return () => {
-      document.body.classList.remove("dashboard-body");
-    };
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -93,52 +90,54 @@ export const CandidateLayout: React.FC = () => {
               alignItems: "center", 
               justifyContent: "center" 
             }}>
-              <BankOutlined style={{ fontSize: 24, color: "white" }} />
+              <BankOutlined style={{ fontSize: 24,  }} />
             </div>
             {!collapsed && <span className="glowing-text" style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "-0.5px" }}>UniAdmission</span>}
           </div>
         </div>
         <Menu 
-          theme="light" 
+          theme={isDarkMode ? "dark" : "light"}
           mode="inline" 
           selectedKeys={[location.pathname]} 
           items={menuItems} 
           onClick={({ key }) => navigate(key)}
-          style={{ borderRight: "none", padding: "0 12px" }}
+          style={{ borderRight: "none", padding: "0 12px", background: "transparent" }}
         />
       </Sider>
       
       <Layout style={{ background: "transparent" }}>
         <Header className="glass-header" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "0 24px" }}>
-          <Dropdown menu={userMenu} placement="bottomRight" arrow>
-            <Space style={{ cursor: "pointer", padding: "4px 12px", borderRadius: "30px", transition: "background 0.3s" }} className="hover-bg-gray">
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
-              <span style={{ fontWeight: 600, color: "#ffffff" }}>{currentUser?.fullName}</span>
-            </Space>
-          </Dropdown>
+          <Space size="large">
+            {/* Nút Toggle Sáng/Tối */}
+            <div 
+              onClick={toggleTheme}
+              style={{ 
+                cursor: "pointer", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                color: isDarkMode ? "#eab308" : "#64748b",
+                transition: "all 0.3s"
+              }}
+            >
+              {isDarkMode ? <BulbOutlined style={{ fontSize: 18 }} /> : <MoonOutlined style={{ fontSize: 18 }} />}
+            </div>
+
+            <Dropdown menu={userMenu} placement="bottomRight" arrow>
+              <Space style={{ cursor: "pointer", padding: "4px 12px", borderRadius: "30px", transition: "background 0.3s" }} className="hover-bg-gray">
+                <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+                <span style={{ fontWeight: 600, color: isDarkMode ? "#ffffff" : "#1f2937" }}>{currentUser?.fullName}</span>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
         
         <Content style={{ margin: "24px 16px", display: "flex", flexDirection: "column" }}>
           {/* Welcome Banner */}
-          <div style={{ 
-            background: "linear-gradient(120deg, rgba(16, 185, 129, 0.15) 0%, rgba(0, 240, 255, 0.15) 100%)", 
-            border: "1px solid rgba(0, 240, 255, 0.2)",
-            borderRadius: "20px", 
-            padding: "32px 40px",
-            marginBottom: "24px",
-            boxShadow: "0 0 20px rgba(0, 240, 255, 0.1)",
-            position: "relative",
-            overflow: "hidden"
-          }}>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <Title level={3} style={{ color: "#fff", margin: 0, textShadow: "0 2px 10px rgba(0,240,255,0.3)" }}>Xin chào, {currentUser?.fullName}! 🎓</Title>
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: "16px" }}>Cánh cửa đại học mơ ước đang rộng mở. Hãy theo dõi tiến trình hồ sơ của bạn tại đây.</Text>
-            </div>
-            {/* Abstract background shapes for banner */}
-            <div style={{ position: "absolute", top: "-50px", right: "-50px", width: "200px", height: "200px", background: "rgba(0, 240, 255, 0.2)", borderRadius: "50%", filter: "blur(40px)" }}></div>
-            <div style={{ position: "absolute", bottom: "-50px", right: "100px", width: "150px", height: "150px", background: "rgba(16, 185, 129, 0.2)", borderRadius: "50%", filter: "blur(40px)" }}></div>
-          </div>
-
           <div style={{ flex: 1 }}>
             <Outlet />
           </div>
