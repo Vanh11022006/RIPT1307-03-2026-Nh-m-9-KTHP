@@ -1093,3 +1093,52 @@ body {
 .auth-light-container .ant-btn-primary:hover {
   background: #1d4ed8 !important;
 }
+
+/* Soft Navy Landing Theme Updates */
+.landing-body {
+  background-color: #0F172A !important;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 40%) !important;
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.5) !important;
+  border: 1px solid rgba(148, 163, 184, 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 15px rgba(56, 189, 248, 0.15) !important;
+}
+
+.btn-glow {
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3) !important;
+  background: linear-gradient(90deg, #0284C7, #2563EB) !important;
+  border: none !important;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5) !important;
+}
+
+.btn-glow-purple {
+  background: linear-gradient(90deg, #7C3AED, #4F46E5) !important;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.3) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.btn-glow-purple:hover {
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.5) !important;
+}
+
+.glowing-text {
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.4) !important;
+  background: linear-gradient(90deg, #38BDF8, #818CF8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
