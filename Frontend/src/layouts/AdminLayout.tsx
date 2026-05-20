@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Dropdown, Avatar, Space, Typography, Input, Button, Badge } from "antd";
+import { Layout, Menu, Dropdown, Avatar, Space, Button, Badge } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
   DashboardOutlined, 
@@ -12,7 +12,6 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   BellOutlined,
-  SearchOutlined,
   BulbOutlined,
   BulbFilled
 } from "@ant-design/icons";
@@ -21,7 +20,7 @@ import { useAuthStore } from "../stores/auth.store";
 import { useTheme } from "../contexts/ThemeContext";
 
 const { Header, Sider, Content } = Layout;
-const { Text } = Typography;
+
 
 export const AdminLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -161,23 +160,11 @@ export const AdminLayout: React.FC = () => {
             background: isDarkMode ? "rgba(17, 24, 39, 0.7)" : "rgba(255, 255, 255, 0.8)",
           }}
         >
-          {/* LEFT: Breadcrumb-like title */}
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <Text style={{ color: "var(--admin-text-secondary)", fontSize: "14px" }}>Dashboard</Text>
-            <span style={{ margin: "0 8px", color: "var(--admin-border)" }}>/</span>
-            <Text strong style={{ color: "var(--admin-text-primary)", fontSize: "14px" }}>Admin</Text>
-          </div>
+          {/* LEFT: Spacer to maintain layout */}
+          <div style={{ display: "flex", alignItems: "center" }}></div>
 
-          {/* CENTER: Search Bar */}
-          <div className="saas-header-search" style={{ flex: 1, maxWidth: 400, margin: "0 24px" }}>
-            <Input 
-              prefix={<SearchOutlined style={{ color: "var(--admin-text-secondary)" }} />}
-              placeholder="Tìm kiếm trường, ngành, hồ sơ..." 
-              size="large"
-              style={{ width: "100%" }}
-              bordered={false}
-            />
-          </div>
+          {/* CENTER: Spacer */}
+          <div style={{ flex: 1 }}></div>
 
           {/* RIGHT: Actions */}
           <Space size="large" align="center">
@@ -188,13 +175,7 @@ export const AdminLayout: React.FC = () => {
               style={{ color: "var(--admin-text-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}
             />
             
-            <Badge dot color="#2563EB">
-              <Button 
-                type="text" 
-                icon={<BellOutlined style={{ fontSize: 18 }} />} 
-                style={{ color: "var(--admin-text-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}
-              />
-            </Badge>
+
 
             <Dropdown menu={userMenu} placement="bottomRight" arrow trigger={['click']}>
               <Space style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "30px", border: "1px solid var(--admin-border)", background: "var(--admin-bg)" }}>

@@ -151,44 +151,60 @@ export const NotificationLogList: React.FC = () => {
       </div>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: "rgba(255,255,255,0.05)" }}>
-            <Statistic 
-              title={<span style={{ color: "rgba(255,255,255,0.7)" }}>Tổng thông báo</span>}
-              value={totalLogs} 
-              prefix={<BellOutlined style={{ color: "#fff" }} />} 
-              valueStyle={{ color: "#fff" }}
-            />
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)", borderRadius: 20, boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.4)" }} bodyStyle={{ padding: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 64, height: 64, background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}>
+                <BellOutlined style={{ fontSize: 28, color: "#fff" }} />
+              </div>
+              <Statistic 
+                title={<span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 16 }}>Tổng thông báo</span>}
+                value={totalLogs} 
+                valueStyle={{ color: "#fff", fontWeight: 800, fontSize: "32px", lineHeight: 1 }}
+              />
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: "rgba(16,185,129,0.05)" }}>
-            <Statistic 
-              title={<span style={{ color: "rgba(255,255,255,0.7)" }}>Đã gửi</span>}
-              value={sentLogs} 
-              prefix={<CheckCircleOutlined style={{ color: "#10b981" }} />} 
-              valueStyle={{ color: '#10b981' }} 
-            />
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ background: "linear-gradient(135deg, #10B981 0%, #047857 100%)", borderRadius: 20, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)" }} bodyStyle={{ padding: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 64, height: 64, background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}>
+                <CheckCircleOutlined style={{ fontSize: 28, color: "#fff" }} />
+              </div>
+              <Statistic 
+                title={<span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 16 }}>Đã gửi</span>}
+                value={sentLogs} 
+                valueStyle={{ color: "#fff", fontWeight: 800, fontSize: "32px", lineHeight: 1 }}
+              />
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: "rgba(250,173,20,0.05)" }}>
-            <Statistic 
-              title={<span style={{ color: "rgba(255,255,255,0.7)" }}>Chờ gửi</span>}
-              value={pendingLogs} 
-              prefix={<ClockCircleOutlined style={{ color: "#faad14" }} />} 
-              valueStyle={{ color: '#faad14' }} 
-            />
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ background: "linear-gradient(135deg, #F59E0B 0%, #B45309 100%)", borderRadius: 20, boxShadow: "0 10px 25px -5px rgba(245, 158, 11, 0.4)" }} bodyStyle={{ padding: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 64, height: 64, background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}>
+                <ClockCircleOutlined style={{ fontSize: 28, color: "#fff" }} />
+              </div>
+              <Statistic 
+                title={<span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 16 }}>Chờ gửi</span>}
+                value={pendingLogs} 
+                valueStyle={{ color: "#fff", fontWeight: 800, fontSize: "32px", lineHeight: 1 }}
+              />
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: "rgba(239,68,68,0.05)" }}>
-            <Statistic 
-              title={<span style={{ color: "rgba(255,255,255,0.7)" }}>Gửi thất bại</span>}
-              value={failedLogs} 
-              prefix={<CloseCircleOutlined style={{ color: "#ef4444" }} />} 
-              valueStyle={{ color: '#ef4444' }} 
-            />
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ background: "linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)", borderRadius: 20, boxShadow: "0 10px 25px -5px rgba(239, 68, 68, 0.4)" }} bodyStyle={{ padding: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 64, height: 64, background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}>
+                <CloseCircleOutlined style={{ fontSize: 28, color: "#fff" }} />
+              </div>
+              <Statistic 
+                title={<span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 16 }}>Gửi thất bại</span>}
+                value={failedLogs} 
+                valueStyle={{ color: "#fff", fontWeight: 800, fontSize: "32px", lineHeight: 1 }}
+              />
+            </div>
           </Card>
         </Col>
       </Row>
