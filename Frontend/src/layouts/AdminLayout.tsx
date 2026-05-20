@@ -72,32 +72,6 @@ export const AdminLayout: React.FC = () => {
     ]
   };
 
-  // Modern SVG Icon for Graduation Cap
-  const ModernGraduationCap = () => (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="28" 
-      height="28" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="url(#grad1)" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#38BDF8", stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: "#818CF8", stopOpacity: 1 }} />
-        </linearGradient>
-      </defs>
-      <path d="M21.42 10.922a2 2 0 0 1-.01 3.016l-7.1 7.255a2 2 0 0 1-2.815 0l-7.1-7.255a2 2 0 0 1-.01-3.016l7.1-7.255a2 2 0 0 1 2.815 0l7.1 7.255z"/>
-      <path d="m14 18 4-4"/>
-      <path d="M7 10v4.5a2.5 2.5 0 0 0 5 0V10"/>
-      <path d="M22 10v6"/>
-    </svg>
-  );
-
   return (
     <Layout style={{ minHeight: "100vh", background: "transparent" }}>
       <Sider 
@@ -119,7 +93,7 @@ export const AdminLayout: React.FC = () => {
               justifyContent: "center",
               border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E2E8F0"
             }}>
-              <ModernGraduationCap />
+              <img src="/favicon.svg" alt="UniAdmission Logo" style={{ width: 28, height: 28 }} />
             </div>
             {!collapsed && (
               <span style={{ 
