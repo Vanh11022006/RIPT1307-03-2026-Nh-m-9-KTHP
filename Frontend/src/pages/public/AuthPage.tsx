@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Typography, message, Card, ConfigProvider, theme } from "antd";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { UserOutlined, LockOutlined, MailOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
-import { GraduationCap } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
 const { Title, Text } = Typography;
@@ -105,7 +104,7 @@ export const AuthPage: React.FC = () => {
             position: "relative"
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => navigate("/")}>
-              <GraduationCap size={36} color="white" />
+              <img src="/favicon.svg" alt="UniAdmission Logo" style={{ width: 36, height: 36 }} />
               <Title level={4} style={{ margin: 0, color: "white", fontWeight: 700 }}>UniAdmission</Title>
             </div>
           </div>
@@ -124,7 +123,7 @@ export const AuthPage: React.FC = () => {
                 bodyStyle={{ padding: "32px" }}
               >
                 <div style={{ textAlign: "center", marginBottom: 32 }}>
-                  <GraduationCap size={48} color="#2563eb" style={{ marginBottom: 16 }} />
+                  <img src="/favicon.svg" alt="UniAdmission Logo" style={{ width: 48, height: 48, marginBottom: 16 }} />
                   <Title level={3} style={{ margin: 0, color: "#111827", fontWeight: 700 }}>
                     {isForgotPassword ? "Quên mật khẩu" : isLogin ? "Đăng nhập UniAdmission" : "Đăng ký tài khoản"}
                   </Title>
