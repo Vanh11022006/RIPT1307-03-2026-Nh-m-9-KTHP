@@ -16,7 +16,7 @@ export const PublicLayout: React.FC = () => {
   const isLanding = location.pathname === "/";
   const isDarkTheme = isLanding;
 
-  if (isLogin) {
+  if (isLogin || isRegister) {
     return <Outlet />;
   }
 

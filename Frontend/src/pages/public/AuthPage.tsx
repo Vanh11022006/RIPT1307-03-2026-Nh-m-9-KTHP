@@ -19,6 +19,7 @@ export const AuthPage: React.FC = () => {
   const [registerForm] = Form.useForm();
 
   const isLogin = location.pathname === "/login";
+  const isRegister = location.pathname === "/register";
 
   // Scroll to respective form on mobile if accessed via direct URL
   useEffect(() => {
@@ -67,7 +68,7 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  if (isLogin) {
+  if (isLogin || isRegister) {
     return (
       <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm, token: { colorPrimary: '#2563eb', colorBgContainer: '#ffffff', colorText: '#1f2937', colorTextSecondary: '#4b5563', borderRadius: 12 } }}>
         <div style={{ 
@@ -101,66 +102,130 @@ export const AuthPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Center Login Card */}
+          {/* Center Card */}
           <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, width: "100%" }}>
-            <div style={{ width: "100%", maxWidth: 440 }}>
+            <div style={{ width: "100%", maxWidth: isLogin ? 440 : 640 }}>
               <Card 
-              bordered={false} 
-              style={{ 
-                borderRadius: 16, 
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                background: "rgba(255, 255, 255, 0.98)",
-                padding: "8px"
-              }}
-              bodyStyle={{ padding: "32px" }}
-            >
-              <div style={{ textAlign: "center", marginBottom: 32 }}>
-                <GraduationCap size={48} color="#2563eb" style={{ marginBottom: 16 }} />
-                <Title level={3} style={{ margin: 0, color: "#111827", fontWeight: 700 }}>Đăng nhập UniAdmission</Title>
-              </div>
-
-              <Form form={loginForm} layout="vertical" onFinish={onFinishLogin} requiredMark={false} size="large">
-                <Form.Item 
-                  label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email hoặc Mã hồ sơ</span>} 
-                  name="email" 
-                  rules={[{ required: true, message: "Vui lòng nhập email hoặc mã hồ sơ" }]}
-                >
-                  <Input prefix={<MailOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập email / mã hồ sơ" style={{ borderRadius: 8, height: 48 }} />
-                </Form.Item>
-
-                <Form.Item 
-                  label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Mật khẩu</span>} 
-                  name="password" 
-                  rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
-                  style={{ marginBottom: 16 }}
-                >
-                  <Input.Password prefix={<LockOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập mật khẩu" style={{ borderRadius: 8, height: 48 }} />
-                </Form.Item>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <Form.Item name="remember" valuePropName="checked" noStyle>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#4b5563", fontSize: 14 }}>
-                      <input type="checkbox" style={{ cursor: "pointer", accentColor: "#2563eb", width: 16, height: 16 }} />
-                      Ghi nhớ đăng nhập
-                    </label>
-                  </Form.Item>
-                  <a style={{ color: "#2563eb", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Quên mật khẩu?</a>
+                bordered={false} 
+                style={{ 
+                  borderRadius: 16, 
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                  background: "rgba(255, 255, 255, 0.98)",
+                  padding: "8px"
+                }}
+                bodyStyle={{ padding: "32px" }}
+              >
+                <div style={{ textAlign: "center", marginBottom: 32 }}>
+                  <GraduationCap size={48} color="#2563eb" style={{ marginBottom: 16 }} />
+                  <Title level={3} style={{ margin: 0, color: "#111827", fontWeight: 700 }}>
+                    {isLogin ? "Đăng nhập UniAdmission" : "Đăng ký tài khoản"}
+                  </Title>
                 </div>
 
-                <Form.Item style={{ marginBottom: 24 }}>
-                  <Button type="primary" htmlType="submit" block loading={loadingLogin} style={{ height: 48, borderRadius: 8, fontWeight: 600, fontSize: 16, background: "#2563eb" }}>
-                    Đăng nhập
-                  </Button>
-                </Form.Item>
-                
-                <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 6 }}>
-                  <Text style={{ color: "#6b7280", fontSize: 14 }}>Chưa có tài khoản?</Text>
-                  <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
-                    Đăng ký ngay
-                  </Link>
-                </div>
-              </Form>
-            </Card>
+                {isLogin ? (
+                  <Form form={loginForm} layout="vertical" onFinish={onFinishLogin} requiredMark={false} size="large">
+                    <Form.Item 
+                      label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email hoặc Mã hồ sơ</span>} 
+                      name="email" 
+                      rules={[{ required: true, message: "Vui lòng nhập email hoặc mã hồ sơ" }]}
+                    >
+                      <Input prefix={<MailOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập email / mã hồ sơ" style={{ borderRadius: 8, height: 48 }} />
+                    </Form.Item>
+
+                    <Form.Item 
+                      label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Mật khẩu</span>} 
+                      name="password" 
+                      rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
+                      style={{ marginBottom: 16 }}
+                    >
+                      <Input.Password prefix={<LockOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập mật khẩu" style={{ borderRadius: 8, height: 48 }} />
+                    </Form.Item>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                      <Form.Item name="remember" valuePropName="checked" noStyle>
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#4b5563", fontSize: 14 }}>
+                          <input type="checkbox" style={{ cursor: "pointer", accentColor: "#2563eb", width: 16, height: 16 }} />
+                          Ghi nhớ đăng nhập
+                        </label>
+                      </Form.Item>
+                      <a style={{ color: "#2563eb", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Quên mật khẩu?</a>
+                    </div>
+
+                    <Form.Item style={{ marginBottom: 24 }}>
+                      <Button type="primary" htmlType="submit" block loading={loadingLogin} style={{ height: 48, borderRadius: 8, fontWeight: 600, fontSize: 16, background: "#2563eb" }}>
+                        Đăng nhập
+                      </Button>
+                    </Form.Item>
+                    
+                    <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 6 }}>
+                      <Text style={{ color: "#6b7280", fontSize: 14 }}>Chưa có tài khoản?</Text>
+                      <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
+                        Đăng ký ngay
+                      </Link>
+                    </div>
+                  </Form>
+                ) : (
+                  <Form form={registerForm} layout="vertical" onFinish={onFinishRegister} requiredMark={false} size="large">
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "0 16px" }}>
+                      <Form.Item 
+                        label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Họ và tên</span>} 
+                        name="fullName" 
+                        rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
+                      >
+                        <Input prefix={<UserOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập họ và tên" style={{ borderRadius: 8, height: 48 }} />
+                      </Form.Item>
+
+                      <Form.Item 
+                        label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email</span>} 
+                        name="email" 
+                        rules={[{ required: true, message: "Vui lòng nhập email" }, { type: "email", message: "Email không hợp lệ" }]}
+                      >
+                        <Input prefix={<MailOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập email của bạn" style={{ borderRadius: 8, height: 48 }} />
+                      </Form.Item>
+                      
+                      <Form.Item 
+                        label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Mật khẩu</span>} 
+                        name="password" 
+                        rules={[{ required: true, message: "Vui lòng tạo mật khẩu" }]}
+                      >
+                        <Input.Password prefix={<LockOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập mật khẩu" style={{ borderRadius: 8, height: 48 }} />
+                      </Form.Item>
+                      
+                      <Form.Item 
+                        label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Xác nhận mật khẩu</span>} 
+                        name="confirmPassword" 
+                        dependencies={["password"]}
+                        rules={[
+                          { required: true, message: "Vui lòng xác nhận mật khẩu" },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              if (!value || getFieldValue("password") === value) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(new Error("Mật khẩu xác nhận không khớp!"));
+                            },
+                          }),
+                        ]}
+                      >
+                        <Input.Password prefix={<SafetyCertificateOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập lại mật khẩu" style={{ borderRadius: 8, height: 48 }} />
+                      </Form.Item>
+                    </div>
+
+                    <Form.Item style={{ marginTop: 8, marginBottom: 24 }}>
+                      <Button type="primary" htmlType="submit" block loading={loadingRegister} style={{ height: 48, borderRadius: 8, fontWeight: 600, fontSize: 16, background: "#2563eb" }}>
+                        Đăng ký
+                      </Button>
+                    </Form.Item>
+
+                    <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 6 }}>
+                      <Text style={{ color: "#6b7280", fontSize: 14 }}>Đã có tài khoản?</Text>
+                      <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
+                        Đăng nhập ngay
+                      </Link>
+                    </div>
+                  </Form>
+                )}
+              </Card>
             </div>
           </div>
 
@@ -173,106 +238,5 @@ export const AuthPage: React.FC = () => {
     );
   }
 
-  return (
-    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm, token: { colorPrimary: '#2563eb', colorBgContainer: '#ffffff', colorText: '#1f2937', colorTextSecondary: '#4b5563', borderRadius: 12 } }}>
-      <div className="auth-light-container" data-theme="light" style={{ display: "flex", flexDirection: "column", background: "#f8fafc", color: "#1f2937", borderRadius: "24px", overflow: "hidden", width: "100%", maxWidth: "560px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px" }}>
-          
-          {/* Header Logo */}
-          <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
-              <GraduationCap size={40} color="#2563eb" />
-              <Title level={2} style={{ margin: 0, fontWeight: 800, color: "#1f2937" }}>UniAdmission</Title>
-            </div>
-            <Text style={{ fontSize: 16, color: "#4b5563" }}>Hệ thống tuyển sinh đại học</Text>
-          </div>
-
-          {/* Form Container */}
-          <div style={{ width: "100%", maxWidth: 480 }}>
-            {/* Register Pane */}
-            <div id="register-section">
-              <Card 
-                bordered={false} 
-                style={{ 
-                  height: "100%", 
-                  borderRadius: 12, 
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-                  border: "1px solid #e2e8f0"
-                }}
-                bodyStyle={{ padding: "32px 24px" }}
-              >
-                <Title level={3} style={{ marginTop: 0, marginBottom: 8, color: "#111827" }}>Đăng ký</Title>
-                <Text style={{ color: "#4b5563", display: "block", marginBottom: 32 }}>Tạo tài khoản mới để bắt đầu</Text>
-
-                <Form form={registerForm} layout="vertical" onFinish={onFinishRegister} requiredMark={false} size="large">
-                  <Form.Item 
-                    label={<span style={{ fontWeight: 600, fontSize: 13, color: "#374151" }}>Họ và tên</span>} 
-                    name="fullName" 
-                    rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
-                  >
-                    <Input prefix={<UserOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập họ và tên" style={{ borderRadius: 8 }} />
-                  </Form.Item>
-
-                  <Form.Item 
-                    label={<span style={{ fontWeight: 600, fontSize: 13, color: "#374151" }}>Email</span>} 
-                    name="email" 
-                    rules={[{ required: true, message: "Vui lòng nhập email" }, { type: "email", message: "Email không hợp lệ" }]}
-                  >
-                    <Input prefix={<MailOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập email của bạn" style={{ borderRadius: 8 }} />
-                  </Form.Item>
-                  
-                  <Form.Item 
-                    label={<span style={{ fontWeight: 600, fontSize: 13, color: "#374151" }}>Mật khẩu</span>} 
-                    name="password" 
-                    rules={[{ required: true, message: "Vui lòng tạo mật khẩu" }]}
-                  >
-                    <Input.Password prefix={<LockOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập mật khẩu" style={{ borderRadius: 8 }} />
-                  </Form.Item>
-                  
-                  <Form.Item 
-                    label={<span style={{ fontWeight: 600, fontSize: 13, color: "#374151" }}>Xác nhận mật khẩu</span>} 
-                    name="confirmPassword" 
-                    dependencies={["password"]}
-                    rules={[
-                      { required: true, message: "Vui lòng xác nhận mật khẩu" },
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          if (!value || getFieldValue("password") === value) {
-                            return Promise.resolve();
-                          }
-                          return Promise.reject(new Error("Mật khẩu xác nhận không khớp!"));
-                        },
-                      }),
-                    ]}
-                  >
-                    <Input.Password prefix={<SafetyCertificateOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập lại mật khẩu" style={{ borderRadius: 8 }} />
-                  </Form.Item>
-
-                  <Form.Item style={{ marginTop: 24, marginBottom: 16 }}>
-                    <Button type="primary" htmlType="submit" block loading={loadingRegister} style={{ height: 44, borderRadius: 8, fontWeight: 600, fontSize: 15 }}>
-                      Đăng ký
-                    </Button>
-                  </Form.Item>
-
-                  <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 4 }}>
-                    <Text style={{ color: "#6b7280", fontSize: 14 }}>Đã có tài khoản?</Text>
-                    <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 14 }}>
-                      Đăng nhập ngay
-                    </Link>
-                  </div>
-                </Form>
-              </Card>
-            </div>
-            
-
-          </div>
-        </div>
-        
-        {/* Footer */}
-        <div style={{ textAlign: "center", padding: "24px", color: "#9ca3af", fontSize: 13 }}>
-          © 2024 UniAdmission. All rights reserved.
-        </div>
-      </div>
-    </ConfigProvider>
-  );
+  return null;
 };
