@@ -10,6 +10,7 @@ const { Title, Text } = Typography;
 export const AuthPage: React.FC = () => {
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [loadingRegister, setLoadingRegister] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,6 +18,7 @@ export const AuthPage: React.FC = () => {
   
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
+  const [forgotPasswordForm] = Form.useForm();
 
   const isLogin = location.pathname === "/login";
   const isRegister = location.pathname === "/register";
@@ -66,6 +68,12 @@ export const AuthPage: React.FC = () => {
     } else {
       message.error(result.message);
     }
+  };
+
+  const onFinishForgotPassword = () => {
+    message.success("Đã gửi yêu cầu khôi phục mật khẩu. Vui lòng kiểm tra email hoặc SMS của bạn.");
+    setIsForgotPassword(false);
+    forgotPasswordForm.resetFields();
   };
 
   if (isLogin || isRegister) {
@@ -118,11 +126,36 @@ export const AuthPage: React.FC = () => {
                 <div style={{ textAlign: "center", marginBottom: 32 }}>
                   <GraduationCap size={48} color="#2563eb" style={{ marginBottom: 16 }} />
                   <Title level={3} style={{ margin: 0, color: "#111827", fontWeight: 700 }}>
-                    {isLogin ? "Đăng nhập UniAdmission" : "Đăng ký tài khoản"}
+                    {isForgotPassword ? "Quên mật khẩu" : isLogin ? "Đăng nhập UniAdmission" : "Đăng ký tài khoản"}
                   </Title>
                 </div>
 
-                {isLogin ? (
+                {isForgotPassword ? (
+                  <Form form={forgotPasswordForm} layout="vertical" onFinish={onFinishForgotPassword} requiredMark={false} size="large">
+                    <Text style={{ color: "#4b5563", display: "block", marginBottom: 24, fontSize: 14, textAlign: "center" }}>
+                      Vui lòng nhập Email hoặc Số CMND/CCCD đã đăng ký để khôi phục mật khẩu.
+                    </Text>
+                    <Form.Item 
+                      label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email hoặc Số CMND/CCCD</span>} 
+                      name="identifier" 
+                      rules={[{ required: true, message: "Vui lòng nhập Email hoặc Số CMND/CCCD" }]}
+                    >
+                      <Input prefix={<UserOutlined style={{ color: "#9ca3af", marginRight: 8 }} />} placeholder="Nhập Email hoặc Số CMND/CCCD" style={{ borderRadius: 8, height: 48 }} />
+                    </Form.Item>
+                    
+                    <Form.Item style={{ marginTop: 8, marginBottom: 24 }}>
+                      <Button type="primary" htmlType="submit" block style={{ height: 48, borderRadius: 8, fontWeight: 600, fontSize: 16, background: "#2563eb" }}>
+                        Gửi yêu cầu
+                      </Button>
+                    </Form.Item>
+
+                    <div style={{ textAlign: "center" }}>
+                      <a onClick={() => setIsForgotPassword(false)} style={{ color: "#2563eb", fontWeight: 600, fontSize: 14, cursor: "pointer", textDecoration: "none" }}>
+                        Quay lại Đăng nhập
+                      </a>
+                    </div>
+                  </Form>
+                ) : isLogin ? (
                   <Form form={loginForm} layout="vertical" onFinish={onFinishLogin} requiredMark={false} size="large">
                     <Form.Item 
                       label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email hoặc Mã hồ sơ</span>} 
@@ -148,7 +181,7 @@ export const AuthPage: React.FC = () => {
                           Ghi nhớ đăng nhập
                         </label>
                       </Form.Item>
-                      <a style={{ color: "#2563eb", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Quên mật khẩu?</a>
+                      <a onClick={() => setIsForgotPassword(true)} style={{ color: "#2563eb", fontSize: 14, fontWeight: 500, cursor: "pointer", textDecoration: "none" }}>Quên mật khẩu?</a>
                     </div>
 
                     <Form.Item style={{ marginBottom: 24 }}>
