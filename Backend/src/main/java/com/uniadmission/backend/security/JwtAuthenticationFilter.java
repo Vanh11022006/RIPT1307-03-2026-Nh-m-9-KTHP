@@ -36,7 +36,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+            if (!StringUtils.hasText(jwt)) {
+                // no token provided, proceed (security will handle protected endpoints)
+            } else if (tokenProvider.validateToken(jwt)) {
                 String email = tokenProvider.getUsernameFromJWT(jwt);
 
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
@@ -46,6 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                // token is present but invalid/expired -> respond 401 so client can attempt
+                // refresh
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\":\"Invalid or expired token\"}");
+                return;
             }
         } catch (Exception ex) {
             logger.error("Không thể thiết lập xác thực người dùng trong context", ex);
