@@ -5,7 +5,7 @@ import axiosClient from "../api/axiosClient";
 interface AuthState {
   currentUser: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => Promise<{ success: boolean; message: string }>;
+  login: (email: string, password?: string, remember?: boolean) => Promise<{ success: boolean; message: string }>;
   register: (email: string, password?: string, fullName?: string, phone?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   loadCurrentUserFromStorage: () => void;
@@ -13,37 +13,74 @@ interface AuthState {
 
 const STORAGE_KEY = "currentUser";
 const TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+const REMEMBER_KEY = "remember_me";
 const isBrowser = typeof window !== "undefined" && typeof localStorage !== "undefined";
 
-const readStoredUser = (): User | null => {
+const readStorageValue = (key: string): string | null => {
   if (!isBrowser) return null;
+  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+};
 
+const writeStorageValue = (key: string, value: string, remember: boolean) => {
+  if (!isBrowser) return;
+  const storage = remember ? localStorage : sessionStorage;
+  storage.setItem(key, value);
+};
+
+const clearStorageKey = (key: string) => {
+  if (!isBrowser) return;
+  localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
+};
+
+const readStoredUser = (): User | null => {
   try {
-    const storedUser = localStorage.getItem(STORAGE_KEY);
+    const storedUser = readStorageValue(STORAGE_KEY);
     return storedUser ? (JSON.parse(storedUser) as User) : null;
   } catch (error) {
     console.error("Failed to parse stored user", error);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(TOKEN_KEY);
+    clearStorageKey(STORAGE_KEY);
+    clearStorageKey(TOKEN_KEY);
+    clearStorageKey(REFRESH_TOKEN_KEY);
+    clearStorageKey(REMEMBER_KEY);
     return null;
   }
 };
 
 const readStoredToken = (): string | null => {
-  if (!isBrowser) return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return readStorageValue(TOKEN_KEY);
 };
 
-const persistAuth = (token: string, user: User) => {
+const persistAuth = (token: string, user: User, remember: boolean, refreshToken?: string | null) => {
   if (!isBrowser) return;
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+
+  writeStorageValue(TOKEN_KEY, token, remember);
+  writeStorageValue(STORAGE_KEY, JSON.stringify(user), remember);
+  writeStorageValue(REMEMBER_KEY, remember ? "true" : "false", remember);
+
+  if (remember && refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+
+  if (remember) {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(REMEMBER_KEY);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(REMEMBER_KEY);
+  }
 };
 
 const clearAuthStorage = () => {
-  if (!isBrowser) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(TOKEN_KEY);
+  clearStorageKey(STORAGE_KEY);
+  clearStorageKey(TOKEN_KEY);
+  clearStorageKey(REFRESH_TOKEN_KEY);
+  clearStorageKey(REMEMBER_KEY);
 };
 
 // Read persisted auth only in the browser so the store is safe in tests/build tooling.
@@ -70,16 +107,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ currentUser: null, isAuthenticated: false });
   },
 
-  login: async (email, password) => {
+  login: async (email, password, remember = false) => {
     try {
-      const response = await axiosClient.post("/auth/login", { email, password });
+      const response = await axiosClient.post("/auth/login", { email, password, remember });
       const payload = response?.data ?? response;
       const authData = payload?.data ?? payload;
-      const token = authData?.token ?? payload?.token ?? null;
+      const token = authData?.token ?? authData?.accessToken ?? payload?.token ?? payload?.accessToken ?? null;
+      const refreshToken = authData?.refreshToken ?? payload?.refreshToken ?? null;
       const user = authData?.user ?? payload?.user ?? null;
 
       if (token && user) {
-        persistAuth(token, user);
+        persistAuth(token, user, remember, refreshToken);
         set({ currentUser: user, isAuthenticated: true });
         return { success: true, message: "Đăng nhập thành công" };
       }

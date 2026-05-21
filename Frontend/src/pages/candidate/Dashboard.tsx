@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, Row, Col, Statistic, Table, Alert, Button, Space, Typography, Progress, Empty, Tag } from "antd";
 import { 
   FileTextOutlined, 
@@ -21,17 +21,21 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { formatDate } from "../../utils/date";
+import type { Application } from "../../types/application.types";
 
 const { Title, Text, Paragraph } = Typography;
 
 export const CandidateDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId } = useCandidateStore();
+  const { getCandidateByUserId, getProfile } = useCandidateStore();
   const { getApplicationsByCandidateId } = useApplicationStore();
-  const { universities } = useUniversityStore();
-  const { majors } = useMajorStore();
-  const { admissionRounds } = useAdmissionRoundStore();
+  const { universities, getUniversities } = useUniversityStore();
+  const { majors, getMajors } = useMajorStore();
+  const { admissionRounds, getAdmissionRounds } = useAdmissionRoundStore();
+
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const safeUniversities = Array.isArray(universities) ? universities : [];
   const safeMajors = Array.isArray(majors) ? majors : [];
@@ -39,20 +43,50 @@ export const CandidateDashboard: React.FC = () => {
 
   const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
-  const safeApplications = useMemo(() => {
-    if (!candidate) return [];
-    const apps = getApplicationsByCandidateId(candidate.id);
-    return Array.isArray(apps) ? apps : [];
-  }, [candidate, getApplicationsByCandidateId]);
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboardData = async () => {
+      if (!currentUser?.id) {
+        if (mounted) setApplications([]);
+        return;
+      }
+
+      const resolvedCandidate = candidate ?? (await getProfile(currentUser.id));
+
+      if (!resolvedCandidate?.id) {
+        if (mounted) setApplications([]);
+        return;
+      }
+
+      setApplicationsLoading(true);
+      await Promise.all([getUniversities(), getMajors(), getAdmissionRounds()]);
+      const data = await getApplicationsByCandidateId(resolvedCandidate.id);
+
+      if (mounted) {
+        setApplications(Array.isArray(data) ? data : []);
+        setApplicationsLoading(false);
+      }
+    };
+
+    loadDashboardData().catch((error) => {
+      console.error("Failed to load candidate dashboard data", error);
+      if (mounted) setApplicationsLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [candidate, currentUser?.id, getAdmissionRounds, getApplicationsByCandidateId, getMajors, getProfile, getUniversities]);
 
   const stats = useMemo(() => {
     return {
-      total: safeApplications.length,
-      pending: safeApplications.filter(a => a.status === "pending").length,
-      approved: safeApplications.filter(a => a.status === "approved").length,
-      rejected: safeApplications.filter(a => a.status === "rejected").length,
+      total: applications.length,
+      pending: applications.filter(a => a.status === "pending").length,
+      approved: applications.filter(a => a.status === "approved").length,
+      rejected: applications.filter(a => a.status === "rejected").length,
     };
-  }, [safeApplications]);
+  }, [applications]);
 
   const getUniversityName = (id: string) => {
     return safeUniversities.find(u => u.id === id)?.name || "Không rõ trường";
@@ -314,14 +348,15 @@ export const CandidateDashboard: React.FC = () => {
 
       {/* 5. Improve recent applications section */}
       <Card title={<Title level={5} style={{ margin: 0 }}>Hồ sơ gần đây</Title>} style={{ borderRadius: 12 }}>
-        {safeApplications.length > 0 ? (
+        {applications.length > 0 ? (
           <Table 
-            dataSource={[...safeApplications].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).slice(0, 5)} 
+            dataSource={[...applications].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).slice(0, 5)} 
             columns={columns} 
             rowKey="id" 
             pagination={false}
             scroll={{ x: true }}
             size="middle"
+            loading={applicationsLoading}
           />
         ) : (
           /* 7. Better empty states */

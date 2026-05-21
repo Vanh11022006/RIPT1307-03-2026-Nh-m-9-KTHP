@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, Button, Typography, message, Card, ConfigProvider, theme } from "antd";
+import { Form, Input, Button, Typography, message, Card, ConfigProvider, theme, Checkbox } from "antd";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { UserOutlined, LockOutlined, MailOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import { useAuthStore } from "../../stores/auth.store";
@@ -35,7 +35,7 @@ export const AuthPage: React.FC = () => {
 
   const onFinishLogin = async (values: any) => {
     setLoadingLogin(true);
-    const result = await login(values.email, values.password);
+    const result = await login(values.email, values.password, values.remember);
     setLoadingLogin(false);
     
     if (result.success) {
@@ -155,7 +155,7 @@ export const AuthPage: React.FC = () => {
                     </div>
                   </Form>
                 ) : isLogin ? (
-                  <Form form={loginForm} layout="vertical" onFinish={onFinishLogin} requiredMark={false} size="large">
+                  <Form form={loginForm} layout="vertical" onFinish={onFinishLogin} requiredMark={false} size="large" initialValues={{ remember: false }}>
                     <Form.Item 
                       label={<span style={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>Email hoặc Mã hồ sơ</span>} 
                       name="email" 
@@ -175,10 +175,7 @@ export const AuthPage: React.FC = () => {
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                       <Form.Item name="remember" valuePropName="checked" noStyle>
-                        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#4b5563", fontSize: 14 }}>
-                          <input type="checkbox" style={{ cursor: "pointer", accentColor: "#2563eb", width: 16, height: 16 }} />
-                          Ghi nhớ đăng nhập
-                        </label>
+                        <Checkbox style={{ color: "#4b5563", fontSize: 14 }}>Ghi nhớ đăng nhập</Checkbox>
                       </Form.Item>
                       <a onClick={() => setIsForgotPassword(true)} style={{ color: "#2563eb", fontSize: 14, fontWeight: 500, cursor: "pointer", textDecoration: "none" }}>Quên mật khẩu?</a>
                     </div>
