@@ -22,11 +22,17 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @Slf4j
 @RequestMapping("/api/applications")
 @RequiredArgsConstructor
+@Tag(name = "Applications", description = "Quản lý hồ sơ tuyển sinh")
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -35,6 +41,7 @@ public class ApplicationController {
     private final ApplicationRepository applicationRepository;
 
     @PostMapping("/{id}/upload")
+    @Operation(summary = "Tải file minh chứng", description = "Upload nhiều file minh chứng cho một hồ sơ")
     public ResponseEntity<ApiResponse<Void>> uploadAttachments(
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) {
@@ -57,6 +64,8 @@ public class ApplicationController {
     }
 
     @PostMapping
+    @Operation(summary = "Nộp hồ sơ", description = "Tạo hồ sơ tuyển sinh từ thông tin đã nhập")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApplicationSubmitRequest.class), examples = @ExampleObject(name = "ApplicationSubmitExample", value = "{\"candidateId\":1,\"majorId\":3,\"admissionRoundId\":1,\"subjectGroupId\":2,\"totalScore\":27.25,\"priorityGroup\":\"KV1\",\"priorityScore\":0.75,\"scores\":{\"toan\":8.5,\"van\":7.5,\"anh\":8.75}}")))
     public ResponseEntity<ApiResponse<ApplicationResponse>> submitApplication(
             @RequestBody ApplicationSubmitRequest request) {
         log.info("Received submitApplication request payload: {}", request);
@@ -67,6 +76,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/candidate/{candidateId}")
+    @Operation(summary = "Lấy hồ sơ theo thí sinh", description = "Trả về danh sách hồ sơ của một candidate")
     public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getApplicationsByCandidate(
             @PathVariable Long candidateId) {
         List<Application> apps = applicationService.getApplicationsByCandidate(candidateId);
@@ -75,12 +85,14 @@ public class ApplicationController {
     }
 
     @PutMapping("/{id}/cancel")
+    @Operation(summary = "Hủy hồ sơ", description = "Chuyển hồ sơ sang trạng thái đã hủy")
     public ResponseEntity<ApiResponse<Void>> cancelApplication(@PathVariable("id") Long id) {
         applicationService.cancelApplication(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cancel application success", null));
     }
 
     @GetMapping
+    @Operation(summary = "Danh sách hồ sơ", description = "Lấy toàn bộ hồ sơ hiện có")
     public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getAll() {
         List<Application> apps = applicationService.getAllApplications();
         List<ApplicationResponse> resp = apps.stream().map(this::mapToResponse).collect(Collectors.toList());
@@ -89,6 +101,8 @@ public class ApplicationController {
 
     @PutMapping("/admin-update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật trạng thái hồ sơ", description = "Admin cập nhật trạng thái và ghi chú cho hồ sơ")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "UpdateStatusExample", value = "{\"status\":\"APPROVED\",\"notes\":\"Đủ điều kiện\",\"adminId\":1}")))
     public ResponseEntity<ApiResponse<Void>> updateStatus(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
@@ -103,6 +117,8 @@ public class ApplicationController {
 
     @PutMapping("/{id}/priority")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật ưu tiên hồ sơ", description = "Admin cập nhật nhóm ưu tiên và điểm ưu tiên")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "UpdatePriorityExample", value = "{\"priorityGroup\":\"KV1\",\"priorityScore\":0.75,\"adminId\":1}")))
     public ResponseEntity<ApiResponse<Void>> updatePriority(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
@@ -120,6 +136,7 @@ public class ApplicationController {
 
     @GetMapping("/admin-list")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Danh sách hồ sơ cho admin", description = "Phân trang, lọc theo trạng thái")
     public ResponseEntity<ApiResponse<Page<Application>>> getAdminApplications(
             @RequestParam(required = false) ApplicationStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -130,12 +147,14 @@ public class ApplicationController {
 
     @GetMapping("/admin-statistics")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Thống kê hồ sơ", description = "Tổng hợp số lượng hồ sơ theo trạng thái")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics() {
         Map<String, Long> stats = applicationService.getApplicationStatistics();
         return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Chi tiết hồ sơ", description = "Lấy thông tin chi tiết của một hồ sơ")
     public ResponseEntity<ApiResponse<ApplicationResponse>> getApplicationDetail(@PathVariable Long id) {
         Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
@@ -145,6 +164,8 @@ public class ApplicationController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Cập nhật hồ sơ", description = "Cập nhật lại thông tin hồ sơ đã nộp")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApplicationSubmitRequest.class), examples = @ExampleObject(name = "ApplicationUpdateExample", value = "{\"candidateId\":1,\"majorId\":3,\"admissionRoundId\":1,\"subjectGroupId\":2,\"totalScore\":27.5,\"priorityGroup\":\"KV1\",\"priorityScore\":0.75,\"scores\":{\"toan\":8.75,\"van\":7.5,\"anh\":8.75}}")))
     public ResponseEntity<ApiResponse<ApplicationResponse>> updateApplication(@PathVariable Long id,
             @RequestBody ApplicationSubmitRequest request) {
         log.info("Received updateApplication id={}, payload={}", id, request);
@@ -154,6 +175,7 @@ public class ApplicationController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa hồ sơ", description = "Xóa hồ sơ theo id")
     public ResponseEntity<ApiResponse<Void>> deleteApplication(@PathVariable Long id) {
         applicationService.deleteApplication(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Xóa hồ sơ thành công", null));
@@ -184,10 +206,10 @@ public class ApplicationController {
             java.util.List<com.uniadmission.backend.entity.Attachment> atts = attachmentRepository
                     .findByApplication_Id(application.getId());
             atts.forEach(att -> {
+                String storedFilePath = att.getFilePath() != null ? att.getFilePath() : "";
                 String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path("/uploads/")
-                        .path(att.getFilePath() != null ? att.getFilePath() : "")
-                        .toUriString();
+                        .toUriString() + storedFilePath;
                 java.util.Map<String, Object> m = new java.util.HashMap<>();
                 m.put("id", att.getId());
                 m.put("fileName", att.getFileName());
