@@ -2,6 +2,9 @@ package com.uniadmission.backend.controller;
 
 import com.uniadmission.backend.dto.response.ApiResponse;
 import com.uniadmission.backend.service.FileService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +17,16 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/uploads")
 @RequiredArgsConstructor
+@Tag(name = "Uploads", description = "Tải lên file minh chứng")
 public class UploadController {
 
     private final FileService fileService;
 
     @PostMapping("/evidence")
+    @Operation(summary = "Upload file minh chứng", description = "Tải lên một file minh chứng và trả về đường dẫn truy cập")
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadEvidenceFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "category", required = false) String category) {
+            @Parameter(description = "File minh chứng cần upload") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "Nhóm minh chứng, ví dụ: academic, identity, priority") @RequestParam(value = "category", required = false) String category) {
 
         String fileName = fileService.storeFile(file);
         String pathSegment = fileName != null ? fileName : "";

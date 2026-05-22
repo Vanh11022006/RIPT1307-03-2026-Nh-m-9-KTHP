@@ -13,7 +13,6 @@ import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.security.JwtTokenProvider;
 import com.uniadmission.backend.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +23,16 @@ import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.uniadmission.backend.util.HashUtil;
 import java.util.concurrent.ThreadLocalRandom;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Đăng nhập, đăng ký và khôi phục mật khẩu")
 public class AuthController {
 
         @Autowired
@@ -49,6 +55,12 @@ public class AuthController {
 
         @PostMapping("/login")
         @Transactional
+        @Operation(summary = "Đăng nhập", description = "Xác thực người dùng và trả về access token / refresh token")
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginRequest.class), examples = @ExampleObject(name = "LoginExample", value = "{\"email\":\"student@example.com\",\"password\":\"P@ssw0rd123\",\"remember\":true}")))
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng nhập thành công", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"success\":true,\"message\":\"Đăng nhập thành công!\",\"data\":{\"token\":\"eyJhbGciOi...\",\"refreshToken\":\"eyJhbGciOi...\",\"user\":{\"id\":1,\"fullName\":\"Nguyen Van A\",\"email\":\"student@example.com\",\"role\":\"candidate\"}}}"))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Sai email hoặc mật khẩu")
+        })
         public ResponseEntity<ApiResponse<Object>> login(@RequestBody LoginRequest request) {
                 Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
 
@@ -97,6 +109,7 @@ public class AuthController {
 
         @PostMapping("/refresh-token")
         @Transactional
+        @Operation(summary = "Làm mới token", description = "Đổi refresh token hợp lệ lấy access token mới")
         public ResponseEntity<ApiResponse<Object>> refreshToken(@RequestBody java.util.Map<String, String> body) {
                 String refresh = body.get("refreshToken");
                 if (refresh == null) {
@@ -167,6 +180,8 @@ public class AuthController {
 
         @PostMapping("/register")
         @Transactional
+        @Operation(summary = "Đăng ký tài khoản", description = "Tạo tài khoản thí sinh mới và hồ sơ candidate đi kèm")
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegisterRequest.class), examples = @ExampleObject(name = "RegisterExample", value = "{\"fullName\":\"Nguyen Van A\",\"email\":\"student@example.com\",\"password\":\"P@ssw0rd123\",\"phone\":\"0912345678\"}")))
         public ResponseEntity<ApiResponse<User>> register(@RequestBody RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
                         return ResponseEntity.badRequest()
@@ -193,6 +208,8 @@ public class AuthController {
 
         @PostMapping("/forgot-password")
         @Transactional
+        @Operation(summary = "Gửi mã quên mật khẩu", description = "Tạo mã khôi phục và gửi email cho người dùng")
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ForgotPasswordRequest.class), examples = @ExampleObject(name = "ForgotPasswordExample", value = "{\"email\":\"student@example.com\"}")))
         public ResponseEntity<ApiResponse<Object>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
                 Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
                 if (!userOpt.isPresent()) {
@@ -218,6 +235,8 @@ public class AuthController {
 
         @PostMapping("/reset-password")
         @Transactional
+        @Operation(summary = "Đặt lại mật khẩu", description = "Xác thực mã khôi phục và cập nhật mật khẩu mới")
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResetPasswordRequest.class), examples = @ExampleObject(name = "ResetPasswordExample", value = "{\"token\":\"4821\",\"email\":\"student@example.com\",\"newPassword\":\"NewPassword123!\",\"confirmPassword\":\"NewPassword123!\"}")))
         public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody ResetPasswordRequest request) {
                 if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
                         return ResponseEntity.badRequest()
