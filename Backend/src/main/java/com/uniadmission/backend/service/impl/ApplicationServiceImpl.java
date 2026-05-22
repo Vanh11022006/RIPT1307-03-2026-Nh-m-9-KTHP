@@ -87,7 +87,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.PENDING);
 
-                // Save to obtain id, then ensure applicationCode is set
                 Application saved = applicationRepository.save(application);
                 if (saved.getApplicationCode() == null || saved.getApplicationCode().isEmpty()) {
                         String code = "HS" + java.time.LocalDate.now().getYear()
@@ -160,7 +159,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setPriorityScore(priorityScore);
                 applicationRepository.save(application);
 
-                // Optionally record a review log for audit
                 ApplicationReviewLog log = new ApplicationReviewLog();
                 log.setApplicationId(application.getId());
                 log.setAdminId(adminId != null ? adminId : 1L);

@@ -197,7 +197,6 @@ public class ApplicationController {
                 evidence.add(m);
             });
         } catch (Exception ex) {
-            // ignore
         }
 
         return ApplicationResponse.builder()

@@ -13,12 +13,10 @@ export const PublicLayout: React.FC = () => {
 
   const isLogin = location.pathname === "/login";
   const isRegister = location.pathname === "/register";
+  const isForgotPassword = location.pathname === "/forgot-password";
+  const isResetPassword = location.pathname === "/reset-password";
   const isLanding = location.pathname === "/";
   const isDarkTheme = isLanding;
-
-  if (isLogin || isRegister) {
-    return <Outlet />;
-  }
 
   // Add a class to body when on landing or auth pages to apply dark mode specifically
   useEffect(() => {
@@ -34,6 +32,10 @@ export const PublicLayout: React.FC = () => {
       document.body.classList.remove("dashboard-body");
     };
   }, [isDarkTheme]);
+
+  if (isLogin || isRegister || isForgotPassword || isResetPassword) {
+    return <Outlet />;
+  }
 
   const layoutStyle = isDarkTheme 
     ? { minHeight: "100vh", background: "transparent", position: "relative" as const, overflowX: "hidden" as const }

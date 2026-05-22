@@ -7,6 +7,8 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (email: string, password?: string, remember?: boolean) => Promise<{ success: boolean; message: string }>;
   register: (email: string, password?: string, fullName?: string, phone?: string) => Promise<{ success: boolean; message: string }>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (email: string, token: string, newPassword: string, confirmPassword: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   loadCurrentUserFromStorage: () => void;
 }
@@ -145,6 +147,50 @@ export const useAuthStore = create<AuthState>((set) => ({
       return { success: false, message: payload?.message || "Đăng ký thất bại" };
     } catch (error: any) {
       const message = error.response?.data?.message || "Email đã tồn tại trong hệ thống";
+      return { success: false, message };
+    }
+  },
+
+  requestPasswordReset: async (email) => {
+    try {
+      const response = await axiosClient.post(
+        "/auth/forgot-password",
+        { email },
+        { timeout: 30000 }
+      );
+      const payload = response?.data ?? response;
+
+      return {
+        success: !!payload?.success,
+        message: payload?.message || "Đã gửi mã khôi phục mật khẩu",
+        data: payload?.data ?? null,
+      };
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Không thể gửi yêu cầu khôi phục mật khẩu";
+      return { success: false, message };
+    }
+  },
+
+  resetPassword: async (email: string, token: string, newPassword: string, confirmPassword: string) => {
+    try {
+      const response = await axiosClient.post(
+        "/auth/reset-password",
+        {
+          email,
+          token,
+          newPassword,
+          confirmPassword,
+        },
+        { timeout: 30000 }
+      );
+      const payload = response?.data ?? response;
+
+      return {
+        success: !!payload?.success,
+        message: payload?.message || "Đặt lại mật khẩu thành công",
+      };
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Không thể đặt lại mật khẩu";
       return { success: false, message };
     }
   },
