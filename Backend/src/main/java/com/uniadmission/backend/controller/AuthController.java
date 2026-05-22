@@ -4,20 +4,26 @@ import com.uniadmission.backend.dto.ApiResponse;
 import com.uniadmission.backend.dto.LoginRequest;
 import com.uniadmission.backend.dto.LoginResponse;
 import com.uniadmission.backend.dto.RegisterRequest;
+import com.uniadmission.backend.dto.request.ForgotPasswordRequest;
+import com.uniadmission.backend.dto.request.ResetPasswordRequest;
 import com.uniadmission.backend.entity.Candidate;
 import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.repository.CandidateRepository;
 import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.security.JwtTokenProvider;
+import com.uniadmission.backend.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.uniadmission.backend.util.HashUtil;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,6 +43,9 @@ public class AuthController {
 
         @Autowired
         private com.uniadmission.backend.repository.RefreshTokenRepository refreshTokenRepository;
+
+        @Autowired
+        private EmailService emailService;
 
         @PostMapping("/login")
         @Transactional
@@ -180,5 +189,71 @@ public class AuthController {
                 candidateRepository.saveAndFlush(candidate);
 
                 return ResponseEntity.ok(new ApiResponse<>(true, "Đăng ký tài khoản thành công!", user));
+        }
+
+        @PostMapping("/forgot-password")
+        @Transactional
+        public ResponseEntity<ApiResponse<Object>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+                Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+                if (!userOpt.isPresent()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false,
+                                                        "Không tìm thấy tài khoản với email này!", null));
+                }
+
+                User user = userOpt.get();
+                String resetToken = String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
+                LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(15);
+
+                user.setResetPasswordToken(resetToken);
+                user.setResetPasswordExpires(expiresAt);
+                userRepository.save(user);
+
+                emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+
+                return ResponseEntity.ok(new ApiResponse<>(true,
+                                "Đã gửi mã khôi phục mật khẩu. Vui lòng kiểm tra hộp thư của bạn.",
+                                null));
+        }
+
+        @PostMapping("/reset-password")
+        @Transactional
+        public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody ResetPasswordRequest request) {
+                if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Email không được để trống!", null));
+                }
+
+                if (request.getNewPassword() == null
+                                || !request.getNewPassword().equals(request.getConfirmPassword())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Mật khẩu xác nhận không khớp!", null));
+                }
+
+                Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+                if (!userOpt.isPresent()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Không tìm thấy tài khoản với email này!",
+                                                        null));
+                }
+
+                User user = userOpt.get();
+                if (request.getToken() == null || !request.getToken().equals(user.getResetPasswordToken())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Mã khôi phục không đúng!", null));
+                }
+
+                if (user.getResetPasswordExpires() == null
+                                || user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Mã khôi phục đã hết hạn!", null));
+                }
+
+                user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                user.setResetPasswordToken(null);
+                user.setResetPasswordExpires(null);
+                userRepository.save(user);
+
+                return ResponseEntity.ok(new ApiResponse<>(true, "Đặt lại mật khẩu thành công!", null));
         }
 }

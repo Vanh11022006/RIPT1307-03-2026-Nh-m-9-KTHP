@@ -44,6 +44,8 @@ export const router = createBrowserRouter([
       { index: true, element: <LandingPage /> },
       { path: "login", element: <AuthPage /> },
       { path: "register", element: <AuthPage /> },
+      { path: "forgot-password", element: <AuthPage /> },
+      { path: "reset-password", element: <AuthPage /> },
       { path: "universities", element: <UniversityList /> },
       { path: "universities/:id", element: <UniversityDetail /> },
     ],

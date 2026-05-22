@@ -64,7 +64,7 @@ export const LoginPage: React.FC = () => {
           <Form.Item name="remember" valuePropName="checked" noStyle>
             <Checkbox style={{ color: "rgba(255,255,255,0.8)" }}>Ghi nhớ đăng nhập</Checkbox>
           </Form.Item>
-          <a style={{ color: "var(--neon-cyan)" }}>Quên mật khẩu?</a>
+          <Link to="/forgot-password" style={{ color: "var(--neon-cyan)" }}>Quên mật khẩu?</Link>
         </div>
 
         <Form.Item style={{ marginBottom: 16 }}>

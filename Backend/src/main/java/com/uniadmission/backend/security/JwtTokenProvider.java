@@ -12,9 +12,8 @@ import java.util.Date;
 public class JwtTokenProvider {
     private final Key key = Keys.hmacShaKeyFor("DayLaKhoaBiMatCuaDuAnCuoiKiTHLTWRatDaiVaBaoMat123456789".getBytes());
 
-    // Access token expires in 1 hour
     private final long accessTokenExpirationInMs = 60 * 60 * 1000L;
-    // Refresh token expires in 7 days
+
     private final long refreshTokenExpirationInMs = 7 * 24 * 60 * 60 * 1000L;
 
     public String generateAccessToken(Authentication authentication) {
