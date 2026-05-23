@@ -30,7 +30,8 @@ export const AuthPage: React.FC = () => {
   const isResetPassword = location.pathname === "/reset-password";
   const prefilledEmail = searchParams.get("email") ?? "";
 
-  const showFixedBack = isRegister || isForgotPassword;
+  // Don't show the floating fixed back button on the login page to avoid duplicate arrows
+  const showFixedBack = isRegister || isForgotPassword || isResetPassword;
   const [hoverBack, setHoverBack] = useState(false);
 
   useEffect(() => {
@@ -55,6 +56,30 @@ export const AuthPage: React.FC = () => {
       navigate("/admin/dashboard");
     } else if (state.currentUser?.role === "candidate") {
       navigate("/candidate/dashboard");
+    }
+  };
+
+  const goBack = () => {
+    // If we're on login page, go to homepage
+    if (isLogin) {
+      navigate("/");
+      return;
+    }
+    // If we're on reset-password, go to forgot-password explicitly
+    if (isResetPassword) {
+      navigate("/forgot-password");
+      return;
+    }
+
+    // If we're on forgot-password page, always go to login (do not rely on history)
+    if (isForgotPassword) {
+      navigate("/login");
+      return;
+    }
+
+    // Otherwise try to go back in history if possible
+    if (window.history.length > 1) {
+      navigate(-1);
     }
   };
 
@@ -169,6 +194,31 @@ export const AuthPage: React.FC = () => {
           borderBottom: "1px solid rgba(255,255,255,0.15)",
           position: "relative"
         }}>
+          {isLogin && (
+            <div style={{ position: "absolute", left: 12, top: 14, zIndex: 99999 }}>
+              <Tooltip title="Quay lại">
+                <div
+                  role="button"
+                  aria-label="Quay về trang chủ"
+                  onClick={goBack}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    background: "rgba(255,255,255,0.06)",
+                    cursor: "pointer",
+                    border: "none",
+                    color: "white"
+                  }}
+                >
+                  <LeftOutlined style={{ fontSize: 18, color: "white" }} />
+                </div>
+              </Tooltip>
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => navigate("/")}>
             <img src="/favicon.svg" alt="UniAdmission Logo" style={{ width: 36, height: 36 }} />
             <Title level={4} style={{ margin: 0, color: "white", fontWeight: 700 }}>UniAdmission</Title>
@@ -178,11 +228,11 @@ export const AuthPage: React.FC = () => {
         <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, width: "100%" }}>
           {showFixedBack && (
             <div style={{ position: "fixed", top: 16, left: 16, zIndex: 9999 }}>
-              <Tooltip title="Quay lại">
+              <Tooltip title={isLogin ? "Quay về trang chủ" : "Quay lại"}>
                 <div
                   role="button"
-                  aria-label="Quay lại"
-                  onClick={() => navigate("/login")}
+                  aria-label={isLogin ? "Quay về trang chủ" : "Quay lại"}
+                  onClick={goBack}
                   onMouseEnter={() => setHoverBack(true)}
                   onMouseLeave={() => setHoverBack(false)}
                   style={{
@@ -192,17 +242,17 @@ export const AuthPage: React.FC = () => {
                     width: 44,
                     height: 44,
                     borderRadius: 22,
-                    background: hoverBack ? "rgba(37,99,235,0.08)" : "transparent",
-                    boxShadow: hoverBack ? "0 8px 24px rgba(37,99,235,0.08)" : "none",
+                    background: hoverBack ? "rgba(255,255,255,0.08)" : "transparent",
+                    boxShadow: hoverBack ? "0 8px 24px rgba(255,255,255,0.08)" : "none",
                     cursor: "pointer",
                     transition: "background 150ms ease, transform 150ms ease, box-shadow 150ms ease",
                     transform: hoverBack ? "translateY(-2px)" : "none",
                     // remove visible border
                     border: "none",
-                    color: "#2563eb"
+                    color: "white"
                   }}
                 >
-                  <LeftOutlined style={{ fontSize: 20, color: "#2563eb" }} />
+                  <LeftOutlined style={{ fontSize: 20, color: "white" }} />
                 </div>
               </Tooltip>
             </div>

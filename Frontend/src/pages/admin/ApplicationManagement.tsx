@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Button } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -19,12 +19,18 @@ const { Option } = Select;
 export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
-  const { applications } = useApplicationStore();
-  const { getCandidateById } = useCandidateStore();
+  const { applications, getApplications } = useApplicationStore();
+  const { getCandidateById, getCandidates } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
   const { subjectGroups } = useSubjectGroupStore();
+
+  // Fetch all applications and candidates when admin page mounts
+  useEffect(() => {
+    getApplications();
+    getCandidates();
+  }, [getApplications, getCandidates]);
 
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
@@ -99,6 +105,19 @@ export const ApplicationManagement: React.FC = () => {
     getUniversityById,
     getMajorById
   ]);
+
+  // Sort applications: pending (chờ duyệt) first, then approved, then rejected
+  const sortedApplications = useMemo(() => {
+    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+    return filteredApplications.slice().sort((a, b) => {
+      const oa = order[a.status] ?? 99;
+      const ob = order[b.status] ?? 99;
+      if (oa !== ob) return oa - ob;
+      const ta = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+      const tb = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+      return tb - ta;
+    });
+  }, [filteredApplications]);
 
   const handleUniversityChange = (value: string) => {
     setUniversityFilter(value);
@@ -278,7 +297,7 @@ export const ApplicationManagement: React.FC = () => {
         {filteredApplications.length > 0 ? (
           <Table 
             columns={columns} 
-            dataSource={filteredApplications} 
+            dataSource={sortedApplications} 
             rowKey="id" 
             scroll={{ x: true }}
           />

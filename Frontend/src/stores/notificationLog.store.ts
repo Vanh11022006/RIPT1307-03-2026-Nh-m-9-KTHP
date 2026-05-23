@@ -34,6 +34,24 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   notificationLogs: [],
   loading: false,
 
+  // Load initial notifications from localStorage if available
+  // This provides a fallback persistence when backend doesn't store notifications
+  // safely during development.
+  ...(function() {
+    try {
+      const raw = localStorage.getItem('notificationLogs');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return { notificationLogs: parsed.map(normalizeNotification) };
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {};
+  })(),
+
   getNotificationLogs: async () => {
     set({ loading: true });
     try {
@@ -41,6 +59,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
       set({ notificationLogs: logs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(logs)); } catch(e){}
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     } finally {
@@ -61,6 +80,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       set((state) => ({
         notificationLogs: [notification, ...state.notificationLogs.filter((item) => item.id !== notification.id)]
       }));
+      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to create notification log:", error);
     }
@@ -78,6 +98,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
           ...state.notificationLogs.filter((item) => !logs.some((log) => log.id === item.id)),
         ]
       }));
+      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
 
       return logs;
     } catch (error) {
@@ -104,6 +125,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
           log.id === notificationId ? { ...log, isRead: true } : log
         )
       }));
+      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
@@ -115,6 +137,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       set((state) => ({
         notificationLogs: state.notificationLogs.filter(log => log.id !== notificationId)
       }));
+      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to delete notification:", error);
     }
@@ -126,6 +149,7 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       set((state) => ({
         notificationLogs: state.notificationLogs.filter(log => String(log.recipientUserId) !== String(userId))
       }));
+      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to delete notifications by user:", error);
     }

@@ -35,11 +35,17 @@ export const AdminDashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const { candidates, getCandidateById } = useCandidateStore();
+  const { candidates, getCandidateById, getCandidates } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
-  const { applications } = useApplicationStore();
+  const { applications, getApplications } = useApplicationStore();
   const { admissionRounds } = useAdmissionRoundStore();
+
+  // Fetch all candidates and applications so dashboard stats are accurate
+  useEffect(() => {
+    getCandidates();
+    getApplications();
+  }, [getCandidates, getApplications]);
 
   const [selectedAdmissionRoundId, setSelectedAdmissionRoundId] = useState<string>("all");
   const [selectedUniversityId, setSelectedUniversityId] = useState<string>("all");

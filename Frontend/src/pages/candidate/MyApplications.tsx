@@ -140,6 +140,20 @@ export const MyApplications: React.FC = () => {
     });
   }, [applications, searchText, statusFilter]);
 
+  // Sort applications: pending (chờ duyệt) first, then approved, then rejected
+  const sortedApplications = useMemo(() => {
+    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+    return filteredApplications.slice().sort((a, b) => {
+      const oa = order[a.status] ?? 99;
+      const ob = order[b.status] ?? 99;
+      if (oa !== ob) return oa - ob;
+      // fallback: newest submitted first
+      const ta = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+      const tb = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+      return tb - ta;
+    });
+  }, [filteredApplications]);
+
   const appStore = useApplicationStore.getState();
 
   const columns = [
@@ -407,7 +421,7 @@ export const MyApplications: React.FC = () => {
           <>
             <Table
               columns={columns}
-              dataSource={filteredApplications}
+              dataSource={sortedApplications}
               rowKey="id"
               loading={loading}
               scroll={{ x: true }}

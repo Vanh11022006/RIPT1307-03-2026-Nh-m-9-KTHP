@@ -2,12 +2,15 @@ package com.uniadmission.backend.service.impl;
 
 import com.uniadmission.backend.dto.request.CandidateProfileRequest;
 import com.uniadmission.backend.entity.Candidate;
+import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.repository.CandidateRepository;
+import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.service.CandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -17,11 +20,24 @@ import java.time.format.DateTimeParseException;
 public class CandidateServiceImpl implements CandidateService {
 
     private final CandidateRepository candidateRepository;
+    private final UserRepository userRepository;
 
     @Override
     public Candidate getProfile(Long userId) {
-        return candidateRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ thí sinh"));
+        Optional<Candidate> candidateOpt = candidateRepository.findByUser_Id(userId);
+        if (candidateOpt.isPresent()) {
+            return candidateOpt.get();
+        }
+
+        // Auto-create a blank Candidate profile for users that don't have one yet
+        // (e.g. users created directly in DB or before the register flow added candidate creation)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
+
+        Candidate candidate = new Candidate();
+        candidate.setUser(user);
+        candidate.setPhone(user.getPhone());
+        return candidateRepository.save(candidate);
     }
 
     @Override
