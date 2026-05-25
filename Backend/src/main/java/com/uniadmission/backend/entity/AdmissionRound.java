@@ -18,8 +18,13 @@ public class AdmissionRound {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
+    private String code;
+
     @Column(nullable = false)
     private String name;
+
+    private Integer year;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -29,6 +34,9 @@ public class AdmissionRound {
 
     @Column(nullable = false)
     private String status;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

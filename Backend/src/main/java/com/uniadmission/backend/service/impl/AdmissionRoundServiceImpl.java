@@ -27,9 +27,13 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
 
     @Override
     public AdmissionRound create(AdmissionRound admissionRound) {
+        if (admissionRound.getCode() == null || admissionRound.getCode().trim().isEmpty()) {
+            throw new RuntimeException("Mã đợt xét tuyển không được để trống");
+        }
         if (admissionRound.getEndDate().isBefore(admissionRound.getStartDate())) {
             throw new RuntimeException("Lỗi: Ngày kết thúc không được trước ngày bắt đầu!");
         }
+        admissionRound.setCode(admissionRound.getCode().trim().toUpperCase());
         return repository.save(admissionRound);
     }
 
@@ -37,14 +41,21 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
     public AdmissionRound update(Long id, AdmissionRound details) {
         AdmissionRound round = getById(id);
 
+        if (details.getCode() == null || details.getCode().trim().isEmpty()) {
+            throw new RuntimeException("Mã đợt xét tuyển không được để trống");
+        }
+
         if (details.getEndDate().isBefore(details.getStartDate())) {
             throw new RuntimeException("Lỗi: Ngày kết thúc không được trước ngày bắt đầu!");
         }
 
+        round.setCode(details.getCode().trim().toUpperCase());
         round.setName(details.getName());
+        round.setYear(details.getYear());
         round.setStartDate(details.getStartDate());
         round.setEndDate(details.getEndDate());
         round.setStatus(details.getStatus());
+        round.setDescription(details.getDescription());
 
         return repository.save(round);
     }

@@ -55,11 +55,28 @@ public class UniversityController {
         University university = universityRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trường đại học với id: " + id));
 
-        if (details.getCode() != null) university.setCode(details.getCode());
-        if (details.getName() != null) university.setName(details.getName());
-        if (details.getLogoUrl() != null) university.setLogoUrl(details.getLogoUrl());
-        if (details.getWebsite() != null) university.setWebsite(details.getWebsite());
-        if (details.getStatus() != null) university.setStatus(details.getStatus());
+        if (details.getCode() != null)
+            university.setCode(details.getCode());
+        if (details.getName() != null)
+            university.setName(details.getName());
+        if (details.getShortName() != null)
+            university.setShortName(details.getShortName());
+        if (details.getAddress() != null)
+            university.setAddress(details.getAddress());
+        if (details.getCity() != null)
+            university.setCity(details.getCity());
+        if (details.getLogoUrl() != null)
+            university.setLogoUrl(details.getLogoUrl());
+        if (details.getWebsite() != null)
+            university.setWebsite(details.getWebsite());
+        if (details.getEmail() != null)
+            university.setEmail(details.getEmail());
+        if (details.getPhone() != null)
+            university.setPhone(details.getPhone());
+        if (details.getDescription() != null)
+            university.setDescription(details.getDescription());
+        if (details.getStatus() != null)
+            university.setStatus(details.getStatus());
 
         University updated = universityRepository.save(university);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật trường đại học thành công", updated));

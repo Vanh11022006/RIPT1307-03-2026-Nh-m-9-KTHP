@@ -13,7 +13,7 @@ const { Option } = Select;
 const { Text } = Typography;
 
 export const MajorManagement: React.FC = () => {
-  const { majors, createMajor, updateMajor, toggleMajorStatus } = useMajorStore();
+  const { majors, createMajor, updateMajor, toggleMajorStatus, getMajors } = useMajorStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { subjectGroups } = useSubjectGroupStore();
 
@@ -71,7 +71,7 @@ export const MajorManagement: React.FC = () => {
     setEditingId(null);
   };
 
-  const handleModalSubmit = (values: any) => {
+  const handleModalSubmit = async (values: any) => {
     const now = new Date().toISOString();
     
     // Safety for subjectGroupCodes
@@ -83,26 +83,30 @@ export const MajorManagement: React.FC = () => {
       description: values.description || ""
     };
 
-    if (editingId) {
-      updateMajor(editingId, {
-        ...payload,
-        updatedAt: now
-      });
-      message.success("Cập nhật ngành học thành công");
-    } else {
-      const newId = `major_${Date.now()}`;
-      createMajor({
-        ...payload,
-        id: newId,
-        createdAt: now,
-        updatedAt: now
-      });
-      message.success("Thêm ngành học thành công");
+    try {
+      if (editingId) {
+        await updateMajor(editingId, {
+          ...payload,
+          updatedAt: now
+        });
+        await getMajors();
+        message.success("Cập nhật ngành học thành công");
+      } else {
+        await createMajor({
+          ...payload,
+          createdAt: now,
+          updatedAt: now
+        });
+        await getMajors();
+        message.success("Thêm ngành học thành công");
+      }
+
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingId(null);
+    } catch (error) {
+      message.error("Không thể lưu thông tin ngành học");
     }
-    
-    setIsModalVisible(false);
-    form.resetFields();
-    setEditingId(null);
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {

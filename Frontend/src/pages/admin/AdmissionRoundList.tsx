@@ -121,11 +121,15 @@ export const AdmissionRoundList: React.FC = () => {
       };
 
       if (editingRound) {
-        updateAdmissionRound(editingRound.id, payload);
-        message.success("Cập nhật đợt xét tuyển thành công");
+        updateAdmissionRound(editingRound.id, payload).then(() => {
+          message.success("Cập nhật đợt xét tuyển thành công");
+          return useAdmissionRoundStore.getState().getAdmissionRounds();
+        });
       } else {
-        createAdmissionRound(payload);
-        message.success("Thêm đợt xét tuyển thành công");
+        createAdmissionRound(payload).then(() => {
+          message.success("Thêm đợt xét tuyển thành công");
+          return useAdmissionRoundStore.getState().getAdmissionRounds();
+        });
       }
 
       setIsModalVisible(false);

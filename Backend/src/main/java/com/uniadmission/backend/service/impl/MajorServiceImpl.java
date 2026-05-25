@@ -38,8 +38,26 @@ public class MajorServiceImpl implements MajorService {
     @Override
     public Major updateMajor(Long id, Major majorDetails) {
         Major existingMajor = getMajorById(id);
-        existingMajor.setName(majorDetails.getName());
-        existingMajor.setCode(majorDetails.getCode());
+        if (majorDetails.getUniversity() != null)
+            existingMajor.setUniversity(majorDetails.getUniversity());
+        if (majorDetails.getName() != null)
+            existingMajor.setName(majorDetails.getName());
+        if (majorDetails.getCode() != null)
+            existingMajor.setCode(majorDetails.getCode());
+        if (majorDetails.getAdmissionQuota() != null)
+            existingMajor.setAdmissionQuota(majorDetails.getAdmissionQuota());
+        if (majorDetails.getSubjectGroupCodes() != null)
+            existingMajor.setSubjectGroupCodes(majorDetails.getSubjectGroupCodes());
+        if (majorDetails.getMinScore() != null)
+            existingMajor.setMinScore(majorDetails.getMinScore());
+        if (majorDetails.getTuitionFeePerYear() != null)
+            existingMajor.setTuitionFeePerYear(majorDetails.getTuitionFeePerYear());
+        if (majorDetails.getDescription() != null)
+            existingMajor.setDescription(majorDetails.getDescription());
+        if (majorDetails.getBenchmarkScore() != null)
+            existingMajor.setBenchmarkScore(majorDetails.getBenchmarkScore());
+        if (majorDetails.getStatus() != null)
+            existingMajor.setStatus(majorDetails.getStatus());
         return majorRepository.save(existingMajor);
     }
 

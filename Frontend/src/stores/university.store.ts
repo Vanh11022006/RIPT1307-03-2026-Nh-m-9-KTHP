@@ -53,7 +53,7 @@ interface UniversityState {
   getUniversities: () => Promise<void>;
   getActiveUniversities: () => University[];
   getUniversityById: (id: string) => University | undefined;
-  createUniversity: (university: University) => Promise<void>;
+  createUniversity: (university: Partial<University>) => Promise<void>;
   updateUniversity: (id: string, data: Partial<University>) => Promise<void>;
   toggleUniversityStatus: (id: string) => Promise<void>;
 }
@@ -88,7 +88,12 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
     try {
       const response = await axiosClient.post("/universities", university);
       const payload = response?.data ?? response;
-      const createdUniversity = normalizeUniversity(payload?.data ?? payload);
+      const serverUniversity = payload?.data ?? payload;
+      const createdUniversity = normalizeUniversity({
+        ...university,
+        ...(serverUniversity || {}),
+        id: String(serverUniversity?.id ?? university?.id ?? ""),
+      });
       if (createdUniversity.id) {
         set((state) => ({
           universities: [...state.universities, createdUniversity]
@@ -96,6 +101,7 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
       }
     } catch (error) {
       console.error("Failed to create university:", error);
+      throw error;
     }
   },
 
@@ -103,16 +109,27 @@ export const useUniversityStore = create<UniversityState>((set, get) => ({
     try {
       const response = await axiosClient.put(`/universities/${id}`, data);
       const payload = response?.data ?? response;
-      const updatedUniversity = normalizeUniversity(payload?.data ?? payload);
-      if (updatedUniversity.id) {
-        set((state) => ({
-          universities: state.universities.map((u) =>
-            u.id === id ? updatedUniversity : u
-          )
-        }));
-      }
+      const serverUniversity = payload?.data ?? payload;
+
+      set((state) => ({
+        universities: state.universities.map((u) => {
+          if (String(u.id) !== String(id)) {
+            return u;
+          }
+
+          const mergedUniversity = {
+            ...u,
+            ...data,
+            ...(serverUniversity || {}),
+            id: String(serverUniversity?.id ?? u.id),
+          };
+
+          return normalizeUniversity(mergedUniversity);
+        })
+      }));
     } catch (error) {
       console.error("Failed to update university:", error);
+      throw error;
     }
   },
 
