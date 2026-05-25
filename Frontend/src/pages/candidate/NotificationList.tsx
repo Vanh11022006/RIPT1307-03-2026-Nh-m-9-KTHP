@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty, message, Popconfirm } from "antd";
-import { BellOutlined, CloseCircleOutlined, DeleteOutlined } from "@ant-design/icons";
+import { BellOutlined, CloseCircleOutlined, DeleteOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import { useAuthStore } from "../../stores/auth.store";
 import type { NotificationLog } from "../../types/notification.types";
@@ -117,6 +117,29 @@ export const NotificationList: React.FC = () => {
 
       {myLogs.length > 0 && (
         <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            type="default"
+            icon={<CheckCircleOutlined />}
+            style={{ marginRight: 8, border: '1px solid #10B981', color: '#10B981', borderRadius: 6 }}
+            onClick={async () => {
+              const unread = myLogs.filter(l => !l.isRead);
+              if (unread.length === 0) {
+                message.info('Không có thông báo chưa đọc');
+                return;
+              }
+
+              try {
+                await Promise.all(unread.map(l => markNotificationAsRead(l.id)));
+                setMyLogs((current) => current.map((l) => ({ ...l, isRead: true })));
+                message.success('Đã đọc tất cả');
+              } catch (error) {
+                console.error(error);
+                message.error('Không thể đánh dấu tất cả là đã đọc');
+              }
+            }}
+          >
+            Đọc tất cả
+          </Button>
           <Popconfirm
             title="Bạn có chắc muốn xóa tất cả thông báo không?"
             description="Hành động này không thể hoàn tác."

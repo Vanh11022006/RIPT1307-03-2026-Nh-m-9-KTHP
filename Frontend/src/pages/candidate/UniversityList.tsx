@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, Row, Col, Input, Select, Button, Space, Typography, Pagination } from "antd";
 import { SearchOutlined, BankOutlined, EnvironmentOutlined, GlobalOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -14,8 +14,14 @@ export const UniversityList: React.FC = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   
-  const { getActiveUniversities } = useUniversityStore();
+  const { getActiveUniversities, getUniversities } = useUniversityStore();
   const activeUniversities = getActiveUniversities();
+
+  useEffect(() => {
+    getUniversities().catch((error) => {
+      console.error("Failed to refresh universities", error);
+    });
+  }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);

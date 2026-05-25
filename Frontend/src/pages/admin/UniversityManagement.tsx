@@ -11,7 +11,7 @@ const { Option } = Select;
 const { Text } = Typography;
 
 export const UniversityManagement: React.FC = () => {
-  const { universities, createUniversity, updateUniversity, toggleUniversityStatus } = useUniversityStore();
+  const { universities, createUniversity, updateUniversity, toggleUniversityStatus, getUniversities } = useUniversityStore();
   const safeUniversities = Array.isArray(universities) ? universities : [];
 
   const [searchText, setSearchText] = useState("");
@@ -69,29 +69,33 @@ export const UniversityManagement: React.FC = () => {
     setEditingId(null);
   };
 
-  const handleModalSubmit = (values: any) => {
+  const handleModalSubmit = async (values: any) => {
     const now = new Date().toISOString();
-    
-    if (editingId) {
-      updateUniversity(editingId, {
-        ...values,
-        updatedAt: now
-      });
-      message.success("Cập nhật trường đại học thành công");
-    } else {
-      const newId = `university_${Date.now()}`;
-      createUniversity({
-        ...values,
-        id: newId,
-        createdAt: now,
-        updatedAt: now
-      });
-      message.success("Thêm trường đại học thành công");
+
+    try {
+      if (editingId) {
+        await updateUniversity(editingId, {
+          ...values,
+          updatedAt: now
+        });
+        await getUniversities();
+        message.success("Cập nhật trường đại học thành công");
+      } else {
+        await createUniversity({
+          ...values,
+          createdAt: now,
+          updatedAt: now
+        });
+        await getUniversities();
+        message.success("Thêm trường đại học thành công");
+      }
+
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingId(null);
+    } catch (error) {
+      message.error("Không thể lưu thông tin trường đại học");
     }
-    
-    setIsModalVisible(false);
-    form.resetFields();
-    setEditingId(null);
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {

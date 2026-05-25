@@ -35,6 +35,13 @@ public class User {
     @Column(nullable = false)
     private String status;
 
+    @JsonIgnore
+    @Column(name = "reset_password_token", unique = true)
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_expires")
+    private LocalDateTime resetPasswordExpires;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

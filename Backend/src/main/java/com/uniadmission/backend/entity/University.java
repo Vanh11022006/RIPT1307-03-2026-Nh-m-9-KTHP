@@ -17,8 +17,16 @@ public class University {
 
     private String code;
     private String name;
+    private String shortName;
+    private String address;
+    private String city;
     private String logoUrl;
     private String website;
+    private String email;
+    private String phone;
+
+    @Column(length = 2000)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     private EntityStatus status;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Button, Drawer, Descriptions, Statistic, Space, Tag, Typography } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -16,10 +16,15 @@ const { Option } = Select;
 
 export const CandidateManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { candidates } = useCandidateStore();
+  const { candidates, getCandidates } = useCandidateStore();
   const { applications } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
+
+  // Fetch all candidates from backend when admin page mounts
+  useEffect(() => {
+    getCandidates();
+  }, [getCandidates]);
 
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
   const safeApplications = Array.isArray(applications) ? applications : [];

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { 
-  Card, Table, Input, Select, Tag, Button, 
+  Card, Table, Input, Select, Tag, Button, message,
   Drawer, Descriptions, Row, Col, Statistic, Typography 
 } from "antd";
 import { SearchOutlined, BellOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, EyeOutlined } from "@ant-design/icons";
@@ -10,9 +10,9 @@ import type { NotificationLog } from "../../types/notification.types";
 const { Title, Text } = Typography;
 
 export const NotificationLogList: React.FC = () => {
-  const { getAllNotificationLogs } = useNotificationLogStore();
-  const allLogs = getAllNotificationLogs();
-  const safeLogs = Array.isArray(allLogs) ? allLogs : [];
+  const safeLogs = useNotificationLogStore(state => state.notificationLogs);
+  const markNotificationAsRead = useNotificationLogStore(state => state.markNotificationAsRead);
+  const safeLogsArr = Array.isArray(safeLogs) ? safeLogs : [];
 
   const [searchText, setSearchText] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -73,8 +73,18 @@ export const NotificationLogList: React.FC = () => {
   };
 
   const handleViewDetail = (log: NotificationLog) => {
-    setSelectedLog(log);
-    setDetailVisible(true);
+    // mark as read if not already, then open detail
+    (async () => {
+      try {
+        if (!log.isRead) {
+          await markNotificationAsRead(log.id);
+        }
+      } catch (e) {
+        console.error('Failed to mark admin notification as read', e);
+      }
+      setSelectedLog({ ...log, isRead: true });
+      setDetailVisible(true);
+    })();
   };
 
   const columns = [
@@ -208,6 +218,33 @@ export const NotificationLogList: React.FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {safeLogsArr.length > 0 && (
+        <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            type="default"
+            icon={<CheckCircleOutlined />}
+            style={{ marginRight: 8, border: '1px solid #10B981', color: '#10B981', borderRadius: 6 }}
+            onClick={async () => {
+              const unread = safeLogsArr.filter(l => !l.isRead);
+              if (unread.length === 0) {
+                message.info('Không có thông báo chưa đọc');
+                return;
+              }
+
+              try {
+                await Promise.all(unread.map(l => markNotificationAsRead(l.id)));
+                message.success('Đã đọc tất cả');
+              } catch (error) {
+                console.error(error);
+                message.error('Không thể đánh dấu tất cả là đã đọc');
+              }
+            }}
+          >
+            Đọc tất cả
+          </Button>
+        </div>
+      )}
 
       <Card title="Lọc thông báo" bordered={false} style={{ marginBottom: 24 }}>
         <Row gutter={[16, 16]}>

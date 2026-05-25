@@ -35,7 +35,7 @@ export const ApplicationForm: React.FC = () => {
 
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId } = useCandidateStore();
-  const { getActiveUniversities } = useUniversityStore();
+  const { getActiveUniversities, getUniversities } = useUniversityStore();
   const { majors } = useMajorStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
   const { applications, createApplication } = useApplicationStore();
@@ -99,6 +99,12 @@ export const ApplicationForm: React.FC = () => {
       form.setFieldsValue({ universityId: defaultUniversityId });
     }
   }, [defaultUniversityId, form]);
+
+  useEffect(() => {
+    getUniversities().catch((error) => {
+      console.error("Failed to refresh universities", error);
+    });
+  }, [getUniversities]);
 
   useEffect(() => {
     // If editing an existing pending application, prefill form

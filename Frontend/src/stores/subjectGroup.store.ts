@@ -13,7 +13,7 @@ interface SubjectGroupState {
   loading: boolean;
   getAllSubjectGroups: () => Promise<void>;
   createSubjectGroup: (subjectGroup: SubjectGroup) => Promise<void>;
-  updateSubjectGroup: (code: string, subjectGroup: Partial<SubjectGroup>) => Promise<void>;
+  updateSubjectGroup: (id: string | number, subjectGroup: Partial<SubjectGroup>) => Promise<void>;
 }
 
 export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
@@ -90,15 +90,15 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
     }
   },
 
-  updateSubjectGroup: async (code, subjectGroup) => {
+  updateSubjectGroup: async (id, subjectGroup) => {
     try {
-      const response = await axiosClient.put(`/subject-groups/${code}`, subjectGroup);
+      const response = await axiosClient.put(`/subject-groups/${id}`, subjectGroup);
       const payload = response?.data ?? response;
       const updatedGroup = payload?.data ?? payload;
       if (updatedGroup) {
         set((state) => ({
           subjectGroups: state.subjectGroups.map((sg) =>
-            sg.code === code
+            String(sg.id) === String(id) || sg.code === updatedGroup?.code
               ? {
                   id: updatedGroup?.id,
                   code: updatedGroup?.code,
@@ -124,6 +124,7 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
       }
     } catch (error) {
       console.error("Failed to update subject group:", error);
+      throw error;
     }
   }
 }));

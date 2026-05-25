@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (!StringUtils.hasText(jwt)) {
-                // no token provided, proceed (security will handle protected endpoints)
             } else if (tokenProvider.validateToken(jwt)) {
                 String email = tokenProvider.getUsernameFromJWT(jwt);
 
@@ -49,8 +48,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                // token is present but invalid/expired -> respond 401 so client can attempt
-                // refresh
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"message\":\"Invalid or expired token\"}");
