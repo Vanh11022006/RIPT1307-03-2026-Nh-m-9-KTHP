@@ -103,11 +103,13 @@ export const SubjectGroupList: React.FC = () => {
       };
 
       if (editingGroup) {
-        updateSubjectGroup(editingGroup.code, payload);
-        message.success("Cập nhật tổ hợp xét tuyển thành công");
+        updateSubjectGroup(editingGroup.id ?? editingGroup.code, payload)
+          .then(() => useSubjectGroupStore.getState().getAllSubjectGroups())
+          .then(() => message.success("Cập nhật tổ hợp xét tuyển thành công"));
       } else {
-        createSubjectGroup(payload);
-        message.success("Thêm tổ hợp xét tuyển thành công");
+        createSubjectGroup(payload)
+          .then(() => useSubjectGroupStore.getState().getAllSubjectGroups())
+          .then(() => message.success("Thêm tổ hợp xét tuyển thành công"));
       }
 
       setIsModalVisible(false);
