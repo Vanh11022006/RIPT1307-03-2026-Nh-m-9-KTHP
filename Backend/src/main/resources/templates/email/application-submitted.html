@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Xác nhận nộp hồ sơ</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:680px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+      <div style="background:linear-gradient(135deg,#2563eb,#0ea5e9);padding:28px 32px;color:#ffffff;">
+        <div style="font-size:14px;opacity:.9;letter-spacing:.08em;text-transform:uppercase;">UniAdmission</div>
+        <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">Xác nhận nộp hồ sơ xét tuyển</h1>
+      </div>
+      <div style="padding:32px;line-height:1.6;">
+        <p style="margin-top:0;">Chào <strong th:text="${candidateName}">Thí sinh</strong>,</p>
+        <p>Bạn đã nộp hồ sơ xét tuyển vào <strong th:text="${universityName}">Trường</strong> - ngành <strong th:text="${majorName}">Ngành</strong>.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;width:180px;"><strong>Mã hồ sơ</strong></td>
+            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;" th:text="${applicationCode}">HS20260001</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;"><strong>Thời gian tiếp nhận</strong></td>
+            <td style="padding:12px 16px;" th:text="${submittedAt}">26/05/2026 10:00</td>
+          </tr>
+        </table>
+
+        <p><strong>Bước tiếp theo:</strong> Phòng Tuyển Sinh sẽ kiểm tra hồ sơ trong vòng 3-5 ngày làm việc. Vui lòng chuẩn bị bản gốc các giấy tờ để đối chiếu khi được yêu cầu.</p>
+        <p>Nếu cần hỗ trợ, liên hệ: <a href="mailto:tuyensinh@uniadmission.example" style="color:#2563eb;">tuyensinh@uniadmission.example</a> hoặc (+84) 0123-456-789.</p>
+        <p style="margin-bottom:0;color:#64748b;font-size:13px;">Trân trọng,<br />Phòng Tuyển Sinh — UniAdmission</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

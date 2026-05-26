@@ -3,6 +3,7 @@ package com.uniadmission.backend.service.impl;
 import com.uniadmission.backend.entity.NotificationLog;
 import com.uniadmission.backend.repository.NotificationLogRepository;
 import com.uniadmission.backend.service.NotificationLogService;
+import com.uniadmission.backend.service.NotificationStreamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public class NotificationLogServiceImpl implements NotificationLogService {
 
     private final NotificationLogRepository repository;
+    private final NotificationStreamService notificationStreamService;
 
     @Override
     public NotificationLog createNotification(Long userId, String title, String message) {
@@ -21,7 +23,9 @@ public class NotificationLogServiceImpl implements NotificationLogService {
         log.setTitle(title);
         log.setMessage(message);
         log.setRead(false);
-        return repository.save(log);
+        NotificationLog saved = repository.save(log);
+        notificationStreamService.publish(saved);
+        return saved;
     }
 
     @Override

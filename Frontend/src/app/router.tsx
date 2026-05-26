@@ -9,6 +9,7 @@ import { RoleBasedRoute } from "../components/layout/RoleBasedRoute";
 // Public Pages
 import { LandingPage } from "../pages/public/LandingPage";
 import { AuthPage } from "../pages/public/AuthPage";
+import { VerifyEmailPage } from "../pages/public/VerifyEmailPage";
 
 // Candidate Pages
 import { CandidateDashboard } from "../pages/candidate/Dashboard";
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: "register", element: <AuthPage /> },
       { path: "forgot-password", element: <AuthPage /> },
       { path: "reset-password", element: <AuthPage /> },
+      { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "universities", element: <UniversityList /> },
       { path: "universities/:id", element: <UniversityDetail /> },
     ],

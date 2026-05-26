@@ -23,6 +23,9 @@ public class DataSeeder implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setRole("admin");
             admin.setStatus("active");
+            admin.setEmailVerified(true);
+            admin.setEmailVerificationToken(null);
+            admin.setEmailVerificationExpires(null);
             admin.setPhone("0900000001");
             userRepository.save(admin);
         } else {
@@ -32,6 +35,7 @@ public class DataSeeder implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setRole("admin");
             admin.setStatus("active");
+            admin.setEmailVerified(true);
             admin.setPhone("0900000001");
             userRepository.save(admin);
         }
