@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Xác minh email</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:680px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+      <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:28px 32px;color:#ffffff;">
+        <div style="font-size:14px;opacity:.9;letter-spacing:.08em;text-transform:uppercase;">UniAdmission</div>
+        <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">Xác minh email tài khoản</h1>
+      </div>
+      <div style="padding:32px;line-height:1.6;">
+        <p style="margin-top:0;">Chào <strong th:text="${candidateName}">Thí sinh</strong>,</p>
+        <p>Cảm ơn bạn đã đăng ký tài khoản UniAdmission. Vui lòng nhấn nút bên dưới để xác minh email và kích hoạt tài khoản:</p>
+        <p><a th:href="${verificationUrl}" href="#" style="background:#2563eb;color:#ffffff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;">Xác minh email</a></p>
+        <p>Nếu nút không hoạt động, hãy sao chép liên kết này vào trình duyệt:</p>
+        <p style="word-break:break-all;color:#2563eb;" th:text="${verificationUrl}">https://example.com/verify-email?token=...</p>
+        <p style="color:#64748b;font-size:13px;">Liên kết có thể hết hạn sau một thời gian. Nếu bạn không yêu cầu tạo tài khoản, hãy bỏ qua email này.</p>
+        <p style="margin-bottom:0;color:#64748b;font-size:13px;">Trân trọng,<br />UniAdmission</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

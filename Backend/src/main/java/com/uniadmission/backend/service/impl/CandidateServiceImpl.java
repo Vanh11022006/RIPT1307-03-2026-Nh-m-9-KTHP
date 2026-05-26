@@ -30,9 +30,14 @@ public class CandidateServiceImpl implements CandidateService {
         }
 
         // Auto-create a blank Candidate profile for users that don't have one yet
-        // (e.g. users created directly in DB or before the register flow added candidate creation)
+        // (e.g. users created directly in DB or before the register flow added
+        // candidate creation)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
+
+        if (!"candidate".equalsIgnoreCase(user.getRole())) {
+            throw new RuntimeException("Người dùng này không phải là thí sinh");
+        }
 
         Candidate candidate = new Candidate();
         candidate.setUser(user);
@@ -42,7 +47,7 @@ public class CandidateServiceImpl implements CandidateService {
 
     @Override
     public List<Candidate> getAllCandidates() {
-        return candidateRepository.findAll();
+        return candidateRepository.findAllByUser_RoleIgnoreCase("candidate");
     }
 
     @Override

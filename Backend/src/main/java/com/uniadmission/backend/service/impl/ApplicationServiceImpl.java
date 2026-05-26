@@ -94,6 +94,45 @@ public class ApplicationServiceImpl implements ApplicationService {
                         saved.setApplicationCode(code);
                         saved = applicationRepository.save(saved);
                 }
+
+                String applicationCode = saved.getApplicationCode() != null ? saved.getApplicationCode()
+                                : "Chưa cập nhật";
+
+                try {
+                        String candidateName = candidate.getUser() != null ? candidate.getUser().getFullName()
+                                        : "thí sinh";
+                        String email = candidate.getUser() != null ? candidate.getUser().getEmail() : null;
+                        String universityName = major.getUniversity() != null ? major.getUniversity().getName() : "";
+                        String majorName = major.getName() != null ? major.getName() : "";
+
+                        if (email != null && !email.trim().isEmpty()) {
+                                emailService.sendApplicationSubmittedEmail(
+                                                email,
+                                                candidateName,
+                                                applicationCode,
+                                                universityName,
+                                                majorName);
+                        }
+                        // create in-app notification for candidate
+                        try {
+                                if (candidate.getUser() != null && candidate.getUser().getId() != null) {
+                                        String title = "Xác nhận: hồ sơ đã được tiếp nhận";
+                                        String message = "Hồ sơ của bạn (Mã: " + applicationCode
+                                                        + ") đã được tiếp nhận. Trường: "
+                                                        + universityName + ", Ngành: " + majorName
+                                                        + ". Phòng Tuyển Sinh sẽ kiểm tra hồ sơ trong vòng 3-5 ngày làm việc.";
+                                        notificationService.createNotification(candidate.getUser().getId(), title,
+                                                        message);
+                                }
+                        } catch (Exception e) {
+                                LOGGER.warn("Failed to create in-app notification for application id={}: {}",
+                                                saved.getId(), e.getMessage());
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Failed to send application submitted email for application id={}: {}",
+                                        saved.getId(), e.getMessage());
+                }
+
                 return saved;
         }
 
