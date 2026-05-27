@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,6 +42,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().antMatchers("/api/notifications/stream/**");
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors().and() // enable CORS with configuration from corsConfigurationSource()
@@ -53,6 +59,7 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/**", "/api/universities/**", "/api/majors/**",
                         "/api/subject-groups/**", "/api/admission-rounds/**")
                 .permitAll()
+                .antMatchers("/api/notifications/stream/**").permitAll()
                 .antMatchers(
                         "/v3/api-docs/**",
                         "/v3/api-docs",
