@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Card, Form, Input, Button, DatePicker, Select, InputNumber, Row, Col, message, Divider, Typography } from "antd";
 import { PageHeader } from "../../components/common/PageHeader";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
 import dayjs from "dayjs";
@@ -12,10 +13,14 @@ export const Profile: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId, getProfile, saveProfile } = useCandidateStore();
   const profile = currentUser ? getCandidateByUserId(currentUser.id) : undefined;
+  const [loading, setLoading] = React.useState<boolean>(false);
 
   useEffect(() => {
     if (currentUser?.id) {
-      getProfile(currentUser.id).catch((error) => console.error("Failed to load profile", error));
+      setLoading(true);
+      getProfile(currentUser.id)
+        .catch((error) => console.error("Failed to load profile", error))
+        .finally(() => setLoading(false));
     }
   }, [currentUser?.id, getProfile]);
 
@@ -57,6 +62,7 @@ export const Profile: React.FC = () => {
 
   return (
     <div>
+      {loading && <LoadingScreen tip="Đang tải thông tin cá nhân..." />}
       <PageHeader title="Thông tin cá nhân" />
       <Card>
         <Form

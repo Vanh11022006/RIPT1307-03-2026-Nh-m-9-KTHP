@@ -4,6 +4,7 @@ import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useApplicationStore } from "../../stores/application.store";
@@ -16,15 +17,16 @@ const { Option } = Select;
 
 export const CandidateManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { candidates, getCandidates } = useCandidateStore();
-  const { applications } = useApplicationStore();
+  const { candidates, loading, getCandidates } = useCandidateStore();
+  const { applications, loading: applicationsLoading, getApplications } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
 
   // Fetch all candidates from backend when admin page mounts
   useEffect(() => {
     getCandidates();
-  }, [getCandidates]);
+    getApplications();
+  }, [getCandidates, getApplications]);
 
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
   const safeApplications = Array.isArray(applications) ? applications : [];
@@ -273,12 +275,15 @@ export const CandidateManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredCandidates.length > 0 ? (
+        {loading && filteredCandidates.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách thí sinh..." />
+        ) : filteredCandidates.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredCandidates} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading || applicationsLoading}
           />
         ) : (
           <EmptyState description="Không tìm thấy thí sinh phù hợp" />

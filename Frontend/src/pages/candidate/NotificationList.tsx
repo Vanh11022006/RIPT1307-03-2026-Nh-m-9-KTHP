@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty, message, Popconfirm } from "antd";
 import { BellOutlined, CloseCircleOutlined, DeleteOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import type { NotificationLog } from "../../types/notification.types";
 
@@ -11,25 +12,37 @@ export const NotificationList: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId } = useNotificationLogStore();
   const [myLogs, setMyLogs] = useState<NotificationLog[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { notificationLogs: storeLogs } = useNotificationLogStore();
 
   useEffect(() => {
     let mounted = true;
 
     const loadNotifications = async () => {
       if (!currentUser?.id) {
-        if (mounted) setMyLogs([]);
+        if (mounted) {
+          setMyLogs([]);
+          setLoading(false);
+        }
         return;
       }
 
+      setLoading(true);
       const logs = await getNotificationLogsByUserId(String(currentUser.id));
+      // eslint-disable-next-line no-console
+      console.debug('[NotificationList] fetched logs count:', Array.isArray(logs) ? logs.length : typeof logs, logs);
       if (mounted) {
         setMyLogs(Array.isArray(logs) ? logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
+        setLoading(false);
       }
     };
 
     loadNotifications().catch((error) => {
       console.error("Failed to load candidate notifications", error);
-      if (mounted) setMyLogs([]);
+      if (mounted) {
+        setMyLogs([]);
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -110,6 +123,20 @@ export const NotificationList: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Debug info: current user id and store cache size */}
+      <div style={{ marginBottom: 12 }}>
+        <Text type="secondary">Debug user id: {currentUser?.id ?? "(no user)"} • Cached notifications: {Array.isArray(storeLogs) ? storeLogs.length : 0}</Text>
+        {!loading && (Array.isArray(myLogs) ? myLogs.length === 0 : true) && (
+          <Button size="small" style={{ marginLeft: 12 }} onClick={async () => {
+            setLoading(true);
+            const logs = await getNotificationLogsByUserId(String(currentUser?.id ?? 0));
+            // eslint-disable-next-line no-console
+            console.debug('[NotificationList] retry fetched logs count:', Array.isArray(logs) ? logs.length : typeof logs, logs);
+            setMyLogs(Array.isArray(logs) ? logs : []);
+            setLoading(false);
+          }}>Thử lại</Button>
+        )}
+      </div>
       <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>Thông báo của tôi</Title>
         <Text type="secondary">Theo dõi các cập nhật liên quan đến hồ sơ xét tuyển của bạn</Text>
@@ -160,7 +187,9 @@ export const NotificationList: React.FC = () => {
       )}
 
       <Card bordered={false}>
-        {myLogs.length === 0 ? (
+        {loading ? (
+          <LoadingScreen tip="Đang tải thông báo..." />
+        ) : myLogs.length === 0 ? (
           <Empty description="Bạn chưa có thông báo nào" />
         ) : (
           <List

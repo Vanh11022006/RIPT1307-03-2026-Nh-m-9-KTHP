@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Button, Modal, Form, Space, message, Popconfirm } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useUniversityStore } from "../../stores/university.store";
 import type { University } from "../../types/university.types";
@@ -11,8 +12,12 @@ const { Option } = Select;
 const { Text } = Typography;
 
 export const UniversityManagement: React.FC = () => {
-  const { universities, createUniversity, updateUniversity, toggleUniversityStatus, getUniversities } = useUniversityStore();
+  const { universities, loading, createUniversity, updateUniversity, toggleUniversityStatus, getUniversities } = useUniversityStore();
   const safeUniversities = Array.isArray(universities) ? universities : [];
+
+  useEffect(() => {
+    getUniversities();
+  }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");
   const [cityFilter, setCityFilter] = useState<string>("all");
@@ -225,12 +230,15 @@ export const UniversityManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredUniversities.length > 0 ? (
+        {loading && filteredUniversities.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách trường đại học..." />
+        ) : filteredUniversities.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredUniversities} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
           />
         ) : (
           <EmptyState description="Không tìm thấy trường đại học phù hợp" />

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Card, Result, Spin, Typography, Button, message } from "antd";
+import { Card, Result, Button, message } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 
-const { Text } = Typography;
 const VERIFIED_EMAIL_TOKENS_KEY = "verified_email_tokens";
 const verifiedTokens = new Set<string>();
 const verificationRequests = new Map<string, Promise<{ success: boolean; message: string }>>();
@@ -133,12 +133,7 @@ export const VerifyEmailPage: React.FC = () => {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
       <Card style={{ width: "100%", maxWidth: 560, borderRadius: 20, boxShadow: "0 24px 80px rgba(0,0,0,0.25)" }} bordered={false}>
         {status === "loading" ? (
-          <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 16 }}>
-              <Text>{detail}</Text>
-            </div>
-          </div>
+          <LoadingScreen tip={detail} />
         ) : status === "success" ? (
           <Result
             status="success"

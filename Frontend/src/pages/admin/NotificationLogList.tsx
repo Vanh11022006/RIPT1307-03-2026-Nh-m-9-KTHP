@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Card, Table, Input, Select, Tag, Button, message,
   Drawer, Descriptions, Row, Col, Statistic, Typography 
 } from "antd";
 import { SearchOutlined, BellOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, EyeOutlined } from "@ant-design/icons";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
 import type { NotificationLog } from "../../types/notification.types";
 
@@ -11,6 +12,8 @@ const { Title, Text } = Typography;
 
 export const NotificationLogList: React.FC = () => {
   const safeLogs = useNotificationLogStore(state => state.notificationLogs);
+  const loading = useNotificationLogStore(state => state.loading);
+  const getNotificationLogs = useNotificationLogStore(state => state.getNotificationLogs);
   const markNotificationAsRead = useNotificationLogStore(state => state.markNotificationAsRead);
   const safeLogsArr = Array.isArray(safeLogs) ? safeLogs : [];
 
@@ -21,6 +24,10 @@ export const NotificationLogList: React.FC = () => {
   
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
+
+  useEffect(() => {
+    getNotificationLogs();
+  }, [getNotificationLogs]);
 
   // Statistics
   const totalLogs = safeLogs.length;
@@ -160,6 +167,10 @@ export const NotificationLogList: React.FC = () => {
         <Text type="secondary">Quản lý và theo dõi các thông báo/email giả lập trong hệ thống</Text>
       </div>
 
+      {loading && safeLogsArr.length === 0 ? (
+        <LoadingScreen tip="Đang tải danh sách thông báo..." />
+      ) : (
+        <>
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card bordered={false} style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)", borderRadius: 20, boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.4)" }} bodyStyle={{ padding: "24px" }}>
@@ -307,6 +318,7 @@ export const NotificationLogList: React.FC = () => {
           locale={{ emptyText: "Không tìm thấy thông báo phù hợp" }}
           pagination={{ pageSize: 10 }}
           scroll={{ x: 800 }}
+          loading={loading}
         />
       </Card>
 
@@ -354,6 +366,8 @@ export const NotificationLogList: React.FC = () => {
           </Descriptions>
         )}
       </Drawer>
+        </>
+      )}
     </div>
   );
 };

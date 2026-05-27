@@ -136,12 +136,21 @@ public class ApplicationController {
 
     @GetMapping("/admin-list")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Danh sách hồ sơ cho admin", description = "Phân trang, lọc theo trạng thái")
+    @Operation(summary = "Danh sách hồ sơ cho admin", description = "Phân trang, lọc theo trạng thái, trường, ngành và đợt xét tuyển")
     public ResponseEntity<ApiResponse<Page<Application>>> getAdminApplications(
-            @RequestParam(required = false) ApplicationStatus status,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long universityId,
+            @RequestParam(required = false) Long majorId,
+            @RequestParam(required = false) Long admissionRoundId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Application> applications = applicationService.getApplicationsForAdmin(status, page, size);
+        ApplicationStatus parsedStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            parsedStatus = ApplicationStatus.valueOf(status.trim().toUpperCase());
+        }
+
+        Page<Application> applications = applicationService.getApplicationsForAdmin(parsedStatus, universityId, majorId,
+                admissionRoundId, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", applications));
     }
 

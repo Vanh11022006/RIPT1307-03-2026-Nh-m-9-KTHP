@@ -5,6 +5,7 @@ import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
@@ -417,7 +418,9 @@ export const MyApplications: React.FC = () => {
       </Card>
 
       <Card>
-        {applications.length > 0 ? (
+        {loading && applications.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách hồ sơ của bạn..." />
+        ) : applications.length > 0 ? (
           <>
             <Table
               columns={columns}

@@ -8,6 +8,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useUniversityStore } from "../../stores/university.store";
@@ -34,17 +35,16 @@ export const ApplicationForm: React.FC = () => {
   const editId = searchParams.get("editId");
 
   const { currentUser } = useAuthStore();
-  const { getCandidateByUserId } = useCandidateStore();
-  const { getActiveUniversities, getUniversities } = useUniversityStore();
-  const { majors } = useMajorStore();
+  const { getCandidateByUserId, getProfile, loading: candidateLoading } = useCandidateStore();
+  const { getActiveUniversities, getUniversities, loading: universitiesLoading } = useUniversityStore();
+  const { majors, getMajors, loading: majorsLoading } = useMajorStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
-  const { applications, createApplication } = useApplicationStore();
-  const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
+  const { applications, createApplication, loading: applicationsLoading, fetchApplicationById, cancelApplication } = useApplicationStore();
+  const { admissionRounds, getAdmissionRoundById, getAdmissionRounds, loading: roundsLoading } = useAdmissionRoundStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
   const { subjectGroups } = useSubjectGroupStore();
-  const { fetchApplicationById, cancelApplication } = useApplicationStore();
 
   const activeRounds = useMemo(() => {
     const safeRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
@@ -105,6 +105,20 @@ export const ApplicationForm: React.FC = () => {
       console.error("Failed to refresh universities", error);
     });
   }, [getUniversities]);
+
+  useEffect(() => {
+    getMajors().catch((error) => {
+      console.error("Failed to refresh majors", error);
+    });
+    getAdmissionRounds().catch((error) => {
+      console.error("Failed to refresh admission rounds", error);
+    });
+    if (currentUser?.id) {
+      getProfile(currentUser.id).catch((error) => {
+        console.error("Failed to refresh candidate profile", error);
+      });
+    }
+  }, [currentUser?.id, getAdmissionRounds, getMajors, getProfile]);
 
   useEffect(() => {
     // If editing an existing pending application, prefill form
@@ -174,6 +188,7 @@ export const ApplicationForm: React.FC = () => {
 
   const currentPriorityScore = getPriorityScore(selectedPriorityGroup);
   const finalAdmissionScore = totalScore + currentPriorityScore;
+  const pageLoading = candidateLoading || universitiesLoading || majorsLoading || roundsLoading || applicationsLoading;
 
   const handleUploadChange = (info: any) => {
     let newFileList = [...info.fileList];
@@ -309,6 +324,12 @@ export const ApplicationForm: React.FC = () => {
     <div>
       <PageHeader title="Nộp hồ sơ xét tuyển" />
 
+      {pageLoading && applications.length === 0 ? (
+        <Card style={{ marginBottom: 24 }}>
+          <LoadingScreen tip="Đang tải dữ liệu nộp hồ sơ..." />
+        </Card>
+      ) : null}
+
       {!isProfileComplete && (
         <Alert
           message="Thông tin cá nhân chưa đầy đủ"
@@ -337,7 +358,7 @@ export const ApplicationForm: React.FC = () => {
       )}
 
       <Card>
-        {!isProfileComplete ? (
+        {pageLoading && applications.length === 0 ? null : !isProfileComplete ? (
           <EmptyState description="Vui lòng cập nhật thông tin cá nhân để tiếp tục" />
         ) : (
         <Form

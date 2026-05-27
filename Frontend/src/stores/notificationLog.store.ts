@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { NotificationLog } from "../types/notification.types";
 import axiosClient from "../api/axiosClient";
+import { useAuthStore } from "./auth.store";
 
 export const normalizeNotification = (notification: any): NotificationLog => ({
   id: String(notification?.id ?? `noti_${Date.now()}`),
@@ -56,7 +57,23 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   getNotificationLogs: async () => {
     set({ loading: true });
     try {
-      const response = await axiosClient.get("/notifications/user/0");
+      const url = "/notifications"; // admin: fetch all notifications
+      let response;
+      try {
+        response = await axiosClient.get(url);
+        // eslint-disable-next-line no-console
+        console.debug('[notificationLog.store] GET', url, 'raw response:', response);
+      } catch (err) {
+        // fallback: try fetching for current user
+        const currentUser = useAuthStore.getState().currentUser;
+        const fallbackUrl = `/notifications/user/${currentUser?.id ?? 0}`;
+        // eslint-disable-next-line no-console
+        console.warn('[notificationLog.store] GET', url, 'failed, falling back to', fallbackUrl, 'error:', err);
+        response = await axiosClient.get(fallbackUrl);
+        // eslint-disable-next-line no-console
+        console.debug('[notificationLog.store] fallback GET', fallbackUrl, 'raw response:', response);
+      }
+
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
       set({ notificationLogs: logs });
@@ -94,7 +111,10 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   
   getNotificationLogsByUserId: async (userId) => {
     try {
-      const response = await axiosClient.get(`/notifications/user/${userId}`);
+      const url = `/notifications/user/${userId}`;
+      const response = await axiosClient.get(url);
+      // eslint-disable-next-line no-console
+      console.debug('[notificationLog.store] GET', url, 'raw response:', response);
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
 

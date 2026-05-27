@@ -46,7 +46,12 @@ export const useAdmissionRoundStore = create<AdmissionRoundState>((set, get) => 
 
   createAdmissionRound: async (data) => {
     try {
-      const response = await axiosClient.post("/admission-rounds", data);
+      const payloadToSend = {
+        ...data,
+        startDate: typeof data.startDate === 'string' && data.startDate.includes('T') ? data.startDate.split('T')[0] : data.startDate,
+        endDate: typeof data.endDate === 'string' && data.endDate.includes('T') ? data.endDate.split('T')[0] : data.endDate,
+      };
+      const response = await axiosClient.post("/admission-rounds", payloadToSend);
       const payload = response?.data ?? response;
       const createdRound = normalizeAdmissionRound(payload?.data ?? payload);
       if (createdRound.id) {
@@ -61,7 +66,12 @@ export const useAdmissionRoundStore = create<AdmissionRoundState>((set, get) => 
 
   updateAdmissionRound: async (id, data) => {
     try {
-      const response = await axiosClient.put(`/admission-rounds/${id}`, data);
+      const payloadToSend = {
+        ...data,
+        startDate: typeof data.startDate === 'string' && data.startDate.includes('T') ? data.startDate.split('T')[0] : data.startDate,
+        endDate: typeof data.endDate === 'string' && data.endDate.includes('T') ? data.endDate.split('T')[0] : data.endDate,
+      };
+      const response = await axiosClient.put(`/admission-rounds/${id}`, payloadToSend);
       const payload = response?.data ?? response;
       const updatedRound = normalizeAdmissionRound(payload?.data ?? payload);
       if (updatedRound.id) {
