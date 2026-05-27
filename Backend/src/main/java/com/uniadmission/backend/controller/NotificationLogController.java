@@ -44,6 +44,20 @@ public class NotificationLogController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
     }
 
+    @GetMapping
+    @Operation(summary = "Danh sách toàn bộ thông báo", description = "Lấy toàn bộ thông báo (admin)")
+    public ResponseEntity<ApiResponse<List<NotificationLog>>> getAllNotifications() {
+        List<NotificationLog> logs = notificationService.getAllNotifications();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
+    @GetMapping("/admin/all")
+    @Operation(summary = "Danh sách toàn bộ thông báo (admin explicit)", description = "Lấy toàn bộ thông báo (admin) - explicit path")
+    public ResponseEntity<ApiResponse<List<NotificationLog>>> getAllNotificationsAdmin() {
+        List<NotificationLog> logs = notificationService.getAllNotifications();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
     @GetMapping("/user/{userId}/unread")
     @Operation(summary = "Thông báo chưa đọc", description = "Lấy danh sách thông báo chưa đọc của user")
     public ResponseEntity<ApiResponse<List<NotificationLog>>> getUnreadNotifications(@PathVariable Long userId) {

@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Tag, Button, Modal, Form, Space, message, InputNumber, Popconfirm } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useMajorStore } from "../../stores/major.store";
 import { useUniversityStore } from "../../stores/university.store";
@@ -13,13 +14,19 @@ const { Option } = Select;
 const { Text } = Typography;
 
 export const MajorManagement: React.FC = () => {
-  const { majors, createMajor, updateMajor, toggleMajorStatus, getMajors } = useMajorStore();
-  const { universities, getUniversityById } = useUniversityStore();
-  const { subjectGroups } = useSubjectGroupStore();
+  const { majors, loading, createMajor, updateMajor, toggleMajorStatus, getMajors } = useMajorStore();
+  const { universities, getUniversityById, getUniversities } = useUniversityStore();
+  const { subjectGroups, getAllSubjectGroups } = useSubjectGroupStore();
 
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
   const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+
+  useEffect(() => {
+    getMajors();
+    getUniversities();
+    getAllSubjectGroups();
+  }, [getMajors, getUniversities, getAllSubjectGroups]);
 
   const [searchText, setSearchText] = useState("");
   const [universityFilter, setUniversityFilter] = useState<string>("all");
@@ -265,12 +272,15 @@ export const MajorManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredMajors.length > 0 ? (
+        {loading && filteredMajors.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách ngành học..." />
+        ) : filteredMajors.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredMajors} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
           />
         ) : (
           <EmptyState description="Không tìm thấy ngành học phù hợp" />

@@ -8,6 +8,8 @@ public interface NotificationLogService {
 
     List<NotificationLog> getUserNotifications(Long userId);
 
+    List<NotificationLog> getAllNotifications();
+
     List<NotificationLog> getUnreadNotifications(Long userId);
 
     void markAsRead(Long id);

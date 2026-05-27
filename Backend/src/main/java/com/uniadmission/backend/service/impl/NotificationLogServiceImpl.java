@@ -34,6 +34,12 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     }
 
     @Override
+    public List<NotificationLog> getAllNotifications() {
+        return repository.findAll(org.springframework.data.domain.Sort
+                .by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+    }
+
+    @Override
     public List<NotificationLog> getUnreadNotifications(Long userId) {
         return repository.findByUserIdAndIsReadFalse(userId);
     }

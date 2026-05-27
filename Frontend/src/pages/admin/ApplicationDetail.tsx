@@ -25,10 +25,10 @@ export const AdminApplicationDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication } = useApplicationStore();
-  const { getCandidateById } = useCandidateStore();
-  const { getUniversityById } = useUniversityStore();
-  const { getMajorById } = useMajorStore();
-  const { getAdmissionRoundById } = useAdmissionRoundStore();
+  const { getCandidateById, getCandidates } = useCandidateStore();
+  const { getUniversityById, getUniversities } = useUniversityStore();
+  const { getMajorById, getMajors } = useMajorStore();
+  const { getAdmissionRoundById, getAdmissionRounds } = useAdmissionRoundStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { currentUser } = useAuthStore();
 
@@ -39,6 +39,11 @@ export const AdminApplicationDetail: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
+
+    getCandidates();
+    getUniversities();
+    getMajors();
+    getAdmissionRounds();
 
     const loadApplication = async () => {
       if (!id) {
@@ -53,8 +58,20 @@ export const AdminApplicationDetail: React.FC = () => {
       if (cachedApplication) {
         if (mounted) {
           setApplication(cachedApplication);
+          // show cached immediately, then attempt to refresh in background
           setLoading(false);
         }
+
+        // Refresh from server to ensure full details (evidence, related refs) are present
+        try {
+          const refreshed = await fetchApplicationById(id);
+          if (mounted && refreshed) {
+            setApplication(refreshed);
+          }
+        } catch (err) {
+          console.error("Failed to refresh application detail", err);
+        }
+
         return;
       }
 
@@ -80,7 +97,7 @@ export const AdminApplicationDetail: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [id, getApplicationById, fetchApplicationById]);
+  }, [id, getApplicationById, fetchApplicationById, getCandidates, getUniversities, getMajors, getAdmissionRounds]);
 
   if (!id) return null;
 
@@ -117,8 +134,8 @@ export const AdminApplicationDetail: React.FC = () => {
   const safeScores = application.scores ?? {};
   const scoreData = Object.entries(safeScores).map(([subject, score]) => ({
     subject,
-    score
-  }));
+    score: Number(score)
+  })).filter((item) => Number.isFinite(item.score));
 
   const scoreColumns = [
     { title: "Môn thi", dataIndex: "subject", key: "subject" },
@@ -127,7 +144,7 @@ export const AdminApplicationDetail: React.FC = () => {
       dataIndex: "score",
       key: "score",
       align: "center" as const,
-      render: (val: number) => <Text strong>{val.toFixed(2)}</Text>
+      render: (val: number | string | undefined) => <Text strong>{Number(val ?? 0).toFixed(2)}</Text>
     }
   ];
 
@@ -260,9 +277,9 @@ export const AdminApplicationDetail: React.FC = () => {
   };
 
   const priorityGroup = application.priorityGroup ?? "none";
-  const priorityScore = application.priorityScore ?? 0;
-  const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
+  const priorityScore = Number(application.priorityScore ?? 0);
+  const examTotalScore = Number(application.totalScore ?? 0);
+  const finalAdmissionScore = Number(application.finalScore ?? (examTotalScore + priorityScore));
 
   return (
     <div className="admin-application-detail">

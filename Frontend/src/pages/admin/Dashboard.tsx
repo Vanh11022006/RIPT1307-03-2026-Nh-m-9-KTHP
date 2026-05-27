@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useUniversityStore } from "../../stores/university.store";
@@ -35,17 +36,20 @@ export const AdminDashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const { candidates, getCandidateById, getCandidates } = useCandidateStore();
-  const { universities, getUniversityById } = useUniversityStore();
-  const { majors, getMajorById } = useMajorStore();
-  const { applications, getApplications } = useApplicationStore();
-  const { admissionRounds } = useAdmissionRoundStore();
+  const { candidates, loading: candidatesLoading, getCandidateById, getCandidates } = useCandidateStore();
+  const { universities, loading: universitiesLoading, getUniversityById, getUniversities } = useUniversityStore();
+  const { majors, loading: majorsLoading, getMajorById, getMajors } = useMajorStore();
+  const { applications, loading: applicationsLoading, getApplications } = useApplicationStore();
+  const { admissionRounds, loading: admissionRoundsLoading, getAdmissionRounds } = useAdmissionRoundStore();
 
   // Fetch all candidates and applications so dashboard stats are accurate
   useEffect(() => {
     getCandidates();
+    getUniversities();
+    getMajors();
     getApplications();
-  }, [getCandidates, getApplications]);
+    getAdmissionRounds();
+  }, [getCandidates, getUniversities, getMajors, getApplications, getAdmissionRounds]);
 
   const [selectedAdmissionRoundId, setSelectedAdmissionRoundId] = useState<string>("all");
   const [selectedUniversityId, setSelectedUniversityId] = useState<string>("all");
@@ -55,6 +59,12 @@ export const AdminDashboard: React.FC = () => {
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeAdmissionRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
+
+  const loading = candidatesLoading || universitiesLoading || majorsLoading || applicationsLoading || admissionRoundsLoading;
+
+  if (loading && safeCandidates.length === 0 && safeUniversities.length === 0 && safeMajors.length === 0 && safeApplications.length === 0 && safeAdmissionRounds.length === 0) {
+    return <LoadingScreen fullScreen tip="Đang tải bảng điều khiển..." />;
+  }
 
   const filteredApplications = useMemo(() => {
     return safeApplications.filter(app => {

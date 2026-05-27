@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -55,7 +56,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Major not found: " + request.getMajorId()));
 
                 AdmissionRound admissionRound = request.getAdmissionRoundId() != null
-                                ? admissionRoundRepository.findById(request.getAdmissionRoundId())
+                                ? admissionRoundRepository
+                                                .findById(java.util.Objects
+                                                                .requireNonNull(request.getAdmissionRoundId()))
                                                 .orElseThrow(() -> new RuntimeException("Admission round not found: "
                                                                 + request.getAdmissionRoundId()))
                                 : null;
@@ -214,21 +217,23 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 if (request.getMajorId() != null) {
-                        Major major = majorRepository.findById(request.getMajorId())
+                        Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Major not found: " + request.getMajorId()));
                         application.setMajor(major);
                 }
 
                 if (request.getAdmissionRoundId() != null) {
-                        AdmissionRound admissionRound = admissionRoundRepository.findById(request.getAdmissionRoundId())
+                        AdmissionRound admissionRound = admissionRoundRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getAdmissionRoundId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Admission round not found: " + request.getAdmissionRoundId()));
                         application.setAdmissionRound(admissionRound);
                 }
 
                 if (request.getSubjectGroupId() != null) {
-                        SubjectGroup subjectGroup = subjectGroupRepository.findById(request.getSubjectGroupId())
+                        SubjectGroup subjectGroup = subjectGroupRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Subject group not found: " + request.getSubjectGroupId()));
                         application.setSubjectGroup(subjectGroup);
@@ -255,16 +260,35 @@ public class ApplicationServiceImpl implements ApplicationService {
         public void deleteApplication(Long id) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
-                applicationRepository.delete(application);
+                applicationRepository.delete(java.util.Objects.requireNonNull(application));
         }
 
         @Override
-        public Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size) {
+        public Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+                Specification<Application> specification = Specification.where(null);
+
                 if (status != null) {
-                        return applicationRepository.findByStatus(status, pageable);
+                        specification = specification.and((root, query, cb) -> cb.equal(root.get("status"), status));
                 }
-                return applicationRepository.findAll(pageable);
+
+                if (universityId != null) {
+                        specification = specification.and((root, query, cb) -> cb
+                                        .equal(root.join("major").join("university").get("id"), universityId));
+                }
+
+                if (majorId != null) {
+                        specification = specification
+                                        .and((root, query, cb) -> cb.equal(root.get("major").get("id"), majorId));
+                }
+
+                if (admissionRoundId != null) {
+                        specification = specification.and((root, query, cb) -> cb
+                                        .equal(root.get("admissionRound").get("id"), admissionRoundId));
+                }
+
+                return applicationRepository.findAll(specification, pageable);
         }
 
         @Override
