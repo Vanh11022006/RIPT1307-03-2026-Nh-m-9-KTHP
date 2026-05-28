@@ -3,6 +3,7 @@ package com.uniadmission.backend.controller;
 import com.uniadmission.backend.dto.response.ApiResponse;
 import com.uniadmission.backend.entity.NotificationLog;
 import com.uniadmission.backend.service.NotificationLogService;
+import com.uniadmission.backend.service.NotificationStreamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -21,6 +23,7 @@ import java.util.Map;
 public class NotificationLogController {
 
     private final NotificationLogService notificationService;
+    private final NotificationStreamService notificationStreamService;
 
     @PostMapping
     @Operation(summary = "Tạo thông báo", description = "Tạo một thông báo mới cho user")
@@ -41,11 +44,31 @@ public class NotificationLogController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
     }
 
+    @GetMapping
+    @Operation(summary = "Danh sách toàn bộ thông báo", description = "Lấy toàn bộ thông báo (admin)")
+    public ResponseEntity<ApiResponse<List<NotificationLog>>> getAllNotifications() {
+        List<NotificationLog> logs = notificationService.getAllNotifications();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
+    @GetMapping("/admin/all")
+    @Operation(summary = "Danh sách toàn bộ thông báo (admin explicit)", description = "Lấy toàn bộ thông báo (admin) - explicit path")
+    public ResponseEntity<ApiResponse<List<NotificationLog>>> getAllNotificationsAdmin() {
+        List<NotificationLog> logs = notificationService.getAllNotifications();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
     @GetMapping("/user/{userId}/unread")
     @Operation(summary = "Thông báo chưa đọc", description = "Lấy danh sách thông báo chưa đọc của user")
     public ResponseEntity<ApiResponse<List<NotificationLog>>> getUnreadNotifications(@PathVariable Long userId) {
         List<NotificationLog> logs = notificationService.getUnreadNotifications(userId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
+    @GetMapping(value = "/stream/{userId}", produces = "text/event-stream")
+    @Operation(summary = "Realtime notifications stream", description = "SSE stream for realtime notification updates")
+    public SseEmitter streamNotifications(@PathVariable Long userId) {
+        return notificationStreamService.subscribe(userId);
     }
 
     @PutMapping("/{id}/read")

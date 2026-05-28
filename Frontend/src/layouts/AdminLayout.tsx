@@ -18,6 +18,8 @@ import {
 
 import { useAuthStore } from "../stores/auth.store";
 import { useTheme } from "../contexts/ThemeContext";
+import { useNotificationLogStore } from "../stores/notificationLog.store";
+import { useNotificationStream } from "../hooks/useNotificationStream";
 
 const { Header, Sider, Content } = Layout;
 
@@ -28,6 +30,8 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const { currentUser, logout } = useAuthStore();
   const { isDarkMode, toggleTheme } = useTheme();
+  const notificationLogs = useNotificationLogStore((state) => state.notificationLogs);
+  useNotificationStream();
 
   useEffect(() => {
     document.body.classList.add("dashboard-body");
@@ -35,6 +39,10 @@ export const AdminLayout: React.FC = () => {
       document.body.classList.remove("dashboard-body");
     };
   }, []);
+
+  const unreadCount = notificationLogs.filter(
+    (log) => String(log.recipientUserId) === String(currentUser?.id) && !log.isRead
+  ).length;
 
   const handleLogout = () => {
     logout();
@@ -48,7 +56,15 @@ export const AdminLayout: React.FC = () => {
     { key: "/admin/subject-groups", icon: <AppstoreOutlined />, label: "Quản lý tổ hợp" },
     { key: "/admin/candidates", icon: <TeamOutlined />, label: "Quản lý thí sinh" },
     { key: "/admin/applications", icon: <FolderOpenOutlined />, label: "Quản lý hồ sơ" },
-    { key: "/admin/notifications", icon: <BellOutlined />, label: "Trung tâm thông báo" },
+    {
+      key: "/admin/notifications",
+      icon: (
+        <Badge count={unreadCount} size="small" overflowCount={99} offset={[6, -2]}>
+          <BellOutlined />
+        </Badge>
+      ),
+      label: <span>Trung tâm thông báo {unreadCount > 0 ? `(${unreadCount})` : ""}</span>,
+    },
     { key: "/admin/admission-rounds", icon: <CalendarOutlined />, label: "Quản lý đợt" },
   ];
 

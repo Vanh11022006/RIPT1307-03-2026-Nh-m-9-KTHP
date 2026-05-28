@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, Dropdown, Avatar, Space } from "antd";
+import { Layout, Menu, Dropdown, Avatar, Space, Badge } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
   DashboardOutlined, 
@@ -16,6 +16,8 @@ import {
 
 import { useAuthStore } from "../stores/auth.store";
 import { useTheme } from "../contexts/ThemeContext";
+import { useNotificationLogStore } from "../stores/notificationLog.store";
+import { useNotificationStream } from "../hooks/useNotificationStream";
 
 const { Header, Sider, Content } = Layout;
 
@@ -26,6 +28,11 @@ export const CandidateLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout } = useAuthStore();
+  const notificationLogs = useNotificationLogStore((state) => state.notificationLogs);
+  useNotificationStream();
+  const unreadCount = notificationLogs.filter(
+    (log) => String(log.recipientUserId) === String(currentUser?.id) && !log.isRead
+  ).length;
 
   const handleLogout = () => {
     logout();
@@ -38,7 +45,15 @@ export const CandidateLayout: React.FC = () => {
     { key: "/candidate/universities", icon: <BankOutlined />, label: "Danh sách trường" },
     { key: "/candidate/apply", icon: <FormOutlined />, label: "Nộp hồ sơ" },
     { key: "/candidate/applications", icon: <FolderOpenOutlined />, label: "Hồ sơ của tôi" },
-    { key: "/candidate/notifications", icon: <BellOutlined />, label: "Thông báo" },
+    {
+      key: "/candidate/notifications",
+      icon: (
+        <Badge count={unreadCount} size="small" offset={[6, -2]} overflowCount={99}>
+          <BellOutlined />
+        </Badge>
+      ),
+      label: <span>Thông báo {unreadCount > 0 ? `(${unreadCount})` : ""}</span>,
+    },
     { key: "/candidate/results", icon: <CheckCircleOutlined />, label: "Kết quả xét tuyển" },
   ];
 

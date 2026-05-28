@@ -11,14 +11,16 @@ import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.repository.CandidateRepository;
 import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.security.JwtTokenProvider;
-import com.uniadmission.backend.service.EmailService;
+import com.uniadmission.backend.event.EmailVerificationRequestedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.uniadmission.backend.util.HashUtil;
@@ -34,6 +36,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Đăng nhập, đăng ký và khôi phục mật khẩu")
 public class AuthController {
+
+        @org.springframework.beans.factory.annotation.Value("${app.frontend.base-url:http://localhost:5173}")
+        private String frontendBaseUrl;
 
         @Autowired
         private UserRepository userRepository;
@@ -51,7 +56,10 @@ public class AuthController {
         private com.uniadmission.backend.repository.RefreshTokenRepository refreshTokenRepository;
 
         @Autowired
-        private EmailService emailService;
+        private com.uniadmission.backend.service.EmailService emailService;
+
+        @Autowired
+        private ApplicationEventPublisher eventPublisher;
 
         @PostMapping("/login")
         @Transactional
@@ -77,6 +85,16 @@ public class AuthController {
                 if (!isPasswordMatch) {
                         return ResponseEntity.badRequest()
                                         .body(new ApiResponse<>(false, "Email hoặc mật khẩu không đúng!", null));
+                }
+
+                boolean isAdminAccount = "admin".equalsIgnoreCase(user.getRole())
+                                || "admin@example.com".equalsIgnoreCase(user.getEmail());
+                boolean requiresEmailVerification = !isAdminAccount;
+                if (requiresEmailVerification && !user.isEmailVerified()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false,
+                                                        "Tài khoản chưa được xác minh email. Vui lòng kiểm tra hộp thư của bạn.",
+                                                        null));
                 }
 
                 if ("inactive".equals(user.getStatus())) {
@@ -194,7 +212,11 @@ public class AuthController {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setPhone(request.getPhone());
                 user.setRole("candidate");
-                user.setStatus("active");
+                user.setStatus("pending_verification");
+                user.setEmailVerified(false);
+                String verificationToken = UUID.randomUUID().toString();
+                user.setEmailVerificationToken(verificationToken);
+                user.setEmailVerificationExpires(LocalDateTime.now().plusHours(24));
 
                 userRepository.saveAndFlush(user);
 
@@ -203,7 +225,47 @@ public class AuthController {
                 candidate.setPhone(request.getPhone());
                 candidateRepository.saveAndFlush(candidate);
 
-                return ResponseEntity.ok(new ApiResponse<>(true, "Đăng ký tài khoản thành công!", user));
+                String verificationLink = buildFrontendUrl("/verify-email?token=" + verificationToken);
+                eventPublisher.publishEvent(new EmailVerificationRequestedEvent(
+                                user.getEmail(),
+                                user.getFullName(),
+                                verificationLink));
+
+                return ResponseEntity.ok(new ApiResponse<>(true,
+                                "Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản.", user));
+        }
+
+        @GetMapping("/verify-email")
+        @Transactional
+        @Operation(summary = "Xác minh email", description = "Kích hoạt tài khoản bằng token xác minh email")
+        public ResponseEntity<ApiResponse<Object>> verifyEmail(@RequestParam String token) {
+                if (token == null || token.trim().isEmpty()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Token xác minh không được để trống!", null));
+                }
+
+                Optional<User> userOpt = userRepository.findByEmailVerificationToken(token);
+                if (!userOpt.isPresent()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Token xác minh không hợp lệ!", null));
+                }
+
+                User user = userOpt.get();
+                if (user.getEmailVerificationExpires() == null
+                                || user.getEmailVerificationExpires().isBefore(LocalDateTime.now())) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Token xác minh đã hết hạn!", null));
+                }
+
+                user.setEmailVerified(true);
+                user.setEmailVerificationToken(null);
+                user.setEmailVerificationExpires(null);
+                if (user.getStatus() == null || "pending_verification".equals(user.getStatus())) {
+                        user.setStatus("active");
+                }
+                userRepository.save(user);
+
+                return ResponseEntity.ok(new ApiResponse<>(true, "Xác minh email thành công!", null));
         }
 
         @PostMapping("/forgot-password")
@@ -274,5 +336,16 @@ public class AuthController {
                 userRepository.save(user);
 
                 return ResponseEntity.ok(new ApiResponse<>(true, "Đặt lại mật khẩu thành công!", null));
+        }
+
+        private String buildFrontendUrl(String path) {
+                String baseUrl = frontendBaseUrl == null ? "" : frontendBaseUrl.trim();
+                if (baseUrl.endsWith("/")) {
+                        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                }
+                if (path == null || path.isEmpty()) {
+                        return baseUrl;
+                }
+                return path.startsWith("/") ? baseUrl + path : baseUrl + "/" + path;
         }
 }

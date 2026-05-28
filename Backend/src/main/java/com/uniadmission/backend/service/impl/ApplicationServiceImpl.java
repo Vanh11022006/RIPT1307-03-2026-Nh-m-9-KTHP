@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -55,7 +56,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Major not found: " + request.getMajorId()));
 
                 AdmissionRound admissionRound = request.getAdmissionRoundId() != null
-                                ? admissionRoundRepository.findById(request.getAdmissionRoundId())
+                                ? admissionRoundRepository
+                                                .findById(java.util.Objects
+                                                                .requireNonNull(request.getAdmissionRoundId()))
                                                 .orElseThrow(() -> new RuntimeException("Admission round not found: "
                                                                 + request.getAdmissionRoundId()))
                                 : null;
@@ -94,6 +97,45 @@ public class ApplicationServiceImpl implements ApplicationService {
                         saved.setApplicationCode(code);
                         saved = applicationRepository.save(saved);
                 }
+
+                String applicationCode = saved.getApplicationCode() != null ? saved.getApplicationCode()
+                                : "Chưa cập nhật";
+
+                try {
+                        String candidateName = candidate.getUser() != null ? candidate.getUser().getFullName()
+                                        : "thí sinh";
+                        String email = candidate.getUser() != null ? candidate.getUser().getEmail() : null;
+                        String universityName = major.getUniversity() != null ? major.getUniversity().getName() : "";
+                        String majorName = major.getName() != null ? major.getName() : "";
+
+                        if (email != null && !email.trim().isEmpty()) {
+                                emailService.sendApplicationSubmittedEmail(
+                                                email,
+                                                candidateName,
+                                                applicationCode,
+                                                universityName,
+                                                majorName);
+                        }
+                        // create in-app notification for candidate
+                        try {
+                                if (candidate.getUser() != null && candidate.getUser().getId() != null) {
+                                        String title = "Xác nhận: hồ sơ đã được tiếp nhận";
+                                        String message = "Hồ sơ của bạn (Mã: " + applicationCode
+                                                        + ") đã được tiếp nhận. Trường: "
+                                                        + universityName + ", Ngành: " + majorName
+                                                        + ". Phòng Tuyển Sinh sẽ kiểm tra hồ sơ trong vòng 3-5 ngày làm việc.";
+                                        notificationService.createNotification(candidate.getUser().getId(), title,
+                                                        message);
+                                }
+                        } catch (Exception e) {
+                                LOGGER.warn("Failed to create in-app notification for application id={}: {}",
+                                                saved.getId(), e.getMessage());
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Failed to send application submitted email for application id={}: {}",
+                                        saved.getId(), e.getMessage());
+                }
+
                 return saved;
         }
 
@@ -175,21 +217,23 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 if (request.getMajorId() != null) {
-                        Major major = majorRepository.findById(request.getMajorId())
+                        Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Major not found: " + request.getMajorId()));
                         application.setMajor(major);
                 }
 
                 if (request.getAdmissionRoundId() != null) {
-                        AdmissionRound admissionRound = admissionRoundRepository.findById(request.getAdmissionRoundId())
+                        AdmissionRound admissionRound = admissionRoundRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getAdmissionRoundId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Admission round not found: " + request.getAdmissionRoundId()));
                         application.setAdmissionRound(admissionRound);
                 }
 
                 if (request.getSubjectGroupId() != null) {
-                        SubjectGroup subjectGroup = subjectGroupRepository.findById(request.getSubjectGroupId())
+                        SubjectGroup subjectGroup = subjectGroupRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Subject group not found: " + request.getSubjectGroupId()));
                         application.setSubjectGroup(subjectGroup);
@@ -216,16 +260,35 @@ public class ApplicationServiceImpl implements ApplicationService {
         public void deleteApplication(Long id) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
-                applicationRepository.delete(application);
+                applicationRepository.delete(java.util.Objects.requireNonNull(application));
         }
 
         @Override
-        public Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size) {
+        public Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+                Specification<Application> specification = Specification.where(null);
+
                 if (status != null) {
-                        return applicationRepository.findByStatus(status, pageable);
+                        specification = specification.and((root, query, cb) -> cb.equal(root.get("status"), status));
                 }
-                return applicationRepository.findAll(pageable);
+
+                if (universityId != null) {
+                        specification = specification.and((root, query, cb) -> cb
+                                        .equal(root.join("major").join("university").get("id"), universityId));
+                }
+
+                if (majorId != null) {
+                        specification = specification
+                                        .and((root, query, cb) -> cb.equal(root.get("major").get("id"), majorId));
+                }
+
+                if (admissionRoundId != null) {
+                        specification = specification.and((root, query, cb) -> cb
+                                        .equal(root.get("admissionRound").get("id"), admissionRoundId));
+                }
+
+                return applicationRepository.findAll(specification, pageable);
         }
 
         @Override

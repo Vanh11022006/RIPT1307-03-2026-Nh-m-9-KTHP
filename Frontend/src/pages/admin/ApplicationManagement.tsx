@@ -19,18 +19,12 @@ const { Option } = Select;
 export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
-  const { applications, getApplications } = useApplicationStore();
+  const { applications, loading, getApplications } = useApplicationStore();
   const { getCandidateById, getCandidates } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
   const { subjectGroups } = useSubjectGroupStore();
-
-  // Fetch all applications and candidates when admin page mounts
-  useEffect(() => {
-    getApplications();
-    getCandidates();
-  }, [getApplications, getCandidates]);
 
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
@@ -44,6 +38,17 @@ export const ApplicationManagement: React.FC = () => {
   const [universityFilter, setUniversityFilter] = useState<string>("all");
   const [majorFilter, setMajorFilter] = useState<string>("all");
   const [subjectGroupFilter, setSubjectGroupFilter] = useState<string>("all");
+
+  // Fetch filtered applications from the server whenever admin filters change
+  useEffect(() => {
+    getApplications({
+      status: statusFilter,
+      universityId: universityFilter,
+      majorId: majorFilter,
+      admissionRoundId: admissionRoundFilter,
+    });
+    getCandidates();
+  }, [getApplications, getCandidates, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
 
   const filteredMajors = useMemo(() => {
     if (universityFilter === "all") return safeMajors;
@@ -294,12 +299,22 @@ export const ApplicationManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredApplications.length > 0 ? (
+        {loading && filteredApplications.length === 0 ? (
+          <Table
+            columns={columns}
+            dataSource={[]}
+            rowKey="id"
+            scroll={{ x: true }}
+            loading={true}
+            pagination={false}
+          />
+        ) : filteredApplications.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={sortedApplications} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
           />
         ) : (
           <EmptyState description="Không tìm thấy hồ sơ xét tuyển phù hợp" />

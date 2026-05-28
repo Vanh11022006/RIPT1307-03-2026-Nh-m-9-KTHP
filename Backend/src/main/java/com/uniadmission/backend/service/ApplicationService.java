@@ -26,7 +26,8 @@ public interface ApplicationService {
 
     void deleteApplication(Long id);
 
-    Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size);
+    Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
+            Long admissionRoundId, int page, int size);
 
     Map<String, Long> getApplicationStatistics();
 }

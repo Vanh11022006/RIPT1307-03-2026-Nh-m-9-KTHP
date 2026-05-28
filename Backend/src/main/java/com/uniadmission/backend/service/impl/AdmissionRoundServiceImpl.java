@@ -70,8 +70,18 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
         round.setCode(normalizedCode);
         round.setName(details.getName());
         round.setYear(details.getYear());
-        round.setStartDate(details.getStartDate());
-        round.setEndDate(details.getEndDate());
+        // Use string setter to allow resilient parsing of various incoming formats
+        try {
+            round.setStartDate(details.getStartDate().toString());
+        } catch (Exception ex) {
+            round.setStartDate((String) null);
+        }
+
+        try {
+            round.setEndDate(details.getEndDate().toString());
+        } catch (Exception ex) {
+            round.setEndDate((String) null);
+        }
         round.setStatus(details.getStatus());
         round.setDescription(details.getDescription());
 

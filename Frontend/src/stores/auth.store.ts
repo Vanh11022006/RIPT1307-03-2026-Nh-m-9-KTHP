@@ -133,20 +133,24 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (email, password, fullName = "", phone = "") => {
     try {
-      const response = await axiosClient.post("/auth/register", { 
-        email, 
-        password,
-        fullName,
-        phone
-      });
+      const response = await axiosClient.post(
+        "/auth/register",
+        {
+          email,
+          password,
+          fullName,
+          phone,
+        },
+        { timeout: 30000 } // registration may trigger email sending; allow up to 30s
+      );
       const payload = response?.data ?? response;
       if (payload) {
-        return { success: true, message: "Đăng ký thành công" };
+        return { success: true, message: payload?.message || "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản." };
       }
 
       return { success: false, message: payload?.message || "Đăng ký thất bại" };
     } catch (error: any) {
-      const message = error.response?.data?.message || "Email đã tồn tại trong hệ thống";
+      const message = error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.";
       return { success: false, message };
     }
   },

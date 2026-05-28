@@ -4,6 +4,7 @@ import { SearchOutlined, BankOutlined, EnvironmentOutlined, GlobalOutlined } fro
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useUniversityStore } from "../../stores/university.store";
 
 const { Title, Text } = Typography;
@@ -14,7 +15,7 @@ export const UniversityList: React.FC = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   
-  const { getActiveUniversities, getUniversities } = useUniversityStore();
+  const { universities, loading, getActiveUniversities, getUniversities } = useUniversityStore();
   const activeUniversities = getActiveUniversities();
 
   useEffect(() => {
@@ -99,7 +100,11 @@ export const UniversityList: React.FC = () => {
         </Row>
       </Card>
 
-      {filteredUniversities.length > 0 ? (
+      {loading && universities.length === 0 ? (
+        <Card>
+          <LoadingScreen tip="Đang tải danh sách trường đại học..." />
+        </Card>
+      ) : filteredUniversities.length > 0 ? (
         <>
         <Row gutter={[24, 24]}>
           {paginatedUniversities.map((university) => (

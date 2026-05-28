@@ -2,6 +2,36 @@ import { create } from "zustand";
 import type { Application, EvidenceFile } from "../types/application.types";
 import axiosClient from "../api/axiosClient";
 
+const APPLICATIONS_CACHE_KEY = "applicationsCache";
+
+const isBrowser = () => typeof window !== "undefined" && typeof localStorage !== "undefined";
+
+const loadCachedApplications = (): Application[] => {
+  if (!isBrowser()) return [];
+
+  try {
+    const raw = localStorage.getItem(APPLICATIONS_CACHE_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.map((item: any) => normalizeApplicationRecord(item));
+  } catch (error) {
+    return [];
+  }
+};
+
+const saveCachedApplications = (applications: Application[]) => {
+  if (!isBrowser()) return;
+
+  try {
+    localStorage.setItem(APPLICATIONS_CACHE_KEY, JSON.stringify(applications));
+  } catch (error) {
+    // ignore cache write failures
+  }
+};
+
 const formatApplicationCode = (id: string, submittedAt?: string, createdAt?: string): string => {
   const dateSource = submittedAt || createdAt;
   const year = dateSource ? new Date(dateSource).getFullYear() : new Date().getFullYear();
@@ -22,6 +52,29 @@ const resolveApplicationCode = (application: any): string => {
   }
 
   return formatApplicationCode(String(application?.id ?? ""), application?.submittedAt ?? application?.submissionDate, application?.createdAt);
+};
+
+const normalizeApplicationScores = (scores: any): Record<string, number> => {
+  if (!scores || typeof scores !== "object" || Array.isArray(scores)) {
+    if (typeof scores === "string" && scores.trim()) {
+      try {
+        const parsed = JSON.parse(scores);
+        return normalizeApplicationScores(parsed);
+      } catch (error) {
+        return {};
+      }
+    }
+
+    return {};
+  }
+
+  return Object.entries(scores).reduce((acc, [key, value]) => {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) {
+      acc[key] = numericValue;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 };
 
 const normalizeEvidenceFiles = (files: any): EvidenceFile[] => {
@@ -48,8 +101,8 @@ const normalizeApplicationRecord = (application: any): Application => ({
   admissionRoundId: application?.admissionRoundId != null ? String(application.admissionRoundId) : undefined,
   priorityGroup: application?.priorityGroup ?? undefined,
   // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
-  priorityScore: application?.priorityScore ?? 0,
-  scores: application?.scores ?? {},
+  priorityScore: Number(application?.priorityScore ?? 0),
+  scores: normalizeApplicationScores(application?.scores),
   totalScore: Number(application?.totalScore ?? 0),
   finalScore: Number(application?.finalScore ?? (Number(application?.totalScore ?? 0) + Number(application?.priorityScore ?? 0))),
   evidenceFiles: normalizeEvidenceFiles(application?.evidenceFiles),
@@ -74,6 +127,47 @@ const normalizeSingleApplication = (payload: any): Application | null => {
   const obj = payload?.data ?? payload;
   if (!obj) return null;
   return normalizeApplicationRecord(obj);
+};
+
+const extractPagedApplications = (payload: any): any[] => {
+  const data = payload?.data ?? payload;
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+
+  return [];
+};
+
+const buildAdminQueryParams = (filters?: {
+  status?: string;
+  universityId?: string;
+  majorId?: string;
+  admissionRoundId?: string;
+}) => {
+  const params: Record<string, string> = { page: "0", size: "100" };
+
+  if (filters?.status && filters.status !== "all") {
+    params.status = filters.status;
+  }
+
+  if (filters?.universityId && filters.universityId !== "all") {
+    params.universityId = filters.universityId;
+  }
+
+  if (filters?.majorId && filters.majorId !== "all") {
+    params.majorId = filters.majorId;
+  }
+
+  if (filters?.admissionRoundId && filters.admissionRoundId !== "all") {
+    params.admissionRoundId = filters.admissionRoundId;
+  }
+
+  return params;
 };
 
 const mergeApplicationRecords = (base?: Application | null, incoming?: Application | null): Application | null => {
@@ -114,7 +208,12 @@ const mergeApplicationRecords = (base?: Application | null, incoming?: Applicati
 interface ApplicationState {
   applications: Application[];
   loading: boolean;
-  getApplications: () => Promise<void>;
+  getApplications: (filters?: {
+    status?: string;
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<void>;
   getApplicationsByCandidateId: (candidateId: string) => Promise<Application[]>;
   getApplicationById: (id: string) => Application | undefined;
   fetchApplicationById: (id: string) => Promise<Application | null>;
@@ -128,19 +227,23 @@ interface ApplicationState {
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
-  applications: [],
+  applications: loadCachedApplications(),
   loading: false,
 
-  getApplications: async () => {
+  getApplications: async (filters) => {
     set({ loading: true });
     try {
-      const response = await axiosClient.get("/applications");
-      const fetchedApplications = normalizeApplicationArray(response);
-      set((state) => ({
-        applications: fetchedApplications
-          .map((item) => mergeApplicationRecords(state.applications.find((existing) => existing.id === item.id), item))
-          .filter((item): item is Application => Boolean(item)),
-      }));
+      const baseParams = buildAdminQueryParams(filters);
+      const firstResponse = await axiosClient.get("/applications/admin-list", { params: baseParams });
+      const firstPageApplications = extractPagedApplications(firstResponse).map((item: any) => normalizeApplicationRecord(item));
+
+      const fetchedApplications = [...firstPageApplications];
+      const nextApplications = fetchedApplications
+        .map((item) => mergeApplicationRecords(get().applications.find((existing) => existing.id === item.id), item))
+        .filter((item): item is Application => Boolean(item));
+
+      set({ applications: nextApplications });
+      saveCachedApplications(nextApplications);
     } catch (error) {
       console.error("Failed to fetch applications:", error);
     } finally {
@@ -169,23 +272,29 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   fetchApplicationById: async (id) => {
     try {
       const response = await axiosClient.get(`/applications/${id}`);
+      // Log raw payload for debugging intermittent missing fields
+      try {
+        // eslint-disable-next-line no-console
+        console.debug("[application.store] fetchApplicationById raw response:", response?.data ?? response);
+      } catch (err) {
+        // ignore
+      }
+
       const application = normalizeSingleApplication(response);
 
       if (application) {
+        // Replace cached entry with the fresh server response to ensure detail view shows full data
         set((state) => {
-          const existingApplication = state.applications.find((item) => item.id === application.id);
-          const mergedApplication = mergeApplicationRecords(existingApplication, application);
-
-          if (!mergedApplication) {
-            return state;
+          const existingIndex = state.applications.findIndex((item) => item.id === application.id);
+          if (existingIndex >= 0) {
+            const copy = [...state.applications];
+            copy[existingIndex] = application;
+            saveCachedApplications(copy);
+            return { applications: copy };
           }
-
-          const exists = Boolean(existingApplication);
-          return {
-            applications: exists
-              ? state.applications.map((item) => (item.id === mergedApplication.id ? mergedApplication : item))
-              : [mergedApplication, ...state.applications],
-          };
+            const nextApplications = [application, ...state.applications];
+            saveCachedApplications(nextApplications);
+            return { applications: nextApplications };
         });
       }
 
@@ -209,9 +318,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const created = mergeApplicationRecords(localApplication, createdFromServer);
 
       if (created) {
-        set((state) => ({
-          applications: [created, ...state.applications.filter((item) => item.id !== created.id)]
-        }));
+        set((state) => {
+          const nextApplications = [created, ...state.applications.filter((item) => item.id !== created.id)];
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
       }
 
       return created;
@@ -230,11 +341,13 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       });
       const updated = normalizeSingleApplication(response);
       if (updated) {
-        set((state) => ({
-          applications: state.applications.map((a) =>
+        set((state) => {
+          const nextApplications = state.applications.map((a) =>
             a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a
-          )
-        }));
+          );
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
       }
     } catch (error) {
       console.error("Failed to approve application:", error);
@@ -245,9 +358,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     try {
       await axiosClient.put(`/applications/${id}/cancel`);
       // update local state: remove the cancelled application from list
-      set((state) => ({
-        applications: state.applications.filter(a => a.id !== id)
-      }));
+      set((state) => {
+        const nextApplications = state.applications.filter(a => a.id !== id);
+        saveCachedApplications(nextApplications);
+        return { applications: nextApplications };
+      });
     } catch (error) {
       console.error("Failed to cancel application:", error);
     }
@@ -258,9 +373,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const response = await axiosClient.put(`/applications/${id}`, payload);
       const updated = normalizeSingleApplication(response);
       if (updated) {
-        set((state) => ({
-          applications: state.applications.map(a => a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a)
-        }));
+        set((state) => {
+          const nextApplications = state.applications.map(a => a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a);
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
       }
       return updated;
     } catch (error) {
@@ -272,9 +389,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   deleteApplication: async (id: string) => {
     try {
       await axiosClient.delete(`/applications/${id}`);
-      set((state) => ({
-        applications: state.applications.filter(a => a.id !== id)
-      }));
+      set((state) => {
+        const nextApplications = state.applications.filter(a => a.id !== id);
+        saveCachedApplications(nextApplications);
+        return { applications: nextApplications };
+      });
     } catch (error) {
       console.error("Failed to delete application:", error);
       throw error;
@@ -290,11 +409,13 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       });
       const updated = normalizeSingleApplication(response);
       if (updated) {
-        set((state) => ({
-          applications: state.applications.map((a) =>
+        set((state) => {
+          const nextApplications = state.applications.map((a) =>
             a.id === id ? (mergeApplicationRecords(a, updated) ?? a) : a
-          )
-        }));
+          );
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
       }
     } catch (error) {
       console.error("Failed to reject application:", error);

@@ -35,6 +35,16 @@ public class User {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
+    @JsonIgnore
+    @Column(name = "email_verification_token", unique = true)
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_expires")
+    private LocalDateTime emailVerificationExpires;
+
     @JsonIgnore
     @Column(name = "reset_password_token", unique = true)
     private String resetPasswordToken;

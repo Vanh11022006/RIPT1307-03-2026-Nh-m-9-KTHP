@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import type { NotificationLog } from "../types/notification.types";
 import axiosClient from "../api/axiosClient";
+import { useAuthStore } from "./auth.store";
 
-const normalizeNotification = (notification: any): NotificationLog => ({
+export const normalizeNotification = (notification: any): NotificationLog => ({
   id: String(notification?.id ?? `noti_${Date.now()}`),
   recipientUserId: String(notification?.recipientUserId ?? notification?.userId ?? ""),
   recipientEmail: String(notification?.recipientEmail ?? ""),
@@ -22,6 +23,7 @@ interface NotificationLogState {
   loading: boolean;
   getNotificationLogs: () => Promise<void>;
   createNotificationLog: (data: Omit<NotificationLog, "id" | "createdAt" | "status"> & { status?: NotificationLog["status"] }) => Promise<void>;
+  appendNotificationLog: (notification: NotificationLog) => void;
   getNotificationLogsByUserId: (userId: string) => Promise<NotificationLog[]>;
   getNotificationLogsByApplicationId: (applicationId: string) => NotificationLog[];
   getAllNotificationLogs: () => NotificationLog[];
@@ -55,7 +57,23 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   getNotificationLogs: async () => {
     set({ loading: true });
     try {
-      const response = await axiosClient.get("/notifications/user/0");
+      const url = "/notifications"; // admin: fetch all notifications
+      let response;
+      try {
+        response = await axiosClient.get(url);
+        // eslint-disable-next-line no-console
+        console.debug('[notificationLog.store] GET', url, 'raw response:', response);
+      } catch (err) {
+        // fallback: try fetching for current user
+        const currentUser = useAuthStore.getState().currentUser;
+        const fallbackUrl = `/notifications/user/${currentUser?.id ?? 0}`;
+        // eslint-disable-next-line no-console
+        console.warn('[notificationLog.store] GET', url, 'failed, falling back to', fallbackUrl, 'error:', err);
+        response = await axiosClient.get(fallbackUrl);
+        // eslint-disable-next-line no-console
+        console.debug('[notificationLog.store] fallback GET', fallbackUrl, 'raw response:', response);
+      }
+
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
       set({ notificationLogs: logs });
@@ -76,29 +94,36 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       });
 
       const notification = normalizeNotification(response?.data?.data ?? response?.data);
-
-      set((state) => ({
-        notificationLogs: [notification, ...state.notificationLogs.filter((item) => item.id !== notification.id)]
-      }));
-      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
+      const nextLogs = [notification, ...get().notificationLogs.filter((item) => item.id !== notification.id)];
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to create notification log:", error);
     }
   },
+
+  appendNotificationLog: (notification) => {
+    const normalized = normalizeNotification(notification);
+    const nextLogs = [normalized, ...get().notificationLogs.filter((item) => item.id !== normalized.id)];
+    set({ notificationLogs: nextLogs });
+    try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
+  },
   
   getNotificationLogsByUserId: async (userId) => {
     try {
-      const response = await axiosClient.get(`/notifications/user/${userId}`);
+      const url = `/notifications/user/${userId}`;
+      const response = await axiosClient.get(url);
+      // eslint-disable-next-line no-console
+      console.debug('[notificationLog.store] GET', url, 'raw response:', response);
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
 
-      set((state) => ({
-        notificationLogs: [
-          ...logs,
-          ...state.notificationLogs.filter((item) => !logs.some((log) => log.id === item.id)),
-        ]
-      }));
-      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
+      const nextLogs = [
+        ...logs,
+        ...get().notificationLogs.filter((item) => !logs.some((log) => log.id === item.id)),
+      ];
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
 
       return logs;
     } catch (error) {
@@ -120,12 +145,11 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   markNotificationAsRead: async (notificationId) => {
     try {
       await axiosClient.put(`/notifications/${notificationId}/read`);
-      set((state) => ({
-        notificationLogs: state.notificationLogs.map(log =>
-          log.id === notificationId ? { ...log, isRead: true } : log
-        )
-      }));
-      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
+      const nextLogs = get().notificationLogs.map(log =>
+        log.id === notificationId ? { ...log, isRead: true } : log
+      );
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
@@ -134,10 +158,9 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   deleteNotification: async (notificationId) => {
     try {
       await axiosClient.delete(`/notifications/${notificationId}`);
-      set((state) => ({
-        notificationLogs: state.notificationLogs.filter(log => log.id !== notificationId)
-      }));
-      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
+      const nextLogs = get().notificationLogs.filter(log => log.id !== notificationId);
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to delete notification:", error);
     }
@@ -146,10 +169,9 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   deleteNotificationsByUserId: async (userId) => {
     try {
       await axiosClient.delete(`/notifications/user/${userId}`);
-      set((state) => ({
-        notificationLogs: state.notificationLogs.filter(log => String(log.recipientUserId) !== String(userId))
-      }));
-      try { localStorage.setItem('notificationLogs', JSON.stringify(get().notificationLogs)); } catch(e){}
+      const nextLogs = get().notificationLogs.filter(log => String(log.recipientUserId) !== String(userId));
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
     } catch (error) {
       console.error("Failed to delete notifications by user:", error);
     }

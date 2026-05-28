@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Card, Result, Button, Descriptions, Table, Typography, Space, Tag, Row, Col } from "antd";
 import { BankOutlined, EnvironmentOutlined, GlobalOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { formatCurrency } from "../../utils/format";
 
 const { Title, Paragraph, Text } = Typography;
@@ -16,8 +17,13 @@ export const UniversityDetail: React.FC = () => {
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   const listPath = basePath ? `${basePath}/universities` : '/universities';
   
-  const { getUniversityById } = useUniversityStore();
-  const { getActiveMajorsByUniversityId } = useMajorStore();
+  const { loading: universitiesLoading, getUniversityById, getUniversities } = useUniversityStore();
+  const { loading: majorsLoading, getActiveMajorsByUniversityId, getMajors } = useMajorStore();
+
+  useEffect(() => {
+    getUniversities();
+    getMajors();
+  }, [getUniversities, getMajors]);
 
   const university = useMemo(() => {
     if (!id) return undefined;
@@ -28,6 +34,16 @@ export const UniversityDetail: React.FC = () => {
     if (!id) return [];
     return getActiveMajorsByUniversityId(id);
   }, [id, getActiveMajorsByUniversityId]);
+
+  if ((universitiesLoading || majorsLoading) && !university) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card>
+          <LoadingScreen tip="Đang tải thông tin trường đại học..." />
+        </Card>
+      </div>
+    );
+  }
 
   if (!university || university.status !== "active") {
     return (
