@@ -45,6 +45,8 @@ const clearAuthStorage = () => {
   sessionStorage.removeItem('currentUser');
 };
 
+let refreshPromise: Promise<string> | null = null;
+
 // Khởi tạo instance của axios
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
@@ -93,8 +95,8 @@ axiosClient.interceptors.response.use(
         originalRequest._retry = true;
 
         // use a shared refresh promise so concurrent 401s wait for same refresh
-        if (!(axiosClient as any)._refreshPromise) {
-          (axiosClient as any)._refreshPromise = axios
+        if (!refreshPromise) {
+          refreshPromise = axios
             .post(`${axiosClient.defaults.baseURL}/auth/refresh-token`, { refreshToken })
             .then((refreshResponse) => {
               const payload = refreshResponse?.data ?? refreshResponse;
@@ -120,16 +122,16 @@ axiosClient.interceptors.response.use(
             })
             .finally(() => {
               // clear the shared promise after completion
-              setTimeout(() => { (axiosClient as any)._refreshPromise = null; }, 0);
+              setTimeout(() => { refreshPromise = null; }, 0);
             });
         }
 
         // wait for refresh to finish then retry original request
-        return (axiosClient as any)._refreshPromise.then((newAccessToken: string) => {
+        return refreshPromise!.then((newAccessToken: string) => {
           originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
           return axiosClient(originalRequest);
-        }).catch((e: any) => Promise.reject(e));
+        }).catch((e) => Promise.reject(e));
       }
       // if no refresh token or already retried, fall-through to handling below
     }

@@ -12,6 +12,7 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import type { Candidate } from "../../types/candidate.types";
 import { formatDate, formatDateTime } from "../../utils/date";
+import { loadCandidateManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
@@ -22,10 +23,16 @@ export const CandidateManagement: React.FC = () => {
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
 
-  // Fetch all candidates from backend when admin page mounts
+  // ⏱️ Optimization: Load all required data in parallel
   useEffect(() => {
-    getCandidates();
-    getApplications();
+    const loadData = async () => {
+      try {
+        await loadCandidateManagementData();
+      } catch (error) {
+        console.error("Failed to load candidate management data:", error);
+      }
+    };
+    loadData();
   }, [getCandidates, getApplications]);
 
   const safeCandidates = Array.isArray(candidates) ? candidates : [];

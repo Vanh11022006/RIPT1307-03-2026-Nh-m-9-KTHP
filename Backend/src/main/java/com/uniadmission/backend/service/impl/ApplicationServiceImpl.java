@@ -267,6 +267,33 @@ public class ApplicationServiceImpl implements ApplicationService {
         public Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
                         Long admissionRoundId, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+                Specification<Application> specification = buildAdminApplicationSpecification(status, universityId,
+                                majorId, admissionRoundId);
+
+                return applicationRepository.findAll(specification, pageable);
+        }
+
+        @Override
+        public Map<String, Long> getApplicationStatistics(Long universityId, Long majorId,
+                        Long admissionRoundId) {
+                Specification<Application> specification = buildAdminApplicationSpecification(null, universityId,
+                                majorId, admissionRoundId);
+                Map<String, Long> stats = new HashMap<>();
+
+                stats.put("PENDING", applicationRepository.count(specification.and((root, query, cb) -> cb
+                                .equal(root.get("status"), ApplicationStatus.PENDING))));
+                stats.put("APPROVED", applicationRepository.count(specification.and((root, query, cb) -> cb
+                                .equal(root.get("status"), ApplicationStatus.APPROVED))));
+                stats.put("REJECTED", applicationRepository.count(specification.and((root, query, cb) -> cb
+                                .equal(root.get("status"), ApplicationStatus.REJECTED))));
+                stats.put("CANCELLED", applicationRepository.count(specification.and((root, query, cb) -> cb
+                                .equal(root.get("status"), ApplicationStatus.CANCELLED))));
+                stats.put("TOTAL", applicationRepository.count(specification));
+                return stats;
+        }
+
+        private Specification<Application> buildAdminApplicationSpecification(ApplicationStatus status,
+                        Long universityId, Long majorId, Long admissionRoundId) {
                 Specification<Application> specification = Specification.where(null);
 
                 if (status != null) {
@@ -288,17 +315,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         .equal(root.get("admissionRound").get("id"), admissionRoundId));
                 }
 
-                return applicationRepository.findAll(specification, pageable);
-        }
-
-        @Override
-        public Map<String, Long> getApplicationStatistics() {
-                Map<String, Long> stats = new HashMap<>();
-                stats.put("PENDING", applicationRepository.countByStatus(ApplicationStatus.PENDING));
-                stats.put("APPROVED", applicationRepository.countByStatus(ApplicationStatus.APPROVED));
-                stats.put("REJECTED", applicationRepository.countByStatus(ApplicationStatus.REJECTED));
-                stats.put("CANCELLED", applicationRepository.countByStatus(ApplicationStatus.CANCELLED));
-                stats.put("TOTAL", applicationRepository.count());
-                return stats;
+                return specification;
         }
 }

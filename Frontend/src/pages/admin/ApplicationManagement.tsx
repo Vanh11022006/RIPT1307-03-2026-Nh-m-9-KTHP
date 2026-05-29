@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Button } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import type { Application } from "../../types/application.types";
 import { formatDateTime } from "../../utils/date";
+import { loadApplicationManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
@@ -20,7 +21,7 @@ export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
   const { applications, loading, getApplications } = useApplicationStore();
-  const { getCandidateById, getCandidates } = useCandidateStore();
+  const { getCandidateById } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
@@ -38,17 +39,42 @@ export const ApplicationManagement: React.FC = () => {
   const [universityFilter, setUniversityFilter] = useState<string>("all");
   const [majorFilter, setMajorFilter] = useState<string>("all");
   const [subjectGroupFilter, setSubjectGroupFilter] = useState<string>("all");
+  const hasLoadedInitialApplications = useRef(false);
 
-  // Fetch filtered applications from the server whenever admin filters change
+  const buildApplicationFilters = () => ({
+    status: statusFilter,
+    universityId: universityFilter,
+    majorId: majorFilter,
+    admissionRoundId: admissionRoundFilter,
+  });
+
+  // ⏱️ Optimization: Load all required data in parallel
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadApplicationManagementData();
+        await getApplications(buildApplicationFilters());
+        hasLoadedInitialApplications.current = true;
+      } catch (error) {
+        console.error("Failed to load application management data:", error);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Refetch applications when filters change
+  useEffect(() => {
+    if (!hasLoadedInitialApplications.current) {
+      return;
+    }
+
     getApplications({
       status: statusFilter,
       universityId: universityFilter,
       majorId: majorFilter,
       admissionRoundId: admissionRoundFilter,
     });
-    getCandidates();
-  }, [getApplications, getCandidates, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
+  }, [getApplications, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
 
   const filteredMajors = useMemo(() => {
     if (universityFilter === "all") return safeMajors;

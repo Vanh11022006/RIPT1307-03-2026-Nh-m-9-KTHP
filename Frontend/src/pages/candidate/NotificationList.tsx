@@ -13,7 +13,6 @@ export const NotificationList: React.FC = () => {
   const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId } = useNotificationLogStore();
   const [myLogs, setMyLogs] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { notificationLogs: storeLogs } = useNotificationLogStore();
 
   useEffect(() => {
     let mounted = true;
@@ -29,8 +28,6 @@ export const NotificationList: React.FC = () => {
 
       setLoading(true);
       const logs = await getNotificationLogsByUserId(String(currentUser.id));
-      // eslint-disable-next-line no-console
-      console.debug('[NotificationList] fetched logs count:', Array.isArray(logs) ? logs.length : typeof logs, logs);
       if (mounted) {
         setMyLogs(Array.isArray(logs) ? logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
         setLoading(false);
@@ -123,20 +120,7 @@ export const NotificationList: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 40 }}>
-      {/* Debug info: current user id and store cache size */}
-      <div style={{ marginBottom: 12 }}>
-        <Text type="secondary">Debug user id: {currentUser?.id ?? "(no user)"} • Cached notifications: {Array.isArray(storeLogs) ? storeLogs.length : 0}</Text>
-        {!loading && (Array.isArray(myLogs) ? myLogs.length === 0 : true) && (
-          <Button size="small" style={{ marginLeft: 12 }} onClick={async () => {
-            setLoading(true);
-            const logs = await getNotificationLogsByUserId(String(currentUser?.id ?? 0));
-            // eslint-disable-next-line no-console
-            console.debug('[NotificationList] retry fetched logs count:', Array.isArray(logs) ? logs.length : typeof logs, logs);
-            setMyLogs(Array.isArray(logs) ? logs : []);
-            setLoading(false);
-          }}>Thử lại</Button>
-        )}
-      </div>
+      
       <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>Thông báo của tôi</Title>
         <Text type="secondary">Theo dõi các cập nhật liên quan đến hồ sơ xét tuyển của bạn</Text>

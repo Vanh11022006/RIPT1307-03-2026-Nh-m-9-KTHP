@@ -29,5 +29,5 @@ public interface ApplicationService {
     Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
             Long admissionRoundId, int page, int size);
 
-    Map<String, Long> getApplicationStatistics();
+    Map<String, Long> getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
 }
