@@ -61,8 +61,6 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
       let response;
       try {
         response = await axiosClient.get(url);
-        // eslint-disable-next-line no-console
-        console.debug('[notificationLog.store] GET', url, 'raw response:', response);
       } catch (err) {
         // fallback: try fetching for current user
         const currentUser = useAuthStore.getState().currentUser;
@@ -70,8 +68,6 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
         // eslint-disable-next-line no-console
         console.warn('[notificationLog.store] GET', url, 'failed, falling back to', fallbackUrl, 'error:', err);
         response = await axiosClient.get(fallbackUrl);
-        // eslint-disable-next-line no-console
-        console.debug('[notificationLog.store] fallback GET', fallbackUrl, 'raw response:', response);
       }
 
       const data = response?.data?.data ?? response?.data ?? [];
@@ -113,8 +109,6 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
     try {
       const url = `/notifications/user/${userId}`;
       const response = await axiosClient.get(url);
-      // eslint-disable-next-line no-console
-      console.debug('[notificationLog.store] GET', url, 'raw response:', response);
       const data = response?.data?.data ?? response?.data ?? [];
       const logs = Array.isArray(data) ? data.map(normalizeNotification) : [];
 

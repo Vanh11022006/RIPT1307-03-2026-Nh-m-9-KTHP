@@ -129,11 +129,6 @@ export const ApplicationDetail: React.FC = () => {
     );
   }
 
-  // Debug logs to help diagnose runtime 404 issues
-  // Please open browser console and check these values when reproducing the issue
-  // eslint-disable-next-line no-console
-  console.log("[ApplicationDetail debug]", { id, loading, application, candidate });
-
   if (!candidate || !application || String(application.candidateId) !== String(candidate.id)) {
     return (
       <div style={{ padding: 24 }}>

@@ -92,7 +92,7 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
             candidates: exists
               ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
               : [...state.candidates, normalizedCandidate]
-          } as any;
+          };
         });
         return true;
       }
@@ -117,7 +117,7 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
             candidates: exists
               ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
               : [...state.candidates, normalizedCandidate]
-          } as any;
+          };
         });
         return normalizedCandidate;
       }

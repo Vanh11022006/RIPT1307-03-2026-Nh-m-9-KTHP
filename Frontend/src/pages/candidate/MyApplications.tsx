@@ -17,6 +17,7 @@ import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import { PRIORITY_GROUPS, getPriorityScore } from "../../constants/priorityGroups";
 import type { Application } from "../../types/application.types";
 import { formatDate } from "../../utils/date";
+import { loadMyApplicationsData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
@@ -26,8 +27,8 @@ export const MyApplications: React.FC = () => {
   const { getCandidateByUserId } = useCandidateStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { getApplicationsByCandidateId } = useApplicationStore();
-  const { universities, getUniversities } = useUniversityStore();
-  const { majors, getMajors } = useMajorStore();
+  const { universities } = useUniversityStore();
+  const { majors } = useMajorStore();
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -37,6 +38,9 @@ export const MyApplications: React.FC = () => {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [form] = Form.useForm();
   const [editTotal, setEditTotal] = useState<string>("0.00");
+  const priorityGroupEntries = Object.entries(PRIORITY_GROUPS) as Array<
+    [keyof typeof PRIORITY_GROUPS, (typeof PRIORITY_GROUPS)[keyof typeof PRIORITY_GROUPS]]
+  >;
   const [selectedSubjectGroup, setSelectedSubjectGroup] = useState<string | undefined>(undefined);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const originalValuesRef = useRef<any>(null);
@@ -84,28 +88,27 @@ export const MyApplications: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    const loadApplications = async () => {
+    const loadData = async () => {
       if (!candidate?.id) {
         if (mounted) setApplications([]);
         return;
       }
 
-      // ensure reference data loaded
-      await Promise.all([getUniversities(), getMajors()]);
-
+      // ⏱️ Optimization: Load universities, majors, and applications in parallel
       setLoading(true);
-      const data = await getApplicationsByCandidateId(candidate.id);
-
-      if (mounted) {
-        setApplications(Array.isArray(data) ? data : []);
-        setLoading(false);
+      try {
+        const { applications } = await loadMyApplicationsData();
+        if (mounted) {
+          setApplications(Array.isArray(applications) ? applications : []);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to load my applications data", error);
+        if (mounted) setLoading(false);
       }
     };
 
-    loadApplications().catch((error) => {
-      console.error("Failed to load my applications", error);
-      if (mounted) setLoading(false);
-    });
+    loadData();
 
     return () => {
       mounted = false;
@@ -574,8 +577,8 @@ export const MyApplications: React.FC = () => {
                   <Col xs={24} sm={12} md={10}>
                     <Form.Item name="priorityGroup" label="Đối tượng ưu tiên">
                       <Select placeholder="Đối tượng ưu tiên">
-                        {Object.entries(PRIORITY_GROUPS).map(([code, cfg]) => (
-                          <Option key={code} value={code}>{(cfg as any).label}</Option>
+                        {priorityGroupEntries.map(([code, cfg]) => (
+                          <Option key={code} value={code}>{cfg.label}</Option>
                         ))}
                       </Select>
                     </Form.Item>

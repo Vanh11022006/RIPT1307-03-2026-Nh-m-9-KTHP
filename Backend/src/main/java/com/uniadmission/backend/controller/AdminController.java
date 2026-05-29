@@ -61,8 +61,12 @@ public class AdminController {
 
         @GetMapping("/statistics/dashboard")
         @Operation(summary = "Thống kê dashboard", description = "Lấy số liệu tổng quan cho trang quản trị")
-        public ResponseEntity<ApiResponse<Map<String, Long>>> getDashboardStatistics() {
-                Map<String, Long> stats = applicationService.getApplicationStatistics();
+        public ResponseEntity<ApiResponse<Map<String, Long>>> getDashboardStatistics(
+                        @RequestParam(required = false) Long universityId,
+                        @RequestParam(required = false) Long majorId,
+                        @RequestParam(required = false) Long admissionRoundId) {
+                Map<String, Long> stats = applicationService.getApplicationStatistics(universityId, majorId,
+                                admissionRoundId);
                 return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
         }
 }

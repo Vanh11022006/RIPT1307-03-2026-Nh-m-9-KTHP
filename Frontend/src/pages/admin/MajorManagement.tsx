@@ -9,6 +9,7 @@ import { useMajorStore } from "../../stores/major.store";
 import { useUniversityStore } from "../../stores/university.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import type { Major } from "../../types/major.types";
+import { loadMajorManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -23,9 +24,14 @@ export const MajorManagement: React.FC = () => {
   const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
 
   useEffect(() => {
-    getMajors();
-    getUniversities();
-    getAllSubjectGroups();
+    const loadData = async () => {
+      try {
+        await loadMajorManagementData();
+      } catch (error) {
+        console.error("Failed to load major management data:", error);
+      }
+    };
+    loadData();
   }, [getMajors, getUniversities, getAllSubjectGroups]);
 
   const [searchText, setSearchText] = useState("");

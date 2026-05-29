@@ -170,6 +170,33 @@ const buildAdminQueryParams = (filters?: {
   return params;
 };
 
+const buildApplicationFilterParams = (filters?: {
+  status?: string;
+  universityId?: string;
+  majorId?: string;
+  admissionRoundId?: string;
+}) => {
+  const params: Record<string, string> = {};
+
+  if (filters?.status && filters.status !== "all") {
+    params.status = filters.status;
+  }
+
+  if (filters?.universityId && filters.universityId !== "all") {
+    params.universityId = filters.universityId;
+  }
+
+  if (filters?.majorId && filters.majorId !== "all") {
+    params.majorId = filters.majorId;
+  }
+
+  if (filters?.admissionRoundId && filters.admissionRoundId !== "all") {
+    params.admissionRoundId = filters.admissionRoundId;
+  }
+
+  return params;
+};
+
 const mergeApplicationRecords = (base?: Application | null, incoming?: Application | null): Application | null => {
   if (!base && !incoming) return null;
   if (!base) return incoming ?? null;
@@ -224,6 +251,11 @@ interface ApplicationState {
   approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
   rejectApplication: (id: string, adminId: string, note: string) => Promise<void>;
   getApplicationStats: () => { total: number; pending: number; approved: number; rejected: number };
+  getAdminApplicationStatistics: (filters?: {
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<{ total: number; pending: number; approved: number; rejected: number; cancelled: number }>;
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -272,14 +304,6 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   fetchApplicationById: async (id) => {
     try {
       const response = await axiosClient.get(`/applications/${id}`);
-      // Log raw payload for debugging intermittent missing fields
-      try {
-        // eslint-disable-next-line no-console
-        console.debug("[application.store] fetchApplicationById raw response:", response?.data ?? response);
-      } catch (err) {
-        // ignore
-      }
-
       const application = normalizeSingleApplication(response);
 
       if (application) {
@@ -307,7 +331,6 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
   createApplication: async (app) => {
     try {
-      console.log("[application.store] createApplication payload:", app);
       const response = await axiosClient.post("/applications", app);
       const createdFromServer = normalizeSingleApplication(response);
       const localApplication = normalizeApplicationRecord({
@@ -430,5 +453,40 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       approved: apps.filter((a) => a.status === "approved").length,
       rejected: apps.filter((a) => a.status === "rejected").length
     };
+  },
+
+  getAdminApplicationStatistics: async (filters) => {
+    const params = buildApplicationFilterParams(filters);
+
+    try {
+      const response = await axiosClient.get("/applications/admin-statistics", { params });
+      const payload = response?.data ?? response;
+      const stats = payload?.data ?? payload ?? {};
+
+      return {
+        total: Number(stats.TOTAL ?? stats.total ?? 0),
+        pending: Number(stats.PENDING ?? stats.pending ?? 0),
+        approved: Number(stats.APPROVED ?? stats.approved ?? 0),
+        rejected: Number(stats.REJECTED ?? stats.rejected ?? 0),
+        cancelled: Number(stats.CANCELLED ?? stats.cancelled ?? 0),
+      };
+    } catch (error) {
+      console.error("Failed to fetch admin application statistics:", error);
+      const apps = get().applications;
+      const filteredApps = apps.filter((app) => {
+        if (filters?.universityId && filters.universityId !== "all" && app.universityId !== filters.universityId) return false;
+        if (filters?.majorId && filters.majorId !== "all" && app.majorId !== filters.majorId) return false;
+        if (filters?.admissionRoundId && filters.admissionRoundId !== "all" && app.admissionRoundId !== filters.admissionRoundId) return false;
+        return true;
+      });
+
+      return {
+        total: filteredApps.length,
+        pending: filteredApps.filter((a) => a.status === "pending").length,
+        approved: filteredApps.filter((a) => a.status === "approved").length,
+        rejected: filteredApps.filter((a) => a.status === "rejected").length,
+        cancelled: filteredApps.filter((a) => String(a.status).toLowerCase() === "cancelled").length,
+      };
+    }
   }
 }));

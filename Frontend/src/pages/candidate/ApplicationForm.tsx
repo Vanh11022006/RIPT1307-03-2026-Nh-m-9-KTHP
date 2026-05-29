@@ -146,8 +146,6 @@ export const ApplicationForm: React.FC = () => {
   }, [editId, fetchApplicationById, form]);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
-    console.log("📝 Form changed:", { changedValues, allValues });
-    
     if (changedValues.universityId) {
       setSelectedUniversityId(changedValues.universityId);
       setSelectedMajorId(undefined);
@@ -171,9 +169,7 @@ export const ApplicationForm: React.FC = () => {
 
     // Always recalculate if allValues has scores
     if (allValues.scores) {
-      console.log("📊 Calculating total score from:", allValues.scores);
       const scoreTotal = calculateTotalScore(allValues.scores);
-      console.log("📊 Calculated total:", scoreTotal);
       setTotalScore(scoreTotal);
     }
 
@@ -250,7 +246,6 @@ export const ApplicationForm: React.FC = () => {
       status: "pending",
     };
 
-    console.log("[ApplicationForm debug] submitPayload:", submitPayload);
     const createdApplication = await createApplication(submitPayload);
 
     if (!createdApplication) {

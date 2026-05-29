@@ -156,9 +156,13 @@ public class ApplicationController {
 
     @GetMapping("/admin-statistics")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Thống kê hồ sơ", description = "Tổng hợp số lượng hồ sơ theo trạng thái")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics() {
-        Map<String, Long> stats = applicationService.getApplicationStatistics();
+    @Operation(summary = "Thống kê hồ sơ", description = "Tổng hợp số lượng hồ sơ theo trạng thái, trường, ngành và đợt xét tuyển")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics(
+            @RequestParam(required = false) Long universityId,
+            @RequestParam(required = false) Long majorId,
+            @RequestParam(required = false) Long admissionRoundId) {
+        Map<String, Long> stats = applicationService.getApplicationStatistics(universityId, majorId,
+                admissionRoundId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
     }
 
