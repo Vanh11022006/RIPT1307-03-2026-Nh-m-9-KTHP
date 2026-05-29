@@ -23,6 +23,15 @@ public interface ApplicationService {
 
     void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
 
+    void bulkUpdateApplicationStatus(java.util.List<Long> ids, ApplicationStatus status, String notes, Long adminId);
+
+    String exportApplicationsCsv(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+
+    java.util.List<Application> getApplicationsForExport(ApplicationStatus status, Long universityId, Long majorId,
+            Long admissionRoundId);
+
+    byte[] exportApplicationsXlsx(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+
     Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
 
     void deleteApplication(Long id);

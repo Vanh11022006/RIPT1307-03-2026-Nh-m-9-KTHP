@@ -23,11 +23,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.uniadmission.backend.dto.request.ApplicationBulkStatusRequest;
 
 @RestController
 @Slf4j
@@ -114,6 +118,64 @@ public class ApplicationController {
 
         applicationService.updateApplicationStatus(id, status, notes, adminId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", null));
+    }
+
+    @PostMapping("/admin-bulk-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật trạng thái hàng loạt", description = "Admin cập nhật trạng thái cho nhiều hồ sơ cùng lúc")
+    public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(@RequestBody ApplicationBulkStatusRequest request) {
+        ApplicationStatus status = ApplicationStatus.valueOf(request.getStatus().trim().toUpperCase());
+        Long adminId = request.getAdminId() != null ? request.getAdminId() : 1L;
+        applicationService.bulkUpdateApplicationStatus(request.getIds(), status, request.getNotes(), adminId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Bulk update status success", null));
+    }
+
+    @GetMapping(value = "/admin-export-csv", produces = "text/csv")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xuất CSV hồ sơ admin", description = "Xuất danh sách hồ sơ theo bộ lọc của admin ra CSV")
+    public ResponseEntity<String> exportAdminApplicationsCsv(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long universityId,
+            @RequestParam(required = false) Long majorId,
+            @RequestParam(required = false) Long admissionRoundId) {
+        ApplicationStatus parsedStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            parsedStatus = ApplicationStatus.valueOf(status.trim().toUpperCase());
+        }
+
+        String csv = applicationService.exportApplicationsCsv(parsedStatus, universityId, majorId, admissionRoundId);
+
+        // Prepend UTF-8 BOM so Microsoft Excel on Windows detects UTF-8 encoding
+        // correctly
+        final String UTF8_BOM = "\uFEFF";
+        String csvWithBom = UTF8_BOM + (csv != null ? csv : "");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=admin-applications.csv")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csvWithBom);
+    }
+
+    @GetMapping(value = "/admin-export-xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xuất Excel hồ sơ admin", description = "Xuất danh sách hồ sơ theo bộ lọc của admin ra file Excel")
+    public ResponseEntity<byte[]> exportAdminApplicationsXlsx(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long universityId,
+            @RequestParam(required = false) Long majorId,
+            @RequestParam(required = false) Long admissionRoundId) {
+        ApplicationStatus parsedStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            parsedStatus = ApplicationStatus.valueOf(status.trim().toUpperCase());
+        }
+
+        byte[] file = applicationService.exportApplicationsXlsx(parsedStatus, universityId, majorId, admissionRoundId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=admin-applications.xlsx")
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(file);
     }
 
     @PutMapping("/{id}/priority")

@@ -29,7 +29,7 @@ export const loadAdminDashboardData = async () => {
     ]);
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Admin Dashboard data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Admin Dashboard data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { candidates, universities, majors, applications, admissionRounds };
   } catch (error) {
@@ -54,7 +54,7 @@ export const loadUniversityManagementData = async () => {
     ]);
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] University Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] University Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { universities, majors, admissionRounds, subjectGroups };
   } catch (error) {
@@ -79,7 +79,7 @@ export const loadMajorManagementData = async () => {
     ]);
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Major Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Major Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { universities, majors, subjectGroups, admissionRounds };
   } catch (error) {
@@ -105,7 +105,7 @@ export const loadApplicationManagementData = async (): Promise<void> => {
     ]);
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Application Management reference data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Application Management reference data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     // Applications are intentionally NOT fetched here to avoid race conditions.
   } catch (error) {
@@ -130,7 +130,7 @@ export const loadCandidateManagementData = async () => {
     ]);
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Candidate Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Candidate Management data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { candidates, applications, universities, admissionRounds };
   } catch (error) {
@@ -167,7 +167,7 @@ export const loadCandidateDashboardData = async () => {
     const applications = useApplicationStore.getState().applications;
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Candidate Dashboard data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Candidate Dashboard data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { universities, majors, admissionRounds, applications };
   } catch (error) {
@@ -188,7 +188,7 @@ export const loadUniversityListData = async () => {
     const universities = await useUniversityStore.getState().getUniversities();
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] University List data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] University List data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { universities };
   } catch (error) {
@@ -229,7 +229,7 @@ export const loadMyApplicationsData = async () => {
     const majors = useMajorStore.getState().majors;
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] My Applications data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] My Applications data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { applications, universities, majors };
   } catch (error) {
@@ -254,7 +254,7 @@ export const loadNotificationData = async () => {
     }
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Notification data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Notification data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return { notificationLogs };
   } catch (error) {
@@ -282,7 +282,7 @@ export const loadDataInParallel = async <T extends Record<string, () => Promise<
     });
 
     const endTime = performance.now();
-    console.log(`✅ [dataLoader] Parallel data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ [dataLoader] Parallel data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     return data;
   } catch (error) {

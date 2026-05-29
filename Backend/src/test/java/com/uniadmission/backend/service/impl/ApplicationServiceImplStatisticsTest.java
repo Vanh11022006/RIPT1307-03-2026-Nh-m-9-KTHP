@@ -2,12 +2,18 @@ package com.uniadmission.backend.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.AdmissionRound;
 import com.uniadmission.backend.entity.Application;
+import com.uniadmission.backend.entity.Candidate;
 import com.uniadmission.backend.entity.Major;
+import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.entity.University;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import com.uniadmission.backend.repository.AdmissionRoundRepository;
@@ -122,5 +128,87 @@ class ApplicationServiceImplStatisticsTest {
         assertThat(stats.getByMajor().get(0).getName()).isEqualTo("Công nghệ thông tin");
         assertThat(stats.getByAdmissionRound()).hasSize(2);
         assertThat(stats.getByAdmissionRound().get(0).getName()).isEqualTo("Đợt 1");
+    }
+
+    @Test
+    void bulkUpdateApplicationStatus_updatesEverySelectedApplicationAndWritesLogs() {
+        User user = new User();
+        user.setId(99L);
+        user.setEmail("candidate@example.com");
+        user.setFullName("Nguyễn Văn A");
+
+        Candidate candidate = new Candidate();
+        candidate.setId(55L);
+        candidate.setUser(user);
+
+        Application first = new Application();
+        first.setId(1L);
+        first.setStatus(ApplicationStatus.PENDING);
+        first.setCandidate(candidate);
+
+        Application second = new Application();
+        second.setId(2L);
+        second.setStatus(ApplicationStatus.PENDING);
+        second.setCandidate(candidate);
+
+        when(applicationRepository.findAllById(anyList())).thenReturn(Arrays.asList(first, second));
+        when(applicationRepository.save(any(Application.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(reviewLogRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(emailService).sendApplicationStatusEmail(anyString(), anyString(), anyString());
+        when(notificationService.createNotification(anyLong(), anyString(), anyString())).thenReturn(null);
+
+        applicationService.bulkUpdateApplicationStatus(Arrays.asList(1L, 2L), ApplicationStatus.APPROVED, "Đã duyệt",
+                7L);
+
+        assertThat(first.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(second.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+    }
+
+    @Test
+    void exportApplicationsCsv_writesHeaderAndApplicationRows() {
+        University university = new University();
+        university.setId(1L);
+        university.setName("Đại học A");
+
+        Major major = new Major();
+        major.setId(10L);
+        major.setName("Công nghệ thông tin");
+        major.setUniversity(university);
+
+        AdmissionRound admissionRound = new AdmissionRound();
+        admissionRound.setId(100L);
+        admissionRound.setName("Đợt 1");
+
+        User user = new User();
+        user.setId(99L);
+        user.setEmail("candidate@example.com");
+        user.setFullName("Nguyễn Văn A");
+
+        Candidate candidate = new Candidate();
+        candidate.setId(55L);
+        candidate.setUser(user);
+
+        Application application = new Application();
+        application.setId(1L);
+        application.setApplicationCode("HS20260001");
+        application.setCandidate(candidate);
+        application.setMajor(major);
+        application.setAdmissionRound(admissionRound);
+        application.setStatus(ApplicationStatus.PENDING);
+        application.setTotalScore(27.5);
+        application.setSubmissionDate(java.time.LocalDateTime.of(2026, 5, 26, 10, 30));
+
+        when(applicationRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(Arrays.asList(application));
+
+        String csv = applicationService.exportApplicationsCsv(ApplicationStatus.PENDING, 1L, 10L, 100L);
+
+        assertThat(csv)
+                .contains("ID,Mã hồ sơ,Thí sinh,Trường,Ngành,Đợt xét tuyển,Tổ hợp,Tổng điểm,Trạng thái,Ngày nộp");
+        assertThat(csv).contains("HS20260001");
+        assertThat(csv).contains("Nguyễn Văn A");
+        assertThat(csv).contains("Đại học A");
+        assertThat(csv).contains("Công nghệ thông tin");
     }
 }
