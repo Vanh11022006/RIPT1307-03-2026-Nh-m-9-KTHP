@@ -1,6 +1,7 @@
 package com.uniadmission.backend.controller;
 
 import com.uniadmission.backend.dto.response.ApiResponse;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import com.uniadmission.backend.service.ApplicationService;
@@ -61,11 +62,11 @@ public class AdminController {
 
         @GetMapping("/statistics/dashboard")
         @Operation(summary = "Thống kê dashboard", description = "Lấy số liệu tổng quan cho trang quản trị")
-        public ResponseEntity<ApiResponse<Map<String, Long>>> getDashboardStatistics(
+        public ResponseEntity<ApiResponse<ApplicationStatisticsResponse>> getDashboardStatistics(
                         @RequestParam(required = false) Long universityId,
                         @RequestParam(required = false) Long majorId,
                         @RequestParam(required = false) Long admissionRoundId) {
-                Map<String, Long> stats = applicationService.getApplicationStatistics(universityId, majorId,
+                ApplicationStatisticsResponse stats = applicationService.getApplicationStatistics(universityId, majorId,
                                 admissionRoundId);
                 return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
         }

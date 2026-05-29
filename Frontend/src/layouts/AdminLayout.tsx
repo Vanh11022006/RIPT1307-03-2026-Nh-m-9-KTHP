@@ -13,7 +13,9 @@ import {
   CalendarOutlined,
   BellOutlined,
   BulbOutlined,
-  BulbFilled
+  BulbFilled,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";
@@ -150,8 +152,24 @@ export const AdminLayout: React.FC = () => {
             background: isDarkMode ? "rgba(17, 24, 39, 0.7)" : "rgba(255, 255, 255, 0.8)",
           }}
         >
-          {/* LEFT: Spacer to maintain layout */}
-          <div style={{ display: "flex", alignItems: "center" }}></div>
+          {/* LEFT: Sidebar toggle */}
+          <Button
+            type="text"
+            onClick={() => setCollapsed((value) => !value)}
+            icon={collapsed ? <MenuUnfoldOutlined style={{ fontSize: 18 }} /> : <MenuFoldOutlined style={{ fontSize: 18 }} />}
+            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            style={{
+              color: "var(--admin-text-primary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: "var(--admin-bg)",
+              border: "1px solid var(--admin-border)",
+            }}
+          />
 
           {/* CENTER: Spacer */}
           <div style={{ flex: 1 }}></div>

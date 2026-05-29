@@ -8,14 +8,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsGroupResponse;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.repository.ApplicationRepository;
 import com.uniadmission.backend.repository.AttachmentRepository;
 import com.uniadmission.backend.security.CustomUserDetailsService;
 import com.uniadmission.backend.security.JwtTokenProvider;
 import com.uniadmission.backend.service.ApplicationService;
 import com.uniadmission.backend.service.FileService;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -51,12 +53,25 @@ class ApplicationControllerAdminStatisticsTest {
 
     @Test
     void adminStatistics_acceptsUniversityMajorAndAdmissionRoundFilters() throws Exception {
-        Map<String, Long> stats = new HashMap<>();
-        stats.put("TOTAL", 8L);
-        stats.put("PENDING", 3L);
-        stats.put("APPROVED", 3L);
-        stats.put("REJECTED", 1L);
-        stats.put("CANCELLED", 1L);
+        ApplicationStatisticsResponse stats = ApplicationStatisticsResponse.builder()
+                .total(8L)
+                .pending(3L)
+                .approved(3L)
+                .rejected(1L)
+                .cancelled(1L)
+                .byUniversity(Arrays.asList(ApplicationStatisticsGroupResponse.builder()
+                        .id(12L)
+                        .code("UNI01")
+                        .name("Đại học A")
+                        .total(8L)
+                        .pending(3L)
+                        .approved(3L)
+                        .rejected(1L)
+                        .cancelled(1L)
+                        .build()))
+                .byMajor(Arrays.asList())
+                .byAdmissionRound(Arrays.asList())
+                .build();
 
         when(applicationService.getApplicationStatistics(eq(12L), eq(34L), eq(56L)))
                 .thenReturn(stats);
@@ -68,8 +83,9 @@ class ApplicationControllerAdminStatisticsTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.TOTAL").value(8))
-                .andExpect(jsonPath("$.data.PENDING").value(3));
+                .andExpect(jsonPath("$.data.total").value(8))
+                .andExpect(jsonPath("$.data.pending").value(3))
+                .andExpect(jsonPath("$.data.byUniversity[0].name").value("Đại học A"));
 
         verify(applicationService).getApplicationStatistics(eq(12L), eq(34L), eq(56L));
     }

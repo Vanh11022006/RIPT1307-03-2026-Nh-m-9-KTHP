@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
 import com.uniadmission.backend.dto.response.ApiResponse;
 import com.uniadmission.backend.dto.response.ApplicationResponse;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.Attachment;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
@@ -157,11 +158,11 @@ public class ApplicationController {
     @GetMapping("/admin-statistics")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Thống kê hồ sơ", description = "Tổng hợp số lượng hồ sơ theo trạng thái, trường, ngành và đợt xét tuyển")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics(
+    public ResponseEntity<ApiResponse<ApplicationStatisticsResponse>> getStatistics(
             @RequestParam(required = false) Long universityId,
             @RequestParam(required = false) Long majorId,
             @RequestParam(required = false) Long admissionRoundId) {
-        Map<String, Long> stats = applicationService.getApplicationStatistics(universityId, majorId,
+        ApplicationStatisticsResponse stats = applicationService.getApplicationStatistics(universityId, majorId,
                 admissionRoundId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Lấy thống kê thành công", stats));
     }

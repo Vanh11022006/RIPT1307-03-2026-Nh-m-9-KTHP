@@ -54,6 +54,54 @@ const resolveApplicationCode = (application: any): string => {
   return formatApplicationCode(String(application?.id ?? ""), application?.submittedAt ?? application?.submissionDate, application?.createdAt);
 };
 
+type ApplicationStatisticsGroup = {
+  id: string;
+  code?: string;
+  name: string;
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+};
+
+type ApplicationStatisticsResponse = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+  byUniversity: ApplicationStatisticsGroup[];
+  byMajor: ApplicationStatisticsGroup[];
+  byAdmissionRound: ApplicationStatisticsGroup[];
+};
+
+const normalizeStatisticsGroups = (groups: any): ApplicationStatisticsGroup[] => {
+  if (!Array.isArray(groups)) return [];
+
+  return groups.map((group: any, index: number) => ({
+    id: String(group?.id ?? group?.code ?? group?.name ?? index),
+    code: group?.code ?? undefined,
+    name: String(group?.name ?? "Chưa cập nhật"),
+    total: Number(group?.total ?? 0),
+    pending: Number(group?.pending ?? 0),
+    approved: Number(group?.approved ?? 0),
+    rejected: Number(group?.rejected ?? 0),
+    cancelled: Number(group?.cancelled ?? 0),
+  }));
+};
+
+const normalizeStatisticsResponse = (stats: any): ApplicationStatisticsResponse => ({
+  total: Number(stats?.TOTAL ?? stats?.total ?? 0),
+  pending: Number(stats?.PENDING ?? stats?.pending ?? 0),
+  approved: Number(stats?.APPROVED ?? stats?.approved ?? 0),
+  rejected: Number(stats?.REJECTED ?? stats?.rejected ?? 0),
+  cancelled: Number(stats?.CANCELLED ?? stats?.cancelled ?? 0),
+  byUniversity: normalizeStatisticsGroups(stats?.byUniversity),
+  byMajor: normalizeStatisticsGroups(stats?.byMajor),
+  byAdmissionRound: normalizeStatisticsGroups(stats?.byAdmissionRound),
+});
+
 const normalizeApplicationScores = (scores: any): Record<string, number> => {
   if (!scores || typeof scores !== "object" || Array.isArray(scores)) {
     if (typeof scores === "string" && scores.trim()) {
@@ -255,7 +303,7 @@ interface ApplicationState {
     universityId?: string;
     majorId?: string;
     admissionRoundId?: string;
-  }) => Promise<{ total: number; pending: number; approved: number; rejected: number; cancelled: number }>;
+  }) => Promise<ApplicationStatisticsResponse>;
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -463,13 +511,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const payload = response?.data ?? response;
       const stats = payload?.data ?? payload ?? {};
 
-      return {
-        total: Number(stats.TOTAL ?? stats.total ?? 0),
-        pending: Number(stats.PENDING ?? stats.pending ?? 0),
-        approved: Number(stats.APPROVED ?? stats.approved ?? 0),
-        rejected: Number(stats.REJECTED ?? stats.rejected ?? 0),
-        cancelled: Number(stats.CANCELLED ?? stats.cancelled ?? 0),
-      };
+      return normalizeStatisticsResponse(stats);
     } catch (error) {
       console.error("Failed to fetch admin application statistics:", error);
       const apps = get().applications;
@@ -486,6 +528,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         approved: filteredApps.filter((a) => a.status === "approved").length,
         rejected: filteredApps.filter((a) => a.status === "rejected").length,
         cancelled: filteredApps.filter((a) => String(a.status).toLowerCase() === "cancelled").length,
+        byUniversity: [],
+        byMajor: [],
+        byAdmissionRound: [],
       };
     }
   }

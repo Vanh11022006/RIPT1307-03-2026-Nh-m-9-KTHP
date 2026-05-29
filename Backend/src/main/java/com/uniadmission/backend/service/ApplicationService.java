@@ -1,6 +1,7 @@
 package com.uniadmission.backend.service;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
@@ -29,5 +30,5 @@ public interface ApplicationService {
     Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
             Long admissionRoundId, int page, int size);
 
-    Map<String, Long> getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
+    ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
 }

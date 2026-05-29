@@ -22,16 +22,93 @@ import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useAuthStore } from "../../stores/auth.store";
 import { formatDate } from "../../utils/date";
 import { loadAdminDashboardData } from "../../utils/dataLoader";
+import type { Application } from "../../types/application.types";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+
+type AdminApplicationBreakdownRow = {
+  id: string;
+  code?: string;
+  name: string;
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+};
+
+type AdminApplicationStatistics = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+  byUniversity: AdminApplicationBreakdownRow[];
+  byMajor: AdminApplicationBreakdownRow[];
+  byAdmissionRound: AdminApplicationBreakdownRow[];
+};
+
+type BreakdownMeta = {
+  id: string;
+  code?: string;
+  name: string;
+};
+
+const emptyBreakdownRows: AdminApplicationBreakdownRow[] = [];
+
+const buildBreakdownRows = (
+  applications: Application[],
+  resolveMeta: (application: Application) => BreakdownMeta | null
+): AdminApplicationBreakdownRow[] => {
+  const rows = new Map<string, AdminApplicationBreakdownRow>();
+
+  applications.forEach((application) => {
+    const meta = resolveMeta(application);
+    if (!meta) {
+      return;
+    }
+
+    if (!rows.has(meta.id)) {
+      rows.set(meta.id, {
+        id: meta.id,
+        code: meta.code,
+        name: meta.name,
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        cancelled: 0,
+      });
+    }
+
+    const next = rows.get(meta.id);
+    if (!next) {
+      return;
+    }
+
+    next.total += 1;
+    if (application.status === "pending") next.pending += 1;
+    if (application.status === "approved") next.approved += 1;
+    if (application.status === "rejected") next.rejected += 1;
+    if (application.status === "cancelled") next.cancelled += 1;
+  });
+
+  return Array.from(rows.values()).sort((left, right) => {
+    if (right.total !== left.total) {
+      return right.total - left.total;
+    }
+
+    return left.name.localeCompare(right.name, "vi");
+  });
+};
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuthStore();
   
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [adminApplicationStats, setAdminApplicationStats] = useState<{ total: number; pending: number; approved: number; rejected: number; cancelled: number } | null>(null);
+  const [adminApplicationStats, setAdminApplicationStats] = useState<AdminApplicationStatistics | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -42,7 +119,7 @@ export const AdminDashboard: React.FC = () => {
   const { universities, loading: universitiesLoading, getUniversityById, getUniversities } = useUniversityStore();
   const { majors, loading: majorsLoading, getMajorById, getMajors } = useMajorStore();
   const { applications, loading: applicationsLoading, getApplications, getAdminApplicationStatistics } = useApplicationStore();
-  const { admissionRounds, loading: admissionRoundsLoading, getAdmissionRounds } = useAdmissionRoundStore();
+  const { admissionRounds, loading: admissionRoundsLoading, getAdmissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
 
   // Fetch all data in parallel using Promise.all for faster load times
   // ⏱️ Optimization: Instead of sequential calls (~1500ms), load in parallel (~300-400ms)
@@ -108,7 +185,7 @@ export const AdminDashboard: React.FC = () => {
       const matchMajor = selectedMajorId === "all" || app.majorId === selectedMajorId;
       return matchRound && matchUni && matchMajor;
     });
-  }, [safeApplications, selectedAdmissionRoundId, selectedUniversityId]);
+  }, [safeApplications, selectedAdmissionRoundId, selectedUniversityId, selectedMajorId]);
 
   const localStats = useMemo(() => {
     return {
@@ -116,6 +193,10 @@ export const AdminDashboard: React.FC = () => {
       pending: filteredApplications.filter(a => a.status === 'pending').length,
       approved: filteredApplications.filter(a => a.status === 'approved').length,
       rejected: filteredApplications.filter(a => a.status === 'rejected').length,
+      cancelled: filteredApplications.filter(a => a.status === 'cancelled').length,
+      byUniversity: emptyBreakdownRows,
+      byMajor: emptyBreakdownRows,
+      byAdmissionRound: emptyBreakdownRows,
     };
   }, [filteredApplications]);
 
@@ -131,20 +212,64 @@ export const AdminDashboard: React.FC = () => {
   const percentPending = stats.total > 0 ? (stats.pending / stats.total) * 100 : 0;
   const percentApproved = stats.total > 0 ? (stats.approved / stats.total) * 100 : 0;
   const percentRejected = stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0;
+  const percentCancelled = stats.total > 0 ? (stats.cancelled / stats.total) * 100 : 0;
 
-  const universityStats = useMemo(() => {
-    return safeUniversities.map(uni => {
-      const apps = filteredApplications.filter(a => a.universityId === uni.id);
+  const universityBreakdown = useMemo(() => {
+    if (adminApplicationStats?.byUniversity?.length) {
+      return adminApplicationStats.byUniversity;
+    }
+
+    return buildBreakdownRows(filteredApplications, (application) => {
+      const university = getUniversityById(application.universityId);
+      if (!university) {
+        return null;
+      }
+
       return {
-        id: uni.id,
-        name: uni.name,
-        total: apps.length,
-        pending: apps.filter(a => a.status === 'pending').length,
-        approved: apps.filter(a => a.status === 'approved').length,
-        rejected: apps.filter(a => a.status === 'rejected').length,
+        id: university.id,
+        code: university.code,
+        name: university.name || "Chưa cập nhật",
       };
-    }).sort((a, b) => b.total - a.total).filter(stat => stat.total > 0);
-  }, [safeUniversities, filteredApplications]);
+    });
+  }, [adminApplicationStats, filteredApplications, getUniversityById]);
+
+  const majorBreakdown = useMemo(() => {
+    if (adminApplicationStats?.byMajor?.length) {
+      return adminApplicationStats.byMajor;
+    }
+
+    return buildBreakdownRows(filteredApplications, (application) => {
+      const major = getMajorById(application.majorId);
+      if (!major) {
+        return null;
+      }
+
+      return {
+        id: major.id,
+        code: major.code,
+        name: major.name || "Chưa cập nhật",
+      };
+    });
+  }, [adminApplicationStats, filteredApplications, getMajorById]);
+
+  const admissionRoundBreakdown = useMemo(() => {
+    if (adminApplicationStats?.byAdmissionRound?.length) {
+      return adminApplicationStats.byAdmissionRound;
+    }
+
+    return buildBreakdownRows(filteredApplications, (application) => {
+      const round = getAdmissionRoundById(application.admissionRoundId ?? "");
+      if (!round) {
+        return null;
+      }
+
+      return {
+        id: round.id,
+        code: round.code,
+        name: round.name || "Chưa cập nhật",
+      };
+    });
+  }, [adminApplicationStats, filteredApplications, getAdmissionRoundById]);
 
   const columns = [
     {
@@ -219,7 +344,64 @@ export const AdminDashboard: React.FC = () => {
     { title: "Chờ duyệt", dataIndex: "pending", key: "pending", align: "center" as const, render: (val: number) => <Tag color="warning" bordered={false}>{val}</Tag> },
     { title: "Đã duyệt", dataIndex: "approved", key: "approved", align: "center" as const, render: (val: number) => <Tag color="success" bordered={false}>{val}</Tag> },
     { title: "Từ chối", dataIndex: "rejected", key: "rejected", align: "center" as const, render: (val: number) => <Tag color="error" bordered={false}>{val}</Tag> },
+    { title: "Đã hủy", dataIndex: "cancelled", key: "cancelled", align: "center" as const, render: (val: number) => <Tag color="purple" bordered={false}>{val}</Tag> },
   ];
+
+  const breakdownColumns = [
+    {
+      title: "Tên",
+      dataIndex: "name",
+      key: "name",
+      render: (text: string, record: AdminApplicationBreakdownRow) => (
+        <div>
+          <Text strong>{text}</Text>
+          {record.code ? <div><Text type="secondary" style={{ fontSize: 12 }}>{record.code}</Text></div> : null}
+        </div>
+      ),
+    },
+    ...commonStatColumns,
+    {
+      title: "Tỷ lệ",
+      key: "ratio",
+      align: "center" as const,
+      render: (_: unknown, record: AdminApplicationBreakdownRow) => (
+        <Tag color="processing" bordered={false} style={{ borderRadius: 12 }}>
+          {stats.total > 0 ? `${((record.total / stats.total) * 100).toFixed(1)}%` : "0%"}
+        </Tag>
+      ),
+    },
+  ];
+
+  const renderBreakdownCard = (
+    title: string,
+    description: string,
+    dataSource: AdminApplicationBreakdownRow[]
+  ) => (
+    <Card
+      className="saas-card"
+      title={
+        <div>
+          <Title level={5} style={{ margin: 0 }}>{title}</Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>{description}</Text>
+        </div>
+      }
+      extra={<Tag color="processing" bordered={false} style={{ borderRadius: 12 }}>{dataSource.length} nhóm</Tag>}
+      bordered={false}
+      style={{ height: '100%' }}
+    >
+      {dataSource.length > 0 ? (
+        <Table
+          columns={breakdownColumns}
+          dataSource={dataSource.map((item) => ({ ...item, key: item.id }))}
+          pagination={{ pageSize: 4, position: ["bottomCenter"] }}
+          size="middle"
+          scroll={{ x: true }}
+        />
+      ) : (
+        <EmptyState description="Không có dữ liệu breakdown phù hợp" />
+      )}
+    </Card>
+  );
 
   return (
     <div style={{ paddingBottom: 40 }} className="animate-fade-up">
@@ -445,29 +627,51 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <Progress percent={percentRejected} strokeColor="#EF4444" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
             </div>
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#A855F7" }}></div><Text type="secondary">Đã hủy</Text></Space>
+                <Text strong>{stats.cancelled} ({percentCancelled.toFixed(1)}%)</Text>
+              </div>
+              <Progress percent={percentCancelled} strokeColor="#A855F7" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
+            </div>
           </Card>
         </Col>
         
         <Col xs={24} lg={16}>
-          <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Thống kê theo trường</Title>} bordered={false} style={{ height: '100%' }}>
-            {universityStats.length > 0 ? (
-              <Table
-                columns={[
-                  { title: "Trường Đại học", dataIndex: "name", key: "name", render: text => <Text strong>{text}</Text> },
-                  ...commonStatColumns
-                ]}
-                dataSource={universityStats}
-                rowKey="id"
-                pagination={{ pageSize: 4, position: ["bottomCenter"] }}
-                size="middle"
-                scroll={{ x: true }}
-              />
-            ) : (
-              <EmptyState description="Không có hồ sơ phù hợp" />
-            )}
+          <Card className="saas-card" bordered={false} style={{ height: '100%' }}>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={8}>
+                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(56, 189, 248, 0.04))", border: "1px solid rgba(37, 99, 235, 0.12)" }}>
+                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Trường</Text>
+                  <Title level={3} style={{ margin: 0 }}>{universityBreakdown.length}</Title>
+                  <Text type="secondary">nhóm đang có hồ sơ</Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={8}>
+                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.04))", border: "1px solid rgba(16, 185, 129, 0.12)" }}>
+                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Ngành</Text>
+                  <Title level={3} style={{ margin: 0 }}>{majorBreakdown.length}</Title>
+                  <Text type="secondary">nhóm đang có hồ sơ</Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={8}>
+                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(244, 114, 182, 0.04))", border: "1px solid rgba(168, 85, 247, 0.12)" }}>
+                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Đợt</Text>
+                  <Title level={3} style={{ margin: 0 }}>{admissionRoundBreakdown.length}</Title>
+                  <Text type="secondary">nhóm đang có hồ sơ</Text>
+                </div>
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>
+
+      {/* BREAKDOWN TABLES */}
+      <div style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 24 }}>
+        {renderBreakdownCard("Breakdown theo trường", "Số hồ sơ và trạng thái theo từng trường", universityBreakdown)}
+        {renderBreakdownCard("Breakdown theo ngành", "Số hồ sơ và trạng thái theo từng ngành", majorBreakdown)}
+        {renderBreakdownCard("Breakdown theo đợt", "Số hồ sơ và trạng thái theo từng đợt xét tuyển", admissionRoundBreakdown)}
+      </div>
 
       {/* LATEST APPLICATIONS */}
       <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Hồ sơ mới nộp gần đây</Title>} bordered={false}>

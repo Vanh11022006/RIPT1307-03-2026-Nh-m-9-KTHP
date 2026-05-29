@@ -1,6 +1,8 @@
 package com.uniadmission.backend.service.impl;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsGroupResponse;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.AdmissionRound;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.Candidate;
@@ -25,10 +27,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -274,22 +282,151 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        public Map<String, Long> getApplicationStatistics(Long universityId, Long majorId,
+        @Transactional(readOnly = true)
+        public ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId,
                         Long admissionRoundId) {
                 Specification<Application> specification = buildAdminApplicationSpecification(null, universityId,
                                 majorId, admissionRoundId);
-                Map<String, Long> stats = new HashMap<>();
+                List<Application> applications = applicationRepository.findAll(specification);
 
-                stats.put("PENDING", applicationRepository.count(specification.and((root, query, cb) -> cb
-                                .equal(root.get("status"), ApplicationStatus.PENDING))));
-                stats.put("APPROVED", applicationRepository.count(specification.and((root, query, cb) -> cb
-                                .equal(root.get("status"), ApplicationStatus.APPROVED))));
-                stats.put("REJECTED", applicationRepository.count(specification.and((root, query, cb) -> cb
-                                .equal(root.get("status"), ApplicationStatus.REJECTED))));
-                stats.put("CANCELLED", applicationRepository.count(specification.and((root, query, cb) -> cb
-                                .equal(root.get("status"), ApplicationStatus.CANCELLED))));
-                stats.put("TOTAL", applicationRepository.count(specification));
-                return stats;
+                Map<ApplicationStatus, Long> statusTotals = new EnumMap<>(ApplicationStatus.class);
+                for (ApplicationStatus status : ApplicationStatus.values()) {
+                        statusTotals.put(status, 0L);
+                }
+
+                for (Application application : applications) {
+                        ApplicationStatus status = application.getStatus();
+                        if (status != null) {
+                                statusTotals.put(status, statusTotals.getOrDefault(status, 0L) + 1L);
+                        }
+                }
+
+                return ApplicationStatisticsResponse.builder()
+                                .total((long) applications.size())
+                                .pending(statusTotals.getOrDefault(ApplicationStatus.PENDING, 0L))
+                                .approved(statusTotals.getOrDefault(ApplicationStatus.APPROVED, 0L))
+                                .rejected(statusTotals.getOrDefault(ApplicationStatus.REJECTED, 0L))
+                                .cancelled(statusTotals.getOrDefault(ApplicationStatus.CANCELLED, 0L))
+                                .byUniversity(buildGroupStatistics(applications,
+                                                application -> application.getMajor() != null
+                                                                && application.getMajor().getUniversity() != null
+                                                                                ? application.getMajor().getUniversity()
+                                                                                : null))
+                                .byMajor(buildGroupStatistics(applications, Application::getMajor))
+                                .byAdmissionRound(buildGroupStatistics(applications, Application::getAdmissionRound))
+                                .build();
+        }
+
+        private List<ApplicationStatisticsGroupResponse> buildGroupStatistics(List<Application> applications,
+                        Function<Application, Object> groupExtractor) {
+                Map<Long, GroupAccumulator> grouped = new HashMap<>();
+
+                for (Application application : applications) {
+                        Object group = groupExtractor.apply(application);
+                        if (group == null) {
+                                continue;
+                        }
+
+                        Long id;
+                        String code;
+                        String name;
+
+                        if (group instanceof com.uniadmission.backend.entity.University) {
+                                com.uniadmission.backend.entity.University university = (com.uniadmission.backend.entity.University) group;
+                                id = university.getId();
+                                code = university.getCode();
+                                name = university.getName();
+                        } else if (group instanceof Major) {
+                                Major major = (Major) group;
+                                id = major.getId();
+                                code = major.getCode();
+                                name = major.getName();
+                        } else if (group instanceof AdmissionRound) {
+                                AdmissionRound admissionRound = (AdmissionRound) group;
+                                id = admissionRound.getId();
+                                code = admissionRound.getCode();
+                                name = admissionRound.getName();
+                        } else {
+                                continue;
+                        }
+
+                        if (id == null) {
+                                continue;
+                        }
+
+                        GroupAccumulator accumulator = grouped.computeIfAbsent(id,
+                                        ignored -> new GroupAccumulator(id, code, name));
+                        accumulator.total++;
+
+                        ApplicationStatus status = application.getStatus();
+                        if (status != null) {
+                                accumulator.increment(status);
+                        }
+                }
+
+                return grouped.values().stream()
+                                .sorted(Comparator.comparingLong(GroupAccumulator::getTotal).reversed()
+                                                .thenComparing(GroupAccumulator::getName,
+                                                                Comparator.nullsLast(String::compareToIgnoreCase)))
+                                .map(GroupAccumulator::toResponse)
+                                .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        private static class GroupAccumulator {
+                private final Long id;
+                private final String code;
+                private final String name;
+                private long total;
+                private long pending;
+                private long approved;
+                private long rejected;
+                private long cancelled;
+
+                private GroupAccumulator(Long id, String code, String name) {
+                        this.id = id;
+                        this.code = code;
+                        this.name = name;
+                }
+
+                private void increment(ApplicationStatus status) {
+                        switch (status) {
+                                case PENDING:
+                                        pending++;
+                                        break;
+                                case APPROVED:
+                                        approved++;
+                                        break;
+                                case REJECTED:
+                                        rejected++;
+                                        break;
+                                case CANCELLED:
+                                        cancelled++;
+                                        break;
+                                default:
+                                        break;
+                        }
+                }
+
+                private long getTotal() {
+                        return total;
+                }
+
+                private String getName() {
+                        return name;
+                }
+
+                private ApplicationStatisticsGroupResponse toResponse() {
+                        return ApplicationStatisticsGroupResponse.builder()
+                                        .id(id)
+                                        .code(code)
+                                        .name(name)
+                                        .total(total)
+                                        .pending(pending)
+                                        .approved(approved)
+                                        .rejected(rejected)
+                                        .cancelled(cancelled)
+                                        .build();
+                }
         }
 
         private Specification<Application> buildAdminApplicationSpecification(ApplicationStatus status,
