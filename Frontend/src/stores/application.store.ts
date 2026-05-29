@@ -298,6 +298,19 @@ interface ApplicationState {
   cancelApplication: (id: string) => Promise<void>;
   approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
   rejectApplication: (id: string, adminId: string, note: string) => Promise<void>;
+  bulkUpdateApplicationStatus: (ids: string[], status: string, adminId: string, note?: string) => Promise<void>;
+  getAdminApplicationsCsv: (filters?: {
+    status?: string;
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<string>;
+  getAdminApplicationsExcel: (filters?: {
+    status?: string;
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<ArrayBuffer>;
   getApplicationStats: () => { total: number; pending: number; approved: number; rejected: number };
   getAdminApplicationStatistics: (filters?: {
     universityId?: string;
@@ -490,6 +503,60 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       }
     } catch (error) {
       console.error("Failed to reject application:", error);
+    }
+  },
+
+  bulkUpdateApplicationStatus: async (ids, status, adminId, note) => {
+    try {
+      await axiosClient.post("/applications/admin-bulk-status", {
+        ids,
+        status,
+        adminId,
+        notes: note ?? "",
+      });
+
+      set((state) => {
+        const nextApplications = state.applications.map((application) =>
+          ids.includes(application.id) ? { ...application, status: String(status).toLowerCase() as Application["status"] } : application
+        );
+        saveCachedApplications(nextApplications);
+        return { applications: nextApplications };
+      });
+    } catch (error) {
+      console.error("Failed to bulk update application status:", error);
+      throw error;
+    }
+  },
+
+  getAdminApplicationsCsv: async (filters) => {
+    try {
+      const params = buildApplicationFilterParams(filters);
+      const response = await axiosClient.get("/applications/admin-export-csv", {
+        params,
+        responseType: "text",
+      });
+
+      // axiosClient interceptor unwraps `response.data` and returns the data directly.
+      // For CSV we expect a string body, so use the returned value itself.
+      return typeof response === "string" ? response : String(response ?? "");
+    } catch (error) {
+      console.error("Failed to export admin applications CSV:", error);
+      throw error;
+    }
+  },
+
+  getAdminApplicationsExcel: async (filters) => {
+    try {
+      const params = buildApplicationFilterParams(filters);
+      const response = await axiosClient.get("/applications/admin-export-xlsx", {
+        params,
+        responseType: "arraybuffer",
+      });
+
+      return response as unknown as ArrayBuffer;
+    } catch (error) {
+      console.error("Failed to export admin applications Excel:", error);
+      throw error;
     }
   },
 

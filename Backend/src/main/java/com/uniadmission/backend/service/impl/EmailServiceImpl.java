@@ -227,6 +227,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async
     public void sendApplicationStatusEmail(String to, String candidateName, String status) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {

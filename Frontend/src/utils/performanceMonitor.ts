@@ -34,9 +34,11 @@ export const logPerformanceMetric = (
 
   // Log to console
   const methodEmoji = method === 'sequential' ? '⏳' : '⚡';
-  console.log(
-    `${methodEmoji} [Performance] ${pageName}: ${duration.toFixed(2)}ms (${method})`
-  );
+  if (import.meta.env.DEV) {
+    console.log(
+      `${methodEmoji} [Performance] ${pageName}: ${duration.toFixed(2)}ms (${method})`
+    );
+  }
 
   // Log to localStorage for later analysis
   try {
@@ -108,30 +110,34 @@ export const getPerformanceSummary = () => {
 export const printPerformanceReport = () => {
   const summary = getPerformanceSummary();
   if (!summary || summary.length === 0) {
-    console.log('❌ No performance metrics collected yet');
+    if (import.meta.env.DEV) console.log('❌ No performance metrics collected yet');
     return;
   }
 
-  console.log('\n📊 ========== PERFORMANCE REPORT ==========');
-  console.log(`📈 Total pages monitored: ${summary.length}`);
+  if (import.meta.env.DEV) {
+    console.log('\n📊 ========== PERFORMANCE REPORT ==========');
+    console.log(`📈 Total pages monitored: ${summary.length}`);
+  }
 
   let totalImprovement = 0;
   let pagesImproved = 0;
 
   summary.forEach((item) => {
     const icon = item.improvementPercent > 0 ? '✅' : '⚠️';
-    console.log(
-      `${icon} ${item.pageName}:`
-    );
-    console.log(
-      `   📊 Sequential avg: ${item.sequentialAvg.toFixed(2)}ms (${item.sequentialCount} samples)`
-    );
-    console.log(
-      `   ⚡ Parallel avg: ${item.parallelAvg.toFixed(2)}ms (${item.parallelCount} samples)`
-    );
-    console.log(
-      `   📈 Improvement: ${item.improvementPercent.toFixed(1)}%`
-    );
+    if (import.meta.env.DEV) {
+      console.log(
+        `${icon} ${item.pageName}:`
+      );
+      console.log(
+        `   📊 Sequential avg: ${item.sequentialAvg.toFixed(2)}ms (${item.sequentialCount} samples)`
+      );
+      console.log(
+        `   ⚡ Parallel avg: ${item.parallelAvg.toFixed(2)}ms (${item.parallelCount} samples)`
+      );
+      console.log(
+        `   📈 Improvement: ${item.improvementPercent.toFixed(1)}%`
+      );
+    }
 
     if (item.improvementPercent > 0) {
       totalImprovement += item.improvementPercent;
@@ -139,12 +145,12 @@ export const printPerformanceReport = () => {
     }
   });
 
-  if (pagesImproved > 0) {
+  if (pagesImproved > 0 && import.meta.env.DEV) {
     const avgImprovement = totalImprovement / pagesImproved;
     console.log(`\n🎉 Average improvement: ${avgImprovement.toFixed(1)}%`);
   }
 
-  console.log('========================================\n');
+  if (import.meta.env.DEV) console.log('========================================\n');
 };
 
 /**
@@ -157,7 +163,7 @@ export const clearPerformanceMetrics = () => {
   } catch (e) {
     // ignore
   }
-  console.log('🧹 Performance metrics cleared');
+  if (import.meta.env.DEV) console.log('🧹 Performance metrics cleared');
 };
 
 /**
@@ -166,7 +172,7 @@ export const clearPerformanceMetrics = () => {
 export const exportMetricsAsCSV = () => {
   const metrics = getPerformanceMetrics();
   if (metrics.length === 0) {
-    console.log('❌ No metrics to export');
+    if (import.meta.env.DEV) console.log('❌ No metrics to export');
     return;
   }
 
@@ -184,5 +190,5 @@ export const exportMetricsAsCSV = () => {
   a.click();
   window.URL.revokeObjectURL(url);
 
-  console.log(`📥 Exported ${metrics.length} metrics to CSV`);
+  if (import.meta.env.DEV) console.log(`📥 Exported ${metrics.length} metrics to CSV`);
 };
