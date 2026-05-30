@@ -14,3 +14,8 @@
 - **Người thực hiện:** Khuất Tiến Quang
 - **Trạng thái script:** Hoạt động ổn định trên môi trường Node.js local.
 - **Kết quả vận hành:** Đã chạy thử nghiệm file `idor_security.test.js`. Hệ thống bắt lỗi an toàn và ghi nhận trạng thái mất kết nối do Server Backend hiện đang offline (lỗi cấu hình Mail chưa nổ máy được). Khung quét tự động đã sẵn sàng 100%, chỉ chờ Backend mở cổng `8080` là có thể quét lỗ hổng IDOR ngay lập tức.
+
+## 4. Nhật ký và Kết quả kiểm thử (Ngày 30/05)
+- **Người thực hiện:** Khuất Tiến Quang
+- **Trạng thái:** Server Backend đã online local ổn định (cổng 8080).
+- **Kết quả vận hành:** Đã kết nối thành công đến API Backend. Hệ thống trả về mã lỗi `401 (Unauthorized)`. Spring Security đang chặn lọc request không có token rất tốt, bước đầu không tồn tại lỗ hổng IDOR công khai khi chưa đăng nhập.
