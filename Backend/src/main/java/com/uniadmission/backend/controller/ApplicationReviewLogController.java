@@ -1,6 +1,8 @@
 package com.uniadmission.backend.controller;
 
+import com.uniadmission.backend.dto.request.ApplicationReviewSubmissionRequest;
 import com.uniadmission.backend.dto.response.ApiResponse;
+import com.uniadmission.backend.dto.response.ApplicationReviewSummaryResponse;
 import com.uniadmission.backend.entity.ApplicationReviewLog;
 import com.uniadmission.backend.service.ApplicationReviewLogService;
 import lombok.RequiredArgsConstructor;
@@ -21,5 +23,23 @@ public class ApplicationReviewLogController {
             @PathVariable Long applicationId) {
         List<ApplicationReviewLog> logs = logService.getLogsByApplication(applicationId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", logs));
+    }
+
+    @GetMapping("/{applicationId}/review-summary")
+    public ResponseEntity<ApiResponse<ApplicationReviewSummaryResponse>> getReviewSummary(
+            @PathVariable Long applicationId,
+            @RequestParam(defaultValue = "3") int reviewerCount) {
+        ApplicationReviewSummaryResponse summary = logService.getReviewSummary(applicationId, reviewerCount);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", summary));
+    }
+
+    @PostMapping("/{applicationId}/review-scores")
+    public ResponseEntity<ApiResponse<ApplicationReviewSummaryResponse>> submitReviewScore(
+            @PathVariable Long applicationId,
+            @RequestBody ApplicationReviewSubmissionRequest request,
+            @RequestParam(defaultValue = "3") int reviewerCount) {
+        ApplicationReviewSummaryResponse summary = logService.submitReviewScore(applicationId, request,
+                reviewerCount);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", summary));
     }
 }

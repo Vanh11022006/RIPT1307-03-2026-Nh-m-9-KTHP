@@ -1,8 +1,3 @@
-/**
- * Data Loader Utility - Load multiple API calls in parallel using Promise.all
- * Giúp tăng tốc độ load dữ liệu bằng cách gọi các API song song thay vì tuần tự
- */
-
 import { useCandidateStore } from '../stores/candidate.store';
 import { useUniversityStore } from '../stores/university.store';
 import { useMajorStore } from '../stores/major.store';
@@ -12,10 +7,6 @@ import { useSubjectGroupStore } from '../stores/subjectGroup.store';
 import { useNotificationLogStore } from '../stores/notificationLog.store';
 import { useAuthStore } from '../stores/auth.store';
 
-/**
- * Load admin dashboard data in parallel
- * Tối ưu: Thay vì gọi 5 API tuần tự (~1500ms), gọi song song (~300-400ms)
- */
 export const loadAdminDashboardData = async () => {
   const startTime = performance.now();
   

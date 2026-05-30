@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Application, EvidenceFile } from "../types/application.types";
+import type { Application, ApplicationReviewSubmission, ApplicationReviewSummary, EvidenceFile } from "../types/application.types";
 import axiosClient from "../api/axiosClient";
 
 const APPLICATIONS_CACHE_KEY = "applicationsCache";
@@ -150,6 +150,8 @@ const normalizeApplicationRecord = (application: any): Application => ({
   priorityGroup: application?.priorityGroup ?? undefined,
   // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
   priorityScore: Number(application?.priorityScore ?? 0),
+  reviewScoreAverage: application?.reviewScoreAverage != null ? Number(application.reviewScoreAverage) : undefined,
+  reviewCount: application?.reviewCount != null ? Number(application.reviewCount) : undefined,
   scores: normalizeApplicationScores(application?.scores),
   totalScore: Number(application?.totalScore ?? 0),
   finalScore: Number(application?.finalScore ?? (Number(application?.totalScore ?? 0) + Number(application?.priorityScore ?? 0))),
@@ -298,6 +300,13 @@ interface ApplicationState {
   cancelApplication: (id: string) => Promise<void>;
   approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
   rejectApplication: (id: string, adminId: string, note: string) => Promise<void>;
+  getApplicationReviewSummary: (id: string, reviewerCount?: number) => Promise<ApplicationReviewSummary | null>;
+  getApplicationReviewLogs: (id: string) => Promise<any[]>;
+  submitApplicationReviewScore: (
+    id: string,
+    payload: ApplicationReviewSubmission,
+    reviewerCount?: number
+  ) => Promise<ApplicationReviewSummary | null>;
   bulkUpdateApplicationStatus: (ids: string[], status: string, adminId: string, note?: string) => Promise<void>;
   getAdminApplicationsCsv: (filters?: {
     status?: string;
@@ -503,6 +512,62 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       }
     } catch (error) {
       console.error("Failed to reject application:", error);
+    }
+  },
+
+  getApplicationReviewSummary: async (id, reviewerCount = 3) => {
+    try {
+      const response = await axiosClient.get(`/applications/${id}/review-summary`, {
+        params: { reviewerCount },
+      });
+      return response?.data ?? response ?? null;
+    } catch (error) {
+      console.error("Failed to fetch application review summary:", error);
+      return null;
+    }
+  },
+
+  getApplicationReviewLogs: async (id) => {
+    try {
+      const response = await axiosClient.get(`/applications/${id}/logs`);
+      const payload = response?.data ?? response ?? null;
+      const data = payload?.data ?? payload;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Failed to fetch application review logs:", error);
+      return [];
+    }
+  },
+
+  submitApplicationReviewScore: async (id, payload, reviewerCount = 3) => {
+    try {
+      const response = await axiosClient.post(`/applications/${id}/review-scores`, payload, {
+        params: { reviewerCount },
+      });
+      const summary = response?.data ?? response ?? null;
+
+      if (summary) {
+        set((state) => {
+          const nextApplications = state.applications.map((application) =>
+            application.id === id
+              ? {
+                  ...application,
+                  reviewScoreAverage: summary.averageReviewScore ?? application.reviewScoreAverage,
+                  reviewCount: summary.reviewCount ?? application.reviewCount,
+                  reviewedBy: summary.reviewedBy ?? application.reviewedBy,
+                  reviewedAt: summary.reviewedAt ?? application.reviewedAt,
+                }
+              : application
+          );
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
+      }
+
+      return summary;
+    } catch (error) {
+      console.error("Failed to submit application review score:", error);
+      throw error;
     }
   },
 

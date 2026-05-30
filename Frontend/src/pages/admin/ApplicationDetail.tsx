@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, message, Popconfirm } from "antd";
+import React, { useEffect, useRef, useState } from "react";
+import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, InputNumber, message, Popconfirm, List } from "antd";
 import { ArrowLeftOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -24,7 +24,7 @@ export const AdminApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication } = useApplicationStore();
+  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication, getApplicationReviewSummary, getApplicationReviewLogs, submitApplicationReviewScore } = useApplicationStore();
   const { getCandidateById, getCandidates } = useCandidateStore();
   const { getUniversityById, getUniversities } = useUniversityStore();
   const { getMajorById, getMajors } = useMajorStore();
@@ -33,12 +33,21 @@ export const AdminApplicationDetail: React.FC = () => {
   const { currentUser } = useAuthStore();
 
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [reviewForm] = Form.useForm();
   const [form] = Form.useForm();
   const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
   const [loading, setLoading] = useState<boolean>(!application);
+  const [reviewSummary, setReviewSummary] = useState<any>(null);
+  const [reviewLogs, setReviewLogs] = useState<any[]>([]);
+  const [reviewLogsLoading, setReviewLogsLoading] = useState(false);
+  const [reviewLogsLoaded, setReviewLogsLoaded] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     let mounted = true;
+    mountedRef.current = true;
 
     getCandidates();
     getUniversities();
@@ -87,6 +96,21 @@ export const AdminApplicationDetail: React.FC = () => {
       }
     };
 
+    const loadReviewSummary = async () => {
+      if (!id) return;
+      setReviewLoading(true);
+      try {
+        const summary = await getApplicationReviewSummary(id, 3);
+        if (mounted) {
+          setReviewSummary(summary);
+        }
+      } finally {
+        if (mounted) {
+          setReviewLoading(false);
+        }
+      }
+    };
+
     loadApplication().catch((error) => {
       console.error("Failed to load application detail", error);
       if (mounted) {
@@ -94,10 +118,15 @@ export const AdminApplicationDetail: React.FC = () => {
       }
     });
 
+    loadReviewSummary().catch((error) => {
+      console.error("Failed to load review summary", error);
+    });
+
     return () => {
       mounted = false;
+      mountedRef.current = false;
     };
-  }, [id, getApplicationById, fetchApplicationById, getCandidates, getUniversities, getMajors, getAdmissionRounds]);
+  }, [id, getApplicationById, fetchApplicationById, getApplicationReviewSummary, getCandidates, getUniversities, getMajors, getAdmissionRounds]);
 
   if (!id) return null;
 
@@ -280,6 +309,95 @@ export const AdminApplicationDetail: React.FC = () => {
   const priorityScore = Number(application.priorityScore ?? 0);
   const examTotalScore = Number(application.totalScore ?? 0);
   const finalAdmissionScore = Number(application.finalScore ?? (examTotalScore + priorityScore));
+  const reviewAverage = reviewSummary?.averageReviewScore ?? application.reviewScoreAverage;
+  const reviewCount = reviewSummary?.reviewCount ?? application.reviewCount;
+  const reviewedBy = reviewSummary?.reviewedBy ?? application.reviewedBy;
+  const reviewedAt = reviewSummary?.reviewedAt ?? application.reviewedAt;
+  const visibleReviewLogs = reviewLogs.slice(0, 3);
+
+  const truncate = (text: string | undefined, length = 120) => {
+    if (!text) return undefined;
+    return text.length > length ? `${text.substring(0, length).trim()}…` : text;
+  };
+
+  const getReviewActionLabel = (item?: any) => {
+    if (!item) return "Hành động: Không rõ";
+
+    const action = String(item.actionType ?? "").toUpperCase();
+    switch (action) {
+      case "REVIEW_ASSIGNMENT":
+        return `Đã phân công reviewer${item.assignedReviewerName ? `: ${item.assignedReviewerName}` : ""}`;
+      case "REVIEW_SCORE":
+        return item.reviewScore != null
+          ? `Gửi điểm review: ${Number(item.reviewScore).toFixed(2)}`
+          : "Gửi điểm review";
+      case "STATUS_UPDATE":
+        return item.newStatus ? `Cập nhật trạng thái: ${item.newStatus}` : "Cập nhật trạng thái";
+      case "PRIORITY_UPDATE":
+        return item.newStatus ? `Cập nhật ưu tiên: ${item.newStatus}` : "Cập nhật ưu tiên";
+      default:
+        // Fallbacks: prefer a short notes preview, then raw actionType, otherwise show id
+        const notePreview = truncate(item.notes);
+        if (notePreview) return `Ghi chú: ${notePreview}`;
+        if (item.actionType) return `Hành động: ${item.actionType}`;
+        if (item.id) return `Hành động không rõ (bản ghi #${item.id})`;
+        return `Hành động: Không rõ`;
+    }
+  };
+
+  const handleReviewSubmit = async (values: { reviewScore: number; notes?: string }) => {
+    if (!currentUser) {
+      message.error("Không xác định được người đang đăng nhập");
+      return;
+    }
+
+    setReviewSubmitting(true);
+    try {
+      const summary = await submitApplicationReviewScore(application.id, {
+        reviewerId: currentUser.id,
+        reviewScore: values.reviewScore,
+        notes: values.notes,
+      }, 3);
+
+      if (summary) {
+        setReviewSummary(summary);
+        setReviewLogs([]);
+        setReviewLogsLoaded(false);
+      }
+
+      const refreshed = await fetchApplicationById(application.id);
+      if (refreshed) {
+        setApplication(refreshed);
+      }
+
+      message.success("Gửi điểm review thành công");
+      reviewForm.resetFields();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Gửi review thất bại";
+      message.error(errorMessage);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const loadReviewLogs = async () => {
+    if (!id || reviewLogsLoading || reviewLogsLoaded) {
+      return;
+    }
+
+    setReviewLogsLoading(true);
+    try {
+      const logs = await getApplicationReviewLogs(id);
+      if (mountedRef.current) {
+        setReviewLogs(Array.isArray(logs) ? logs : []);
+        setReviewLogsLoaded(true);
+      }
+    } finally {
+      if (mountedRef.current) {
+        setReviewLogsLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="admin-application-detail">
@@ -379,6 +497,12 @@ export const AdminApplicationDetail: React.FC = () => {
               <Descriptions.Item label="Người xử lý">
                 {application.reviewedBy || "Chưa cập nhật"}
               </Descriptions.Item>
+              <Descriptions.Item label="Điểm review trung bình">
+                {reviewAverage != null ? Number(reviewAverage).toFixed(2) : "Chưa cập nhật"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số lượt review">
+                {reviewCount != null ? reviewCount : "Chưa cập nhật"}
+              </Descriptions.Item>
             </Descriptions>
             <Divider style={{ margin: "12px 0" }} />
             <div style={{ marginBottom: 16 }}>
@@ -407,6 +531,100 @@ export const AdminApplicationDetail: React.FC = () => {
               <Text strong style={{ display: "block", marginBottom: 8, color: "rgba(255,255,255,0.65)" }}>Ghi chú admin:</Text>
               <Text style={{ color: "rgba(255,255,255,0.92)" }}>{application.adminNote || "Không có ghi chú"}</Text>
             </div>
+          </Card>
+
+          <Card title="Submit review" style={{ marginBottom: 24 }}>
+            <Form
+              form={reviewForm}
+              layout="vertical"
+              onFinish={handleReviewSubmit}
+              disabled={reviewSubmitting}
+            >
+              <Form.Item
+                name="reviewScore"
+                label="Điểm review"
+                rules={[
+                  { required: true, message: "Vui lòng nhập điểm review" },
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  style={{ width: "100%" }}
+                  placeholder="Nhập điểm từ 0 đến 10"
+                />
+              </Form.Item>
+              <Form.Item name="notes" label="Ghi chú review">
+                <Input.TextArea rows={4} placeholder="Nhập ghi chú cho lần review này" />
+              </Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={reviewSubmitting}>
+                  Gửi review
+                </Button>
+                <Button onClick={() => reviewForm.resetFields()} disabled={reviewSubmitting}>
+                  Xóa form
+                </Button>
+              </Space>
+            </Form>
+          </Card>
+
+          <Card title="Danh sách reviewer" style={{ marginBottom: 24 }} loading={reviewLoading}>
+            <List
+              dataSource={reviewSummary?.assignedReviewers ?? []}
+              locale={{ emptyText: "Chưa có reviewer được gán" }}
+              renderItem={(item: any) => (
+                <List.Item>
+                  <List.Item.Meta
+                    title={item.fullName || "Chưa cập nhật"}
+                    description={item.email || "Chưa cập nhật"}
+                  />
+                </List.Item>
+              )}
+            />
+            <Divider />
+            <Descriptions column={1} size="small">
+              <Descriptions.Item label="Người review gần nhất">
+                {reviewedBy || "Chưa cập nhật"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Thời điểm review gần nhất">
+                {reviewedAt ? formatDateTime(reviewedAt) : "Chưa cập nhật"}
+              </Descriptions.Item>
+            </Descriptions>
+            {reviewCount != null && reviewCount > 0 && (
+              <Alert
+                type="success"
+                showIcon
+                message="Đã review hồ sơ này"
+                description={`Có ${reviewCount} lượt review${reviewedBy ? `, người review gần nhất: ${reviewedBy}` : ""}.`}
+                style={{ marginTop: 12 }}
+              />
+            )}
+            <Divider />
+            <Space style={{ marginBottom: 12 }}>
+              <Button onClick={loadReviewLogs} loading={reviewLogsLoading}>
+                Tải lịch sử review
+              </Button>
+              {reviewLogsLoaded && reviewLogs.length > 0 && (
+                <Text type="secondary">Đã tải {reviewLogs.length} bản ghi</Text>
+              )}
+            </Space>
+            {reviewLogsLoaded && (
+              <List
+                size="small"
+                locale={{ emptyText: "Chưa có lịch sử review" }}
+                dataSource={visibleReviewLogs}
+                renderItem={(item: any) => (
+                  <List.Item>
+                    <Text>
+                      {getReviewActionLabel(item)}
+                      {item.reviewerName ? ` · ${item.reviewerName}` : ""}
+                      {item.createdAt ? ` · ${formatDateTime(item.createdAt)}` : ""}
+                    </Text>
+                  </List.Item>
+                )}
+              />
+            )}
           </Card>
 
           <Card title="Điểm xét tuyển">
