@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Card, Table, Input, Select, Row, Col, Typography, Button } from "antd";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Card, Table, Input, Select, Row, Col, Typography, Button, Space, Modal, message } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -11,20 +11,23 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
+import { useAuthStore } from "../../stores/auth.store";
 import type { Application } from "../../types/application.types";
 import { formatDateTime } from "../../utils/date";
+import { loadApplicationManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
 export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
-  const { applications, loading, getApplications } = useApplicationStore();
-  const { getCandidateById, getCandidates } = useCandidateStore();
+  const { applications, loading, getApplications, bulkUpdateApplicationStatus, getAdminApplicationsExcel } = useApplicationStore();
+  const { getCandidateById } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
   const { subjectGroups } = useSubjectGroupStore();
+  const { currentUser } = useAuthStore();
 
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
@@ -38,17 +41,44 @@ export const ApplicationManagement: React.FC = () => {
   const [universityFilter, setUniversityFilter] = useState<string>("all");
   const [majorFilter, setMajorFilter] = useState<string>("all");
   const [subjectGroupFilter, setSubjectGroupFilter] = useState<string>("all");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const hasLoadedInitialApplications = useRef(false);
 
-  // Fetch filtered applications from the server whenever admin filters change
+  const buildApplicationFilters = () => ({
+    status: statusFilter,
+    universityId: universityFilter,
+    majorId: majorFilter,
+    admissionRoundId: admissionRoundFilter,
+  });
+
+  // ⏱️ Optimization: Load all required data in parallel
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadApplicationManagementData();
+        await getApplications(buildApplicationFilters());
+        hasLoadedInitialApplications.current = true;
+      } catch (error) {
+        console.error("Failed to load application management data:", error);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Refetch applications when filters change
+  useEffect(() => {
+    if (!hasLoadedInitialApplications.current) {
+      return;
+    }
+
     getApplications({
       status: statusFilter,
       universityId: universityFilter,
       majorId: majorFilter,
       admissionRoundId: admissionRoundFilter,
     });
-    getCandidates();
-  }, [getApplications, getCandidates, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
+  }, [getApplications, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
 
   const filteredMajors = useMemo(() => {
     if (universityFilter === "all") return safeMajors;
@@ -124,9 +154,71 @@ export const ApplicationManagement: React.FC = () => {
     });
   }, [filteredApplications]);
 
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [statusFilter, admissionRoundFilter, universityFilter, majorFilter, subjectGroupFilter, searchText]);
+
   const handleUniversityChange = (value: string) => {
     setUniversityFilter(value);
     setMajorFilter("all"); // reset major when university changes
+  };
+
+  const clearSelection = () => {
+    setSelectedRowKeys([]);
+  };
+
+  const handleBulkStatusChange = (status: "APPROVED" | "REJECTED") => {
+    if (!currentUser) {
+      message.error("Không xác định được quản trị viên đang đăng nhập");
+      return;
+    }
+
+    const selectedIds = selectedRowKeys.map(String);
+    if (selectedIds.length === 0) {
+      message.warning("Chọn ít nhất một hồ sơ để thao tác hàng loạt");
+      return;
+    }
+
+    Modal.confirm({
+      title: status === "APPROVED" ? "Duyệt hồ sơ hàng loạt" : "Từ chối hồ sơ hàng loạt",
+      content: `Bạn chắc chắn muốn ${status === "APPROVED" ? "duyệt" : "từ chối"} ${selectedIds.length} hồ sơ đã chọn?`,
+      okText: status === "APPROVED" ? "Duyệt" : "Từ chối",
+      okButtonProps: { danger: status === "REJECTED" },
+      cancelText: "Hủy",
+      onOk: async () => {
+        setBulkLoading(true);
+        try {
+          await bulkUpdateApplicationStatus(selectedIds, status, currentUser.id);
+          message.success(`Đã ${status === "APPROVED" ? "duyệt" : "từ chối"} ${selectedIds.length} hồ sơ`);
+          clearSelection();
+        } catch (error) {
+          message.error("Không thể thực hiện thao tác hàng loạt");
+        } finally {
+          setBulkLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setBulkLoading(true);
+      const xlsx = await getAdminApplicationsExcel(buildApplicationFilters());
+      const blob = new Blob([xlsx], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `admin-applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success("Đã xuất Excel thành công");
+    } catch (error) {
+      message.error("Không thể xuất Excel");
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const columns = [
@@ -299,6 +391,34 @@ export const ApplicationManagement: React.FC = () => {
       </Card>
 
       <Card>
+        <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }} wrap>
+          <Typography.Text type="secondary">
+            {selectedRowKeys.length > 0
+              ? `Đã chọn ${selectedRowKeys.length} hồ sơ`
+              : "Chọn các hồ sơ để duyệt hoặc từ chối hàng loạt"}
+          </Typography.Text>
+          <Space wrap>
+            <Button onClick={handleExportExcel} loading={bulkLoading}>
+              Xuất Excel theo bộ lọc
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleBulkStatusChange("APPROVED")}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkLoading}
+            >
+              Duyệt hàng loạt
+            </Button>
+            <Button
+              danger
+              onClick={() => handleBulkStatusChange("REJECTED")}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkLoading}
+            >
+              Từ chối hàng loạt
+            </Button>
+          </Space>
+        </Space>
         {loading && filteredApplications.length === 0 ? (
           <Table
             columns={columns}
@@ -315,6 +435,10 @@ export const ApplicationManagement: React.FC = () => {
             rowKey="id" 
             scroll={{ x: true }}
             loading={loading}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: (keys) => setSelectedRowKeys(keys),
+            }}
           />
         ) : (
           <EmptyState description="Không tìm thấy hồ sơ xét tuyển phù hợp" />

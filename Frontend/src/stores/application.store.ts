@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Application, EvidenceFile } from "../types/application.types";
+import type { Application, ApplicationReviewSubmission, ApplicationReviewSummary, EvidenceFile } from "../types/application.types";
 import axiosClient from "../api/axiosClient";
 
 const APPLICATIONS_CACHE_KEY = "applicationsCache";
@@ -54,6 +54,54 @@ const resolveApplicationCode = (application: any): string => {
   return formatApplicationCode(String(application?.id ?? ""), application?.submittedAt ?? application?.submissionDate, application?.createdAt);
 };
 
+type ApplicationStatisticsGroup = {
+  id: string;
+  code?: string;
+  name: string;
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+};
+
+type ApplicationStatisticsResponse = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+  byUniversity: ApplicationStatisticsGroup[];
+  byMajor: ApplicationStatisticsGroup[];
+  byAdmissionRound: ApplicationStatisticsGroup[];
+};
+
+const normalizeStatisticsGroups = (groups: any): ApplicationStatisticsGroup[] => {
+  if (!Array.isArray(groups)) return [];
+
+  return groups.map((group: any, index: number) => ({
+    id: String(group?.id ?? group?.code ?? group?.name ?? index),
+    code: group?.code ?? undefined,
+    name: String(group?.name ?? "Chưa cập nhật"),
+    total: Number(group?.total ?? 0),
+    pending: Number(group?.pending ?? 0),
+    approved: Number(group?.approved ?? 0),
+    rejected: Number(group?.rejected ?? 0),
+    cancelled: Number(group?.cancelled ?? 0),
+  }));
+};
+
+const normalizeStatisticsResponse = (stats: any): ApplicationStatisticsResponse => ({
+  total: Number(stats?.TOTAL ?? stats?.total ?? 0),
+  pending: Number(stats?.PENDING ?? stats?.pending ?? 0),
+  approved: Number(stats?.APPROVED ?? stats?.approved ?? 0),
+  rejected: Number(stats?.REJECTED ?? stats?.rejected ?? 0),
+  cancelled: Number(stats?.CANCELLED ?? stats?.cancelled ?? 0),
+  byUniversity: normalizeStatisticsGroups(stats?.byUniversity),
+  byMajor: normalizeStatisticsGroups(stats?.byMajor),
+  byAdmissionRound: normalizeStatisticsGroups(stats?.byAdmissionRound),
+});
+
 const normalizeApplicationScores = (scores: any): Record<string, number> => {
   if (!scores || typeof scores !== "object" || Array.isArray(scores)) {
     if (typeof scores === "string" && scores.trim()) {
@@ -102,6 +150,8 @@ const normalizeApplicationRecord = (application: any): Application => ({
   priorityGroup: application?.priorityGroup ?? undefined,
   // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
   priorityScore: Number(application?.priorityScore ?? 0),
+  reviewScoreAverage: application?.reviewScoreAverage != null ? Number(application.reviewScoreAverage) : undefined,
+  reviewCount: application?.reviewCount != null ? Number(application.reviewCount) : undefined,
   scores: normalizeApplicationScores(application?.scores),
   totalScore: Number(application?.totalScore ?? 0),
   finalScore: Number(application?.finalScore ?? (Number(application?.totalScore ?? 0) + Number(application?.priorityScore ?? 0))),
@@ -150,6 +200,33 @@ const buildAdminQueryParams = (filters?: {
   admissionRoundId?: string;
 }) => {
   const params: Record<string, string> = { page: "0", size: "100" };
+
+  if (filters?.status && filters.status !== "all") {
+    params.status = filters.status;
+  }
+
+  if (filters?.universityId && filters.universityId !== "all") {
+    params.universityId = filters.universityId;
+  }
+
+  if (filters?.majorId && filters.majorId !== "all") {
+    params.majorId = filters.majorId;
+  }
+
+  if (filters?.admissionRoundId && filters.admissionRoundId !== "all") {
+    params.admissionRoundId = filters.admissionRoundId;
+  }
+
+  return params;
+};
+
+const buildApplicationFilterParams = (filters?: {
+  status?: string;
+  universityId?: string;
+  majorId?: string;
+  admissionRoundId?: string;
+}) => {
+  const params: Record<string, string> = {};
 
   if (filters?.status && filters.status !== "all") {
     params.status = filters.status;
@@ -223,7 +300,32 @@ interface ApplicationState {
   cancelApplication: (id: string) => Promise<void>;
   approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
   rejectApplication: (id: string, adminId: string, note: string) => Promise<void>;
+  getApplicationReviewSummary: (id: string, reviewerCount?: number) => Promise<ApplicationReviewSummary | null>;
+  getApplicationReviewLogs: (id: string) => Promise<any[]>;
+  submitApplicationReviewScore: (
+    id: string,
+    payload: ApplicationReviewSubmission,
+    reviewerCount?: number
+  ) => Promise<ApplicationReviewSummary | null>;
+  bulkUpdateApplicationStatus: (ids: string[], status: string, adminId: string, note?: string) => Promise<void>;
+  getAdminApplicationsCsv: (filters?: {
+    status?: string;
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<string>;
+  getAdminApplicationsExcel: (filters?: {
+    status?: string;
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<ArrayBuffer>;
   getApplicationStats: () => { total: number; pending: number; approved: number; rejected: number };
+  getAdminApplicationStatistics: (filters?: {
+    universityId?: string;
+    majorId?: string;
+    admissionRoundId?: string;
+  }) => Promise<ApplicationStatisticsResponse>;
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -272,14 +374,6 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   fetchApplicationById: async (id) => {
     try {
       const response = await axiosClient.get(`/applications/${id}`);
-      // Log raw payload for debugging intermittent missing fields
-      try {
-        // eslint-disable-next-line no-console
-        console.debug("[application.store] fetchApplicationById raw response:", response?.data ?? response);
-      } catch (err) {
-        // ignore
-      }
-
       const application = normalizeSingleApplication(response);
 
       if (application) {
@@ -307,7 +401,6 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
   createApplication: async (app) => {
     try {
-      console.log("[application.store] createApplication payload:", app);
       const response = await axiosClient.post("/applications", app);
       const createdFromServer = normalizeSingleApplication(response);
       const localApplication = normalizeApplicationRecord({
@@ -422,6 +515,116 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     }
   },
 
+  getApplicationReviewSummary: async (id, reviewerCount = 3) => {
+    try {
+      const response = await axiosClient.get(`/applications/${id}/review-summary`, {
+        params: { reviewerCount },
+      });
+      return response?.data ?? response ?? null;
+    } catch (error) {
+      console.error("Failed to fetch application review summary:", error);
+      return null;
+    }
+  },
+
+  getApplicationReviewLogs: async (id) => {
+    try {
+      const response = await axiosClient.get(`/applications/${id}/logs`);
+      const payload = response?.data ?? response ?? null;
+      const data = payload?.data ?? payload;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Failed to fetch application review logs:", error);
+      return [];
+    }
+  },
+
+  submitApplicationReviewScore: async (id, payload, reviewerCount = 3) => {
+    try {
+      const response = await axiosClient.post(`/applications/${id}/review-scores`, payload, {
+        params: { reviewerCount },
+      });
+      const summary = response?.data ?? response ?? null;
+
+      if (summary) {
+        set((state) => {
+          const nextApplications = state.applications.map((application) =>
+            application.id === id
+              ? {
+                  ...application,
+                  reviewScoreAverage: summary.averageReviewScore ?? application.reviewScoreAverage,
+                  reviewCount: summary.reviewCount ?? application.reviewCount,
+                  reviewedBy: summary.reviewedBy ?? application.reviewedBy,
+                  reviewedAt: summary.reviewedAt ?? application.reviewedAt,
+                }
+              : application
+          );
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
+      }
+
+      return summary;
+    } catch (error) {
+      console.error("Failed to submit application review score:", error);
+      throw error;
+    }
+  },
+
+  bulkUpdateApplicationStatus: async (ids, status, adminId, note) => {
+    try {
+      await axiosClient.post("/applications/admin-bulk-status", {
+        ids,
+        status,
+        adminId,
+        notes: note ?? "",
+      });
+
+      set((state) => {
+        const nextApplications = state.applications.map((application) =>
+          ids.includes(application.id) ? { ...application, status: String(status).toLowerCase() as Application["status"] } : application
+        );
+        saveCachedApplications(nextApplications);
+        return { applications: nextApplications };
+      });
+    } catch (error) {
+      console.error("Failed to bulk update application status:", error);
+      throw error;
+    }
+  },
+
+  getAdminApplicationsCsv: async (filters) => {
+    try {
+      const params = buildApplicationFilterParams(filters);
+      const response = await axiosClient.get("/applications/admin-export-csv", {
+        params,
+        responseType: "text",
+      });
+
+      // axiosClient interceptor unwraps `response.data` and returns the data directly.
+      // For CSV we expect a string body, so use the returned value itself.
+      return typeof response === "string" ? response : String(response ?? "");
+    } catch (error) {
+      console.error("Failed to export admin applications CSV:", error);
+      throw error;
+    }
+  },
+
+  getAdminApplicationsExcel: async (filters) => {
+    try {
+      const params = buildApplicationFilterParams(filters);
+      const response = await axiosClient.get("/applications/admin-export-xlsx", {
+        params,
+        responseType: "arraybuffer",
+      });
+
+      return response as unknown as ArrayBuffer;
+    } catch (error) {
+      console.error("Failed to export admin applications Excel:", error);
+      throw error;
+    }
+  },
+
   getApplicationStats: () => {
     const apps = get().applications;
     return {
@@ -430,5 +633,37 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       approved: apps.filter((a) => a.status === "approved").length,
       rejected: apps.filter((a) => a.status === "rejected").length
     };
+  },
+
+  getAdminApplicationStatistics: async (filters) => {
+    const params = buildApplicationFilterParams(filters);
+
+    try {
+      const response = await axiosClient.get("/applications/admin-statistics", { params });
+      const payload = response?.data ?? response;
+      const stats = payload?.data ?? payload ?? {};
+
+      return normalizeStatisticsResponse(stats);
+    } catch (error) {
+      console.error("Failed to fetch admin application statistics:", error);
+      const apps = get().applications;
+      const filteredApps = apps.filter((app) => {
+        if (filters?.universityId && filters.universityId !== "all" && app.universityId !== filters.universityId) return false;
+        if (filters?.majorId && filters.majorId !== "all" && app.majorId !== filters.majorId) return false;
+        if (filters?.admissionRoundId && filters.admissionRoundId !== "all" && app.admissionRoundId !== filters.admissionRoundId) return false;
+        return true;
+      });
+
+      return {
+        total: filteredApps.length,
+        pending: filteredApps.filter((a) => a.status === "pending").length,
+        approved: filteredApps.filter((a) => a.status === "approved").length,
+        rejected: filteredApps.filter((a) => a.status === "rejected").length,
+        cancelled: filteredApps.filter((a) => String(a.status).toLowerCase() === "cancelled").length,
+        byUniversity: [],
+        byMajor: [],
+        byAdmissionRound: [],
+      };
+    }
   }
 }));

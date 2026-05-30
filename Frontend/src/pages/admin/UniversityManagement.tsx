@@ -7,6 +7,7 @@ import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useUniversityStore } from "../../stores/university.store";
 import type { University } from "../../types/university.types";
+import { loadUniversityManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -16,7 +17,14 @@ export const UniversityManagement: React.FC = () => {
   const safeUniversities = Array.isArray(universities) ? universities : [];
 
   useEffect(() => {
-    getUniversities();
+    const loadData = async () => {
+      try {
+        await loadUniversityManagementData();
+      } catch (error) {
+        console.error("Failed to load university management data:", error);
+      }
+    };
+    loadData();
   }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");

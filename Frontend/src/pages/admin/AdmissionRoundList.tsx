@@ -138,9 +138,7 @@ export const AdmissionRoundList: React.FC = () => {
       setIsModalVisible(false);
       form.resetFields();
       setEditingRound(null);
-    }).catch((info) => {
-      console.log("Validate Failed:", info);
-    });
+    }).catch(() => {});
   };
 
   const columns = [

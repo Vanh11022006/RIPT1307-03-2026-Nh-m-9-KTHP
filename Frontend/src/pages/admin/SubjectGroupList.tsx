@@ -121,9 +121,7 @@ export const SubjectGroupList: React.FC = () => {
       setIsModalVisible(false);
       form.resetFields();
       setEditingGroup(null);
-    }).catch(info => {
-      console.log('Validate Failed:', info);
-    });
+    }).catch(() => {});
   };
 
   const columns = [

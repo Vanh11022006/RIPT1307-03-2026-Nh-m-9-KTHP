@@ -1,5 +1,7 @@
 package com.uniadmission.backend.service;
 
+import com.uniadmission.backend.dto.request.ApplicationReviewSubmissionRequest;
+import com.uniadmission.backend.dto.response.ApplicationReviewSummaryResponse;
 import com.uniadmission.backend.entity.ApplicationReviewLog;
 import java.util.List;
 
@@ -7,4 +9,10 @@ public interface ApplicationReviewLogService {
     List<ApplicationReviewLog> getLogsByApplication(Long applicationId);
 
     ApplicationReviewLog createLog(ApplicationReviewLog log);
+
+    ApplicationReviewSummaryResponse getReviewSummary(Long applicationId, int reviewerCount);
+
+    ApplicationReviewSummaryResponse submitReviewScore(Long applicationId,
+            ApplicationReviewSubmissionRequest request,
+            int reviewerCount);
 }

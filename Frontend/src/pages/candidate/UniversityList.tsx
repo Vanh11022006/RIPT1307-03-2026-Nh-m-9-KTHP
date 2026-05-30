@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
 import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useUniversityStore } from "../../stores/university.store";
+import { loadUniversityListData } from "../../utils/dataLoader";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -19,9 +20,14 @@ export const UniversityList: React.FC = () => {
   const activeUniversities = getActiveUniversities();
 
   useEffect(() => {
-    getUniversities().catch((error) => {
-      console.error("Failed to refresh universities", error);
-    });
+    const loadData = async () => {
+      try {
+        await loadUniversityListData();
+      } catch (error) {
+        console.error("Failed to load university list data:", error);
+      }
+    };
+    loadData();
   }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");

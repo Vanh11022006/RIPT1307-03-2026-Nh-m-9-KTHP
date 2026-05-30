@@ -1,6 +1,8 @@
 package com.uniadmission.backend.service.impl;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsGroupResponse;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.AdmissionRound;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.Candidate;
@@ -25,10 +27,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -163,32 +177,147 @@ public class ApplicationServiceImpl implements ApplicationService {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
-                String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
+                applyStatusUpdate(application, status, notes, adminId);
+        }
 
-                application.setStatus(status);
-                applicationRepository.save(application);
+        @Override
+        @Transactional
+        public void bulkUpdateApplicationStatus(List<Long> ids, ApplicationStatus status, String notes, Long adminId) {
+                if (ids == null || ids.isEmpty()) {
+                        throw new RuntimeException("Danh sách hồ sơ không được rỗng");
+                }
 
-                ApplicationReviewLog log = new ApplicationReviewLog();
-                log.setApplicationId(application.getId());
-                log.setAdminId(adminId);
-                log.setOldStatus(oldStatus);
-                log.setNewStatus(status.name());
-                log.setNotes(notes);
-                reviewLogRepository.save(log);
+                List<Application> applications = applicationRepository.findAllById(ids);
+                if (applications.isEmpty()) {
+                        throw new RuntimeException("Không tìm thấy hồ sơ hợp lệ để cập nhật");
+                }
 
-                try {
-                        String email = application.getCandidate().getUser().getEmail();
-                        String name = application.getCandidate().getUser().getFullName();
+                for (Application application : applications) {
+                        applyStatusUpdate(application, status, notes, adminId);
+                }
+        }
 
-                        emailService.sendApplicationStatusEmail(email, name, status.name());
+        @Override
+        @Transactional(readOnly = true)
+        public String exportApplicationsCsv(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId) {
+                List<Application> applications = getApplicationsForExport(status, universityId, majorId,
+                                admissionRoundId);
 
-                        String title = "Cập nhật trạng thái hồ sơ xét tuyển";
-                        String message = "Hồ sơ của bạn đã chuyển sang trạng thái: " + status.name() + ". Ghi chú: "
-                                        + notes;
-                        notificationService.createNotification(application.getCandidate().getUser().getId(), title,
-                                        message);
+                StringBuilder csv = new StringBuilder();
+                csv.append("ID,Mã hồ sơ,Thí sinh,Trường,Ngành,Đợt xét tuyển,Tổ hợp,Tổng điểm,Trạng thái,Ngày nộp\n");
+
+                for (Application application : applications) {
+                        String candidateName = application.getCandidate() != null
+                                        && application.getCandidate().getUser() != null
+                                                        ? application.getCandidate().getUser().getFullName()
+                                                        : "";
+                        String universityName = application.getMajor() != null
+                                        && application.getMajor().getUniversity() != null
+                                                        ? application.getMajor().getUniversity().getName()
+                                                        : "";
+                        String majorName = application.getMajor() != null ? application.getMajor().getName() : "";
+                        String roundName = application.getAdmissionRound() != null
+                                        ? application.getAdmissionRound().getName()
+                                        : "";
+                        String subjectGroupCode = application.getSubjectGroup() != null
+                                        ? application.getSubjectGroup().getCode()
+                                        : "";
+                        String totalScore = application.getTotalScore() != null ? application.getTotalScore().toString()
+                                        : "";
+                        String submittedAt = application.getSubmissionDate() != null
+                                        ? application.getSubmissionDate().toString()
+                                        : "";
+
+                        csv.append(csvValue(application.getId())).append(',')
+                                        .append(csvValue(application.getApplicationCode())).append(',')
+                                        .append(csvValue(candidateName)).append(',')
+                                        .append(csvValue(universityName)).append(',')
+                                        .append(csvValue(majorName)).append(',')
+                                        .append(csvValue(roundName)).append(',')
+                                        .append(csvValue(subjectGroupCode)).append(',')
+                                        .append(csvValue(totalScore)).append(',')
+                                        .append(csvValue(
+                                                        application.getStatus() != null ? application.getStatus().name()
+                                                                        : ""))
+                                        .append(',')
+                                        .append(csvValue(submittedAt))
+                                        .append('\n');
+                }
+
+                return csv.toString();
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<Application> getApplicationsForExport(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId) {
+                Specification<Application> specification = buildAdminApplicationSpecification(status, universityId,
+                                majorId, admissionRoundId);
+                return applicationRepository.findAll(specification, Sort.by("id").descending());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public byte[] exportApplicationsXlsx(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId) {
+                List<Application> applications = getApplicationsForExport(status, universityId, majorId,
+                                admissionRoundId);
+
+                try (XSSFWorkbook workbook = new XSSFWorkbook();
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                        Sheet sheet = workbook.createSheet("Applications");
+
+                        Row header = sheet.createRow(0);
+                        String[] headers = new String[] { "ID", "Mã hồ sơ", "Thí sinh", "Trường", "Ngành",
+                                        "Đợt xét tuyển", "Tổ hợp", "Tổng điểm", "Trạng thái", "Ngày nộp" };
+                        for (int i = 0; i < headers.length; i++) {
+                                header.createCell(i).setCellValue(headers[i]);
+                        }
+
+                        for (int i = 0; i < applications.size(); i++) {
+                                Application application = applications.get(i);
+                                Row row = sheet.createRow(i + 1);
+                                row.createCell(0).setCellValue(application.getId() != null ? application.getId() : 0L);
+                                row.createCell(1).setCellValue(application.getApplicationCode() != null
+                                                ? application.getApplicationCode()
+                                                : "");
+                                row.createCell(2).setCellValue(application.getCandidate() != null
+                                                && application.getCandidate().getUser() != null
+                                                                ? application.getCandidate().getUser().getFullName()
+                                                                : "");
+                                row.createCell(3).setCellValue(application.getMajor() != null
+                                                && application.getMajor().getUniversity() != null
+                                                                ? application.getMajor().getUniversity().getName()
+                                                                : "");
+                                row.createCell(4).setCellValue(application.getMajor() != null
+                                                ? application.getMajor().getName()
+                                                : "");
+                                row.createCell(5).setCellValue(application.getAdmissionRound() != null
+                                                ? application.getAdmissionRound().getName()
+                                                : "");
+                                row.createCell(6).setCellValue(application.getSubjectGroup() != null
+                                                ? application.getSubjectGroup().getCode()
+                                                : "");
+                                row.createCell(7).setCellValue(application.getTotalScore() != null
+                                                ? application.getTotalScore()
+                                                : 0D);
+                                row.createCell(8).setCellValue(application.getStatus() != null
+                                                ? application.getStatus().name()
+                                                : "");
+                                row.createCell(9).setCellValue(application.getSubmissionDate() != null
+                                                ? application.getSubmissionDate().toString()
+                                                : "");
+                        }
+
+                        for (int i = 0; i < headers.length; i++) {
+                                sheet.autoSizeColumn(i);
+                        }
+
+                        workbook.write(outputStream);
+                        return outputStream.toByteArray();
                 } catch (Exception e) {
-                        System.err.println("Lỗi khi gửi email: " + e.getMessage());
+                        throw new RuntimeException("Không thể xuất file Excel", e);
                 }
         }
 
@@ -267,6 +396,200 @@ public class ApplicationServiceImpl implements ApplicationService {
         public Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
                         Long admissionRoundId, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+                Specification<Application> specification = buildAdminApplicationSpecification(status, universityId,
+                                majorId, admissionRoundId);
+
+                return applicationRepository.findAll(specification, pageable);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId,
+                        Long admissionRoundId) {
+                Specification<Application> specification = buildAdminApplicationSpecification(null, universityId,
+                                majorId, admissionRoundId);
+                List<Application> applications = applicationRepository.findAll(specification);
+
+                Map<ApplicationStatus, Long> statusTotals = new EnumMap<>(ApplicationStatus.class);
+                for (ApplicationStatus status : ApplicationStatus.values()) {
+                        statusTotals.put(status, 0L);
+                }
+
+                for (Application application : applications) {
+                        ApplicationStatus status = application.getStatus();
+                        if (status != null) {
+                                statusTotals.put(status, statusTotals.getOrDefault(status, 0L) + 1L);
+                        }
+                }
+
+                return ApplicationStatisticsResponse.builder()
+                                .total((long) applications.size())
+                                .pending(statusTotals.getOrDefault(ApplicationStatus.PENDING, 0L))
+                                .approved(statusTotals.getOrDefault(ApplicationStatus.APPROVED, 0L))
+                                .rejected(statusTotals.getOrDefault(ApplicationStatus.REJECTED, 0L))
+                                .cancelled(statusTotals.getOrDefault(ApplicationStatus.CANCELLED, 0L))
+                                .byUniversity(buildGroupStatistics(applications,
+                                                application -> application.getMajor() != null
+                                                                && application.getMajor().getUniversity() != null
+                                                                                ? application.getMajor().getUniversity()
+                                                                                : null))
+                                .byMajor(buildGroupStatistics(applications, Application::getMajor))
+                                .byAdmissionRound(buildGroupStatistics(applications, Application::getAdmissionRound))
+                                .build();
+        }
+
+        private List<ApplicationStatisticsGroupResponse> buildGroupStatistics(List<Application> applications,
+                        Function<Application, Object> groupExtractor) {
+                Map<Long, GroupAccumulator> grouped = new HashMap<>();
+
+                for (Application application : applications) {
+                        Object group = groupExtractor.apply(application);
+                        if (group == null) {
+                                continue;
+                        }
+
+                        Long id;
+                        String code;
+                        String name;
+
+                        if (group instanceof com.uniadmission.backend.entity.University) {
+                                com.uniadmission.backend.entity.University university = (com.uniadmission.backend.entity.University) group;
+                                id = university.getId();
+                                code = university.getCode();
+                                name = university.getName();
+                        } else if (group instanceof Major) {
+                                Major major = (Major) group;
+                                id = major.getId();
+                                code = major.getCode();
+                                name = major.getName();
+                        } else if (group instanceof AdmissionRound) {
+                                AdmissionRound admissionRound = (AdmissionRound) group;
+                                id = admissionRound.getId();
+                                code = admissionRound.getCode();
+                                name = admissionRound.getName();
+                        } else {
+                                continue;
+                        }
+
+                        if (id == null) {
+                                continue;
+                        }
+
+                        GroupAccumulator accumulator = grouped.computeIfAbsent(id,
+                                        ignored -> new GroupAccumulator(id, code, name));
+                        accumulator.total++;
+
+                        ApplicationStatus status = application.getStatus();
+                        if (status != null) {
+                                accumulator.increment(status);
+                        }
+                }
+
+                return grouped.values().stream()
+                                .sorted(Comparator.comparingLong(GroupAccumulator::getTotal).reversed()
+                                                .thenComparing(GroupAccumulator::getName,
+                                                                Comparator.nullsLast(String::compareToIgnoreCase)))
+                                .map(GroupAccumulator::toResponse)
+                                .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        private static class GroupAccumulator {
+                private final Long id;
+                private final String code;
+                private final String name;
+                private long total;
+                private long pending;
+                private long approved;
+                private long rejected;
+                private long cancelled;
+
+                private GroupAccumulator(Long id, String code, String name) {
+                        this.id = id;
+                        this.code = code;
+                        this.name = name;
+                }
+
+                private void increment(ApplicationStatus status) {
+                        switch (status) {
+                                case PENDING:
+                                        pending++;
+                                        break;
+                                case APPROVED:
+                                        approved++;
+                                        break;
+                                case REJECTED:
+                                        rejected++;
+                                        break;
+                                case CANCELLED:
+                                        cancelled++;
+                                        break;
+                                default:
+                                        break;
+                        }
+                }
+
+                private long getTotal() {
+                        return total;
+                }
+
+                private String getName() {
+                        return name;
+                }
+
+                private ApplicationStatisticsGroupResponse toResponse() {
+                        return ApplicationStatisticsGroupResponse.builder()
+                                        .id(id)
+                                        .code(code)
+                                        .name(name)
+                                        .total(total)
+                                        .pending(pending)
+                                        .approved(approved)
+                                        .rejected(rejected)
+                                        .cancelled(cancelled)
+                                        .build();
+                }
+        }
+
+        private void applyStatusUpdate(Application application, ApplicationStatus status, String notes, Long adminId) {
+                String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
+                application.setStatus(status);
+                applicationRepository.save(application);
+
+                ApplicationReviewLog log = new ApplicationReviewLog();
+                log.setApplicationId(application.getId());
+                log.setAdminId(adminId);
+                log.setOldStatus(oldStatus);
+                log.setNewStatus(status.name());
+                log.setNotes(notes);
+                reviewLogRepository.save(log);
+
+                try {
+                        if (application.getCandidate() != null && application.getCandidate().getUser() != null) {
+                                String email = application.getCandidate().getUser().getEmail();
+                                String name = application.getCandidate().getUser().getFullName();
+
+                                emailService.sendApplicationStatusEmail(email, name, status.name());
+
+                                String title = "Cập nhật trạng thái hồ sơ xét tuyển";
+                                String message = "Hồ sơ của bạn đã chuyển sang trạng thái: " + status.name()
+                                                + ". Ghi chú: " + notes;
+                                notificationService.createNotification(application.getCandidate().getUser().getId(),
+                                                title,
+                                                message);
+                        }
+                } catch (Exception e) {
+                        System.err.println("Lỗi khi gửi email: " + e.getMessage());
+                }
+        }
+
+        private String csvValue(Object value) {
+                String text = value == null ? "" : String.valueOf(value);
+                String escaped = text.replace("\"", "\"\"");
+                return '"' + escaped + '"';
+        }
+
+        private Specification<Application> buildAdminApplicationSpecification(ApplicationStatus status,
+                        Long universityId, Long majorId, Long admissionRoundId) {
                 Specification<Application> specification = Specification.where(null);
 
                 if (status != null) {
@@ -288,17 +611,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         .equal(root.get("admissionRound").get("id"), admissionRoundId));
                 }
 
-                return applicationRepository.findAll(specification, pageable);
-        }
-
-        @Override
-        public Map<String, Long> getApplicationStatistics() {
-                Map<String, Long> stats = new HashMap<>();
-                stats.put("PENDING", applicationRepository.countByStatus(ApplicationStatus.PENDING));
-                stats.put("APPROVED", applicationRepository.countByStatus(ApplicationStatus.APPROVED));
-                stats.put("REJECTED", applicationRepository.countByStatus(ApplicationStatus.REJECTED));
-                stats.put("CANCELLED", applicationRepository.countByStatus(ApplicationStatus.CANCELLED));
-                stats.put("TOTAL", applicationRepository.count());
-                return stats;
+                return specification;
         }
 }

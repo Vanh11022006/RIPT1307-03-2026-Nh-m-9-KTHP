@@ -42,6 +42,14 @@ public class ApplicationResponse {
     private Double priorityScore;
     @Schema(description = "Điểm thành phần theo môn", example = "{\"toan\":8.5,\"van\":7.5,\"anh\":8.75}")
     private java.util.Map<String, Double> scores;
+    @Schema(example = "8.75")
+    private Double reviewScoreAverage;
+    @Schema(example = "3")
+    private Long reviewCount;
+    @Schema(example = "Nguyễn Văn A, Trần Thị B")
+    private String reviewedBy;
+    @Schema(example = "2026-05-22T10:30:00")
+    private String reviewedAt;
     @Schema(description = "Danh sách file minh chứng")
     private java.util.List<java.util.Map<String, Object>> evidenceFiles;
     @Schema(example = "2026-05-22T10:30:00")

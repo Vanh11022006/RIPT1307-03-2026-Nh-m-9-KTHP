@@ -50,6 +50,8 @@ export interface Application {
   priorityGroup?: string;
   priorityScore?: number;
   finalScore?: number;
+  reviewScoreAverage?: number;
+  reviewCount?: number;
   scores: ApplicationScores;
   totalScore: number;
   evidenceFiles: EvidenceFile[];
@@ -71,4 +73,26 @@ export interface ApplicationReviewLog {
   note?: string;
   reviewedBy: string;
   reviewedAt: string;
+}
+
+export interface ReviewerSummary {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface ApplicationReviewSummary {
+  applicationId: string;
+  assignedReviewers: ReviewerSummary[];
+  averageReviewScore?: number | null;
+  reviewCount?: number | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  reviewLogs: ApplicationReviewLog[];
+}
+
+export interface ApplicationReviewSubmission {
+  reviewerId?: string;
+  reviewScore: number;
+  notes?: string;
 }
