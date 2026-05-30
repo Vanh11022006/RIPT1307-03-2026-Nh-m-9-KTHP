@@ -21,6 +21,7 @@ import axiosClient from "../../api/axiosClient";
 import { calculateTotalScore } from "../../utils/calculate";
 import { PRIORITY_GROUPS, getPriorityScore } from "../../constants/priorityGroups";
 import { EVIDENCE_CATEGORIES } from "../../constants/evidenceCategories";
+import type { Application } from "../../types/application.types";
 import type { EvidenceFile } from "../../types/application.types";
 import type { UploadFile } from "antd/es/upload/interface";
 
@@ -39,7 +40,7 @@ export const ApplicationForm: React.FC = () => {
   const { getActiveUniversities, getUniversities, loading: universitiesLoading } = useUniversityStore();
   const { majors, getMajors, loading: majorsLoading } = useMajorStore();
   const { getActiveMajorsByUniversityId } = useMajorStore();
-  const { applications, createApplication, loading: applicationsLoading, fetchApplicationById, cancelApplication } = useApplicationStore();
+  const { applications, createApplication, saveDraftApplication, submitDraftApplication, loading: applicationsLoading, fetchApplicationById, cancelApplication } = useApplicationStore();
   const { admissionRounds, getAdmissionRoundById, getAdmissionRounds, loading: roundsLoading } = useAdmissionRoundStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { getUniversityById } = useUniversityStore();
@@ -58,6 +59,7 @@ export const ApplicationForm: React.FC = () => {
   const [selectedEvidenceCategory, setSelectedEvidenceCategory] = useState<string>("other");
   const [totalScore, setTotalScore] = useState<number>(0);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [loadedApplication, setLoadedApplication] = useState<Application | null>(null);
 
   const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
@@ -127,6 +129,15 @@ export const ApplicationForm: React.FC = () => {
       if (!editId) return;
       const app = await fetchApplicationById(editId);
       if (!app || !mounted) return;
+      setLoadedApplication(app);
+      const existingFiles: UploadFile[] = Array.isArray(app.evidenceFiles)
+        ? app.evidenceFiles.map((file, index) => ({
+            uid: String(file.id ?? `existing-${index}`),
+            name: file.name,
+            status: "done",
+            url: file.url,
+          }))
+        : [];
       form.setFieldsValue({
         universityId: app.universityId,
         majorId: app.majorId,
@@ -140,8 +151,13 @@ export const ApplicationForm: React.FC = () => {
       setSelectedSubjectGroupCode(app.subjectGroupCode);
       setTotalScore(app.totalScore ?? 0);
       setSelectedPriorityGroup(app.priorityGroup ?? 'none');
+      setFileList(existingFiles);
     };
     loadForEdit().catch(err => console.error(err));
+    if (!editId) {
+      setLoadedApplication(null);
+      setFileList([]);
+    }
     return () => { mounted = false; };
   }, [editId, fetchApplicationById, form]);
 
@@ -192,6 +208,104 @@ export const ApplicationForm: React.FC = () => {
     setFileList(newFileList);
   };
 
+  const buildSubmissionPayload = (values: any, requireSubjectGroup: boolean) => {
+    const selectedSubjectGroup = availableSubjectGroups.find(
+      (group) => String(group.code) === String(values.subjectGroupCode)
+    );
+
+    if (!selectedSubjectGroup?.id && requireSubjectGroup) {
+      message.error("Không tìm thấy tổ hợp xét tuyển phù hợp.");
+      return null;
+    }
+
+    const mockEvidences: EvidenceFile[] = fileList.map(file => ({
+      id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: file.name,
+      url: file.originFileObj ? URL.createObjectURL(file.originFileObj as File) : (file.url ?? ""),
+      type: file.type === "application/pdf" ? "pdf" : "image",
+      category: selectedEvidenceCategory,
+      size: file.size || 0,
+      uploadedAt: new Date().toISOString()
+    }));
+
+    return {
+      payload: {
+        candidateId: Number(candidate?.id),
+        universityId: values.universityId ? Number(values.universityId) : undefined,
+        majorId: values.majorId ? Number(values.majorId) : undefined,
+        admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
+        subjectGroupId: selectedSubjectGroup?.id ? Number(selectedSubjectGroup.id) : undefined,
+        subjectGroupCode: values.subjectGroupCode,
+        scores: values.scores ?? {},
+        totalScore,
+        priorityGroup: selectedPriorityGroup,
+        priorityScore: currentPriorityScore,
+        evidenceFiles: mockEvidences,
+        submittedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: requireSubjectGroup ? "pending" : "draft",
+      },
+      selectedSubjectGroup,
+      mockEvidences,
+    };
+  };
+
+  const uploadApplicationFiles = async (applicationId: string) => {
+    if (!fileList || fileList.length === 0) return;
+
+    const filesToUpload = fileList.filter((item) => Boolean(item.originFileObj));
+    if (filesToUpload.length === 0) return;
+
+    const formData = new FormData();
+    filesToUpload.forEach((item) => {
+      if (item.originFileObj) {
+        formData.append("files", item.originFileObj as File);
+      }
+    });
+
+    await axiosClient.post(`/applications/${applicationId}/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+
+    try {
+      await fetchApplicationById(applicationId);
+    } catch (err) {
+      console.warn("Failed to refresh application after file upload", err);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!candidate || !currentUser) return;
+
+    const values = form.getFieldsValue(true);
+    const built = buildSubmissionPayload(values, false);
+    if (!built) return;
+
+    const draftPayload = built.payload;
+    let savedDraft;
+    if (editId && loadedApplication?.status === "draft") {
+      savedDraft = await saveDraftApplication({ ...draftPayload, id: editId });
+    } else {
+      savedDraft = await saveDraftApplication(draftPayload);
+    }
+
+    if (!savedDraft) {
+      message.error("Lưu nháp thất bại, vui lòng thử lại.");
+      return;
+    }
+
+    try {
+      await uploadApplicationFiles(savedDraft.id);
+    } catch (err) {
+      console.error("Failed to upload draft files", err);
+      message.warning("Đã lưu nháp nhưng một số file chưa tải lên được.");
+    }
+
+    message.success("Đã lưu nháp hồ sơ");
+    navigate("/candidate/applications");
+  };
+
   const onFinish = async (values: any) => {
     if (!candidate || !currentUser) return;
 
@@ -209,78 +323,30 @@ export const ApplicationForm: React.FC = () => {
       return;
     }
 
-    const mockEvidences: EvidenceFile[] = fileList.map(file => ({
-      id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: file.name,
-      url: file.originFileObj ? URL.createObjectURL(file.originFileObj as File) : "",
-      type: file.type === "application/pdf" ? "pdf" : "image",
-      category: selectedEvidenceCategory,
-      size: file.size || 0,
-      uploadedAt: new Date().toISOString()
-    }));
+    const built = buildSubmissionPayload(values, true);
+    if (!built) return;
 
-    const selectedSubjectGroup = availableSubjectGroups.find(
-      (group) => String(group.code) === String(values.subjectGroupCode)
-    );
-
-    if (!selectedSubjectGroup?.id) {
-      message.error("Không tìm thấy tổ hợp xét tuyển phù hợp.");
-      return;
+    const submitPayload = built.payload;
+    let createdApplication;
+    if (editId && loadedApplication?.status === "draft") {
+      createdApplication = await submitDraftApplication(editId, submitPayload);
+    } else {
+      createdApplication = await createApplication(submitPayload);
     }
-
-    const submitPayload: any = {
-      candidateId: Number(candidate.id),
-      universityId: Number(values.universityId),
-      majorId: Number(values.majorId),
-      admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
-      subjectGroupId: Number(selectedSubjectGroup.id),
-      subjectGroupCode: values.subjectGroupCode,
-      scores: values.scores ?? {},
-      totalScore,
-      priorityGroup: selectedPriorityGroup,
-      priorityScore: currentPriorityScore,
-      evidenceFiles: mockEvidences,
-      submittedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: "pending",
-    };
-
-    const createdApplication = await createApplication(submitPayload);
 
     if (!createdApplication) {
       message.error("Nộp hồ sơ thất bại, vui lòng thử lại.");
       return;
     }
 
-      // If files were selected, upload them to backend and refresh application
-      if (fileList && fileList.length > 0) {
-        try {
-          const formData = new FormData();
-          fileList.forEach((f) => {
-            if (f.originFileObj) {
-              formData.append("files", f.originFileObj as File);
-            }
-          });
+    try {
+      await uploadApplicationFiles(createdApplication.id);
+    } catch (err) {
+      console.error("Failed to upload files to server", err);
+      message.warning("Hồ sơ đã được tạo nhưng một số file không thể tải lên. Vui lòng thử lại sau.");
+    }
 
-          await axiosClient.post(`/applications/${createdApplication.id}/upload`, formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-          });
-
-          // Refresh from server so attachments and scores (if persisted) are visible
-          try {
-            await fetchApplicationById(createdApplication.id);
-          } catch (err) {
-            console.warn("Failed to refresh application after upload", err);
-          }
-        } catch (err) {
-          console.error("Failed to upload files to server", err);
-          message.warning("Hồ sơ đã được tạo nhưng một số file không thể tải lên. Vui lòng thử lại sau.");
-        }
-      }
-
-    // If this was editing an existing application, cancel the old one
-    if (editId) {
+    if (editId && loadedApplication?.status !== "draft") {
       try {
         await cancelApplication(editId);
       } catch (err) {
@@ -588,9 +654,16 @@ export const ApplicationForm: React.FC = () => {
           </Form.Item>
 
           <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" size="large" block disabled={!isProfileComplete || activeRounds.length === 0}>
-              Nộp hồ sơ
-            </Button>
+            <Space style={{ width: "100%" }}>
+              {(!editId || loadedApplication?.status === "draft") && (
+                <Button size="large" onClick={handleSaveDraft} disabled={!isProfileComplete}>
+                  Lưu nháp
+                </Button>
+              )}
+              <Button type="primary" htmlType="submit" size="large" block disabled={!isProfileComplete || activeRounds.length === 0}>
+                Nộp hồ sơ
+              </Button>
+            </Space>
           </Form.Item>
         </Form>
         )}

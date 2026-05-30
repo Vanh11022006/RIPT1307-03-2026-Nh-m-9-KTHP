@@ -141,9 +141,9 @@ export const ApplicationManagement: React.FC = () => {
     getMajorById
   ]);
 
-  // Sort applications: pending (chờ duyệt) first, then approved, then rejected
+  // Sort applications: draft first, then pending, approved, and rejected
   const sortedApplications = useMemo(() => {
-    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+    const order: Record<string, number> = { draft: 0, pending: 1, approved: 2, rejected: 3 };
     return filteredApplications.slice().sort((a, b) => {
       const oa = order[a.status] ?? 99;
       const ob = order[b.status] ?? 99;
@@ -320,6 +320,7 @@ export const ApplicationManagement: React.FC = () => {
               onChange={value => setStatusFilter(value)}
             >
               <Option value="all">Tất cả trạng thái</Option>
+              <Option value="draft">Bản nháp</Option>
               <Option value="pending">Chờ duyệt</Option>
               <Option value="approved">Đã duyệt</Option>
               <Option value="rejected">Từ chối</Option>

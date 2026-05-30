@@ -19,7 +19,7 @@ public class ApplicationSubmitRequest {
     @Schema(example = "2")
     private Long subjectGroupId;
     @Schema(example = "27.25")
-    private double totalScore;
+    private Double totalScore;
     @Schema(example = "KV1")
     private String priorityGroup;
     @Schema(example = "0.75")

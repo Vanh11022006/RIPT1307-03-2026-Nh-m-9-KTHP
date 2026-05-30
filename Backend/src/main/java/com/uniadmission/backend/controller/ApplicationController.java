@@ -80,6 +80,13 @@ public class ApplicationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", resp));
     }
 
+    @PostMapping("/draft")
+    @Operation(summary = "Lưu nháp hồ sơ", description = "Tạo một hồ sơ ở trạng thái nháp")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> saveDraft(@RequestBody ApplicationSubmitRequest request) {
+        Application application = applicationService.saveDraft(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lưu nháp thành công", mapToResponse(application)));
+    }
+
     @GetMapping("/candidate/{candidateId}")
     @Operation(summary = "Lấy hồ sơ theo thí sinh", description = "Trả về danh sách hồ sơ của một candidate")
     public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getApplicationsByCandidate(
@@ -94,6 +101,22 @@ public class ApplicationController {
     public ResponseEntity<ApiResponse<Void>> cancelApplication(@PathVariable("id") Long id) {
         applicationService.cancelApplication(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cancel application success", null));
+    }
+
+    @PutMapping("/{id}/draft")
+    @Operation(summary = "Cập nhật nháp", description = "Cập nhật một hồ sơ đang ở trạng thái nháp")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> updateDraft(@PathVariable Long id,
+            @RequestBody ApplicationSubmitRequest request) {
+        Application updated = applicationService.updateDraft(id, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật nháp thành công", mapToResponse(updated)));
+    }
+
+    @PutMapping("/{id}/submit")
+    @Operation(summary = "Nộp nháp", description = "Chuyển một hồ sơ nháp sang trạng thái chờ duyệt")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> submitDraft(@PathVariable Long id,
+            @RequestBody ApplicationSubmitRequest request) {
+        Application updated = applicationService.submitDraft(id, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Nộp hồ sơ thành công", mapToResponse(updated)));
     }
 
     @GetMapping
