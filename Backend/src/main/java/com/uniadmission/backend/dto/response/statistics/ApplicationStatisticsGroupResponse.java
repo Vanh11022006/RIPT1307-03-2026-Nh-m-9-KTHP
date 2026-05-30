@@ -14,6 +14,7 @@ public class ApplicationStatisticsGroupResponse {
     private String code;
     private String name;
     private Long total;
+    private Long draft;
     private Long pending;
     private Long approved;
     private Long rejected;

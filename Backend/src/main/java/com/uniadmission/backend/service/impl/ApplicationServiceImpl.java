@@ -59,40 +59,50 @@ public class ApplicationServiceImpl implements ApplicationService {
         private final AdmissionRoundRepository admissionRoundRepository;
         private final SubjectGroupRepository subjectGroupRepository;
 
-        @Override
-        public Application submit(ApplicationSubmitRequest request) {
+        private Application applyRequest(Application application, ApplicationSubmitRequest request,
+                        boolean requireMajorAndSubjectGroup) {
+                if (request.getCandidateId() == null) {
+                        throw new RuntimeException("Candidate not found");
+                }
+
                 Candidate candidate = candidateRepository
                                 .findById(java.util.Objects.requireNonNull(request.getCandidateId()))
                                 .orElseThrow(() -> new RuntimeException(
                                                 "Candidate not found: " + request.getCandidateId()));
-
-                Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
-                                .orElseThrow(() -> new RuntimeException("Major not found: " + request.getMajorId()));
-
-                AdmissionRound admissionRound = request.getAdmissionRoundId() != null
-                                ? admissionRoundRepository
-                                                .findById(java.util.Objects
-                                                                .requireNonNull(request.getAdmissionRoundId()))
-                                                .orElseThrow(() -> new RuntimeException("Admission round not found: "
-                                                                + request.getAdmissionRoundId()))
-                                : null;
-
-                SubjectGroup subjectGroup = subjectGroupRepository
-                                .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
-                                .orElseThrow(() -> new RuntimeException(
-                                                "Subject group not found: " + request.getSubjectGroupId()));
-
-                Application application = new Application();
                 application.setCandidate(candidate);
-                application.setMajor(major);
-                application.setAdmissionRound(admissionRound);
-                application.setSubjectGroup(subjectGroup);
+
+                if (request.getMajorId() != null) {
+                        Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Major not found: " + request.getMajorId()));
+                        application.setMajor(major);
+                } else if (requireMajorAndSubjectGroup) {
+                        throw new RuntimeException("Major not found");
+                }
+
+                if (request.getAdmissionRoundId() != null) {
+                        AdmissionRound admissionRound = admissionRoundRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getAdmissionRoundId()))
+                                        .orElseThrow(() -> new RuntimeException("Admission round not found: "
+                                                        + request.getAdmissionRoundId()));
+                        application.setAdmissionRound(admissionRound);
+                }
+
+                if (request.getSubjectGroupId() != null) {
+                        SubjectGroup subjectGroup = subjectGroupRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Subject group not found: " + request.getSubjectGroupId()));
+                        application.setSubjectGroup(subjectGroup);
+                } else if (requireMajorAndSubjectGroup) {
+                        throw new RuntimeException("Subject group not found");
+                }
+
                 application.setTotalScore(request.getTotalScore());
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
                 try {
-                        LOGGER.info("Persisting scores for application candidateId={}: {}", request.getCandidateId(),
-                                        request.getScores());
+                        LOGGER.info("Persisting scores for application request: {}", request.getScores());
                         if (request.getScores() != null) {
                                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                                 String json = mapper.writeValueAsString(request.getScores());
@@ -101,9 +111,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 } catch (Exception e) {
                         LOGGER.warn("Failed to serialize scores", e);
                 }
-                application.setSubmissionDate(java.time.LocalDateTime.now());
-                application.setStatus(ApplicationStatus.PENDING);
 
+                return application;
+        }
+
+        private Application saveWithApplicationCode(Application application) {
                 Application saved = applicationRepository.save(application);
                 if (saved.getApplicationCode() == null || saved.getApplicationCode().isEmpty()) {
                         String code = "HS" + java.time.LocalDate.now().getYear()
@@ -111,16 +123,26 @@ public class ApplicationServiceImpl implements ApplicationService {
                         saved.setApplicationCode(code);
                         saved = applicationRepository.save(saved);
                 }
+                return saved;
+        }
 
+        private void sendSubmissionNotifications(Application saved) {
                 String applicationCode = saved.getApplicationCode() != null ? saved.getApplicationCode()
                                 : "Chưa cập nhật";
 
                 try {
-                        String candidateName = candidate.getUser() != null ? candidate.getUser().getFullName()
+                        Candidate candidate = saved.getCandidate();
+                        Major major = saved.getMajor();
+                        String candidateName = candidate != null && candidate.getUser() != null
+                                        ? candidate.getUser().getFullName()
                                         : "thí sinh";
-                        String email = candidate.getUser() != null ? candidate.getUser().getEmail() : null;
-                        String universityName = major.getUniversity() != null ? major.getUniversity().getName() : "";
-                        String majorName = major.getName() != null ? major.getName() : "";
+                        String email = candidate != null && candidate.getUser() != null
+                                        ? candidate.getUser().getEmail()
+                                        : null;
+                        String universityName = major != null && major.getUniversity() != null
+                                        ? major.getUniversity().getName()
+                                        : "";
+                        String majorName = major != null && major.getName() != null ? major.getName() : "";
 
                         if (email != null && !email.trim().isEmpty()) {
                                 emailService.sendApplicationSubmittedEmail(
@@ -130,9 +152,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                                 universityName,
                                                 majorName);
                         }
-                        // create in-app notification for candidate
                         try {
-                                if (candidate.getUser() != null && candidate.getUser().getId() != null) {
+                                if (candidate != null && candidate.getUser() != null
+                                                && candidate.getUser().getId() != null) {
                                         String title = "Xác nhận: hồ sơ đã được tiếp nhận";
                                         String message = "Hồ sơ của bạn (Mã: " + applicationCode
                                                         + ") đã được tiếp nhận. Trường: "
@@ -149,7 +171,45 @@ public class ApplicationServiceImpl implements ApplicationService {
                         LOGGER.warn("Failed to send application submitted email for application id={}: {}",
                                         saved.getId(), e.getMessage());
                 }
+        }
 
+        @Override
+        public Application submit(ApplicationSubmitRequest request) {
+                Application application = applyRequest(new Application(), request, true);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.PENDING);
+                Application saved = saveWithApplicationCode(application);
+                sendSubmissionNotifications(saved);
+                return saved;
+        }
+
+        @Override
+        public Application saveDraft(ApplicationSubmitRequest request) {
+                Application application = applyRequest(new Application(), request, false);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.DRAFT);
+                return saveWithApplicationCode(application);
+        }
+
+        @Override
+        public Application updateDraft(Long id, ApplicationSubmitRequest request) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+                application = applyRequest(application, request, false);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.DRAFT);
+                return saveWithApplicationCode(application);
+        }
+
+        @Override
+        public Application submitDraft(Long id, ApplicationSubmitRequest request) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+                application = applyRequest(application, request, true);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.PENDING);
+                Application saved = saveWithApplicationCode(application);
+                sendSubmissionNotifications(saved);
                 return saved;
         }
 
@@ -424,6 +484,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                 return ApplicationStatisticsResponse.builder()
                                 .total((long) applications.size())
+                                .draft(statusTotals.getOrDefault(ApplicationStatus.DRAFT, 0L))
                                 .pending(statusTotals.getOrDefault(ApplicationStatus.PENDING, 0L))
                                 .approved(statusTotals.getOrDefault(ApplicationStatus.APPROVED, 0L))
                                 .rejected(statusTotals.getOrDefault(ApplicationStatus.REJECTED, 0L))
@@ -498,6 +559,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 private final String code;
                 private final String name;
                 private long total;
+                private long draft;
                 private long pending;
                 private long approved;
                 private long rejected;
@@ -511,6 +573,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                 private void increment(ApplicationStatus status) {
                         switch (status) {
+                                case DRAFT:
+                                        draft++;
+                                        break;
                                 case PENDING:
                                         pending++;
                                         break;
@@ -542,6 +607,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         .code(code)
                                         .name(name)
                                         .total(total)
+                                        .draft(draft)
                                         .pending(pending)
                                         .approved(approved)
                                         .rejected(rejected)

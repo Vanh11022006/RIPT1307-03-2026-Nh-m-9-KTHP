@@ -59,6 +59,7 @@ type ApplicationStatisticsGroup = {
   code?: string;
   name: string;
   total: number;
+  draft: number;
   pending: number;
   approved: number;
   rejected: number;
@@ -67,6 +68,7 @@ type ApplicationStatisticsGroup = {
 
 type ApplicationStatisticsResponse = {
   total: number;
+  draft: number;
   pending: number;
   approved: number;
   rejected: number;
@@ -84,6 +86,7 @@ const normalizeStatisticsGroups = (groups: any): ApplicationStatisticsGroup[] =>
     code: group?.code ?? undefined,
     name: String(group?.name ?? "Chưa cập nhật"),
     total: Number(group?.total ?? 0),
+    draft: Number(group?.draft ?? 0),
     pending: Number(group?.pending ?? 0),
     approved: Number(group?.approved ?? 0),
     rejected: Number(group?.rejected ?? 0),
@@ -93,6 +96,7 @@ const normalizeStatisticsGroups = (groups: any): ApplicationStatisticsGroup[] =>
 
 const normalizeStatisticsResponse = (stats: any): ApplicationStatisticsResponse => ({
   total: Number(stats?.TOTAL ?? stats?.total ?? 0),
+  draft: Number(stats?.DRAFT ?? stats?.draft ?? 0),
   pending: Number(stats?.PENDING ?? stats?.pending ?? 0),
   approved: Number(stats?.APPROVED ?? stats?.approved ?? 0),
   rejected: Number(stats?.REJECTED ?? stats?.rejected ?? 0),
@@ -294,8 +298,10 @@ interface ApplicationState {
   getApplicationsByCandidateId: (candidateId: string) => Promise<Application[]>;
   getApplicationById: (id: string) => Application | undefined;
   fetchApplicationById: (id: string) => Promise<Application | null>;
-  createApplication: (app: Partial<Application>) => Promise<Application | null>;
+  createApplication: (app: any) => Promise<Application | null>;
+  saveDraftApplication: (app: any) => Promise<Application | null>;
   updateApplication: (id: string, payload: any) => Promise<Application | null>;
+  submitDraftApplication: (id: string, payload: any) => Promise<Application | null>;
   deleteApplication: (id: string) => Promise<void>;
   cancelApplication: (id: string) => Promise<void>;
   approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
@@ -320,7 +326,7 @@ interface ApplicationState {
     majorId?: string;
     admissionRoundId?: string;
   }) => Promise<ArrayBuffer>;
-  getApplicationStats: () => { total: number; pending: number; approved: number; rejected: number };
+  getApplicationStats: () => { total: number; draft: number; pending: number; approved: number; rejected: number; cancelled: number };
   getAdminApplicationStatistics: (filters?: {
     universityId?: string;
     majorId?: string;
@@ -399,7 +405,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     }
   },
 
-  createApplication: async (app) => {
+  createApplication: async (app: any) => {
     try {
       const response = await axiosClient.post("/applications", app);
       const createdFromServer = normalizeSingleApplication(response);
@@ -421,6 +427,35 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       return created;
     } catch (error) {
       console.error("Failed to create application:", error);
+      return null;
+    }
+  },
+
+  saveDraftApplication: async (app: any) => {
+    try {
+      const hasId = Boolean(app?.id);
+      const response = hasId
+        ? await axiosClient.put(`/applications/${app.id}/draft`, app)
+        : await axiosClient.post("/applications/draft", app);
+      const savedFromServer = normalizeSingleApplication(response);
+      const localApplication = normalizeApplicationRecord({
+        ...app,
+        id: savedFromServer?.id ?? app.id ?? "",
+        applicationCode: app.applicationCode ?? savedFromServer?.applicationCode,
+      });
+      const saved = mergeApplicationRecords(localApplication, savedFromServer);
+
+      if (saved) {
+        set((state) => {
+          const nextApplications = [saved, ...state.applications.filter((item) => item.id !== saved.id)];
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
+      }
+
+      return saved;
+    } catch (error) {
+      console.error("Failed to save draft application:", error);
       return null;
     }
   },
@@ -475,6 +510,26 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       return updated;
     } catch (error) {
       console.error("Failed to update application:", error);
+      throw error;
+    }
+  },
+
+  submitDraftApplication: async (id: string, payload: any) => {
+    try {
+      const response = await axiosClient.put(`/applications/${id}/submit`, payload);
+      const updated = normalizeSingleApplication(response);
+      if (updated) {
+        set((state) => {
+          const nextApplications = state.applications.map((item) =>
+            item.id === id ? (mergeApplicationRecords(item, updated) ?? item) : item
+          );
+          saveCachedApplications(nextApplications);
+          return { applications: nextApplications };
+        });
+      }
+      return updated;
+    } catch (error) {
+      console.error("Failed to submit draft application:", error);
       throw error;
     }
   },
@@ -629,9 +684,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     const apps = get().applications;
     return {
       total: apps.length,
+      draft: apps.filter((a) => a.status === "draft").length,
       pending: apps.filter((a) => a.status === "pending").length,
       approved: apps.filter((a) => a.status === "approved").length,
-      rejected: apps.filter((a) => a.status === "rejected").length
+      rejected: apps.filter((a) => a.status === "rejected").length,
+      cancelled: apps.filter((a) => a.status === "cancelled").length
     };
   },
 
@@ -656,6 +713,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
       return {
         total: filteredApps.length,
+        draft: filteredApps.filter((a) => a.status === "draft").length,
         pending: filteredApps.filter((a) => a.status === "pending").length,
         approved: filteredApps.filter((a) => a.status === "approved").length,
         rejected: filteredApps.filter((a) => a.status === "rejected").length,

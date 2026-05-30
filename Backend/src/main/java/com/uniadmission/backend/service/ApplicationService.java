@@ -11,33 +11,40 @@ import java.util.Map;
 
 public interface ApplicationService {
 
-    Application submit(ApplicationSubmitRequest request);
+        Application submit(ApplicationSubmitRequest request);
 
-    List<Application> getApplicationsByCandidate(Long candidateId);
+        Application saveDraft(ApplicationSubmitRequest request);
 
-    void cancelApplication(Long applicationId);
+        Application updateDraft(Long id, ApplicationSubmitRequest request);
 
-    List<Application> getAllApplications();
+        Application submitDraft(Long id, ApplicationSubmitRequest request);
 
-    void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
+        List<Application> getApplicationsByCandidate(Long candidateId);
 
-    void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
+        void cancelApplication(Long applicationId);
 
-    void bulkUpdateApplicationStatus(java.util.List<Long> ids, ApplicationStatus status, String notes, Long adminId);
+        List<Application> getAllApplications();
 
-    String exportApplicationsCsv(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+        void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
 
-    java.util.List<Application> getApplicationsForExport(ApplicationStatus status, Long universityId, Long majorId,
-            Long admissionRoundId);
+        void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
 
-    byte[] exportApplicationsXlsx(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+        void bulkUpdateApplicationStatus(java.util.List<Long> ids, ApplicationStatus status, String notes,
+                        Long adminId);
 
-    Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
+        String exportApplicationsCsv(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
 
-    void deleteApplication(Long id);
+        java.util.List<Application> getApplicationsForExport(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId);
 
-    Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
-            Long admissionRoundId, int page, int size);
+        byte[] exportApplicationsXlsx(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
 
-    ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
+        Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
+
+        void deleteApplication(Long id);
+
+        Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId, int page, int size);
+
+        ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
 }
