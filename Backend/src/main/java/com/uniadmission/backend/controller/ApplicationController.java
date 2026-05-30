@@ -319,6 +319,10 @@ public class ApplicationController {
                 .priorityGroup(application.getPriorityGroup())
                 .priorityScore(application.getPriorityScore())
                 .scores(parsedScores)
+                .reviewScoreAverage(application.getReviewScoreAverage())
+                .reviewCount(application.getReviewCount())
+                .reviewedBy(application.getReviewedBy())
+                .reviewedAt(application.getReviewedAt() != null ? application.getReviewedAt().toString() : null)
                 .evidenceFiles(evidence)
                 .submittedAt(
                         application.getSubmissionDate() != null ? application.getSubmissionDate().toString() : null)
