@@ -76,4 +76,8 @@ public class ApplicationResponse {
     private String submittedAt;
     @Schema(example = "submitted")
     private String status;
+    @Schema(example = "Hồ sơ đủ điều kiện, chúc mừng bạn trúng tuyển")
+    private String adminNote;
+    @Schema(description = "Phương thức xét tuyển", example = "THPT_SCORE")
+    private String admissionMethod;
 }

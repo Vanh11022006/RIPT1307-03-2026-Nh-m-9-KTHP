@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/**", "/api/universities/**", "/api/majors/**",
                         "/api/subject-groups/**", "/api/admission-rounds/**")
                 .permitAll()
+                .antMatchers("/uploads/**", "/favicon.ico").permitAll()
                 .antMatchers("/api/notifications/stream/**").permitAll()
                 .antMatchers(
                         "/v3/api-docs/**",

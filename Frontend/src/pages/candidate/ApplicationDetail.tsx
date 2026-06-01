@@ -320,6 +320,16 @@ export const ApplicationDetail: React.FC = () => {
               <Descriptions.Item label="Tổ hợp xét tuyển">
                 <Tag color="blue">{application.subjectGroupCode}</Tag>
               </Descriptions.Item>
+              {application.admissionMethod && (
+                <Descriptions.Item label="Phương thức xét tuyển">
+                  {{
+                    THPT_SCORE: "Điểm thi THPT Quốc gia",
+                    SCHOOL_TRANSCRIPT: "Xét học bạ THPT",
+                    COMPETENCY_ASSESSMENT: "Đánh giá năng lực",
+                    INTERVIEW: "Phỏng vấn / Xét tuyển thẳng",
+                  }[application.admissionMethod] ?? application.admissionMethod}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Đối tượng ưu tiên">
                 <Text strong>{getPriorityGroupLabel(priorityGroup)}</Text>
               </Descriptions.Item>

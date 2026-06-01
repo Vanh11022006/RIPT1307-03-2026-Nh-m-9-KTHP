@@ -144,7 +144,8 @@ export const ApplicationForm: React.FC = () => {
         subjectGroupCode: app.subjectGroupCode,
         admissionRoundId: app.admissionRoundId,
         scores: app.scores,
-        priorityGroup: app.priorityGroup ?? 'none'
+        priorityGroup: app.priorityGroup ?? 'none',
+        admissionMethod: app.admissionMethod ?? undefined,
       });
       setSelectedUniversityId(app.universityId);
       setSelectedMajorId(app.majorId);
@@ -240,6 +241,7 @@ export const ApplicationForm: React.FC = () => {
         totalScore,
         priorityGroup: selectedPriorityGroup,
         priorityScore: currentPriorityScore,
+        admissionMethod: values.admissionMethod,
         evidenceFiles: mockEvidences,
         submittedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
@@ -480,6 +482,20 @@ export const ApplicationForm: React.FC = () => {
                   {activeRounds.map(r => (
                     <Option key={r.id} value={r.id}>{r.code} - {r.name}</Option>
                   ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Form.Item
+                name="admissionMethod"
+                label="Phương thức xét tuyển"
+                rules={[{ required: true, message: "Vui lòng chọn phương thức xét tuyển" }]}
+              >
+                <Select placeholder="Chọn phương thức">
+                  <Option value="THPT_SCORE">Điểm thi THPT Quốc gia</Option>
+                  <Option value="SCHOOL_TRANSCRIPT">Xét học bạ THPT</Option>
+                  <Option value="COMPETENCY_ASSESSMENT">Đánh giá năng lực</Option>
+                  <Option value="INTERVIEW">Phỏng vấn / Xét tuyển thẳng</Option>
                 </Select>
               </Form.Item>
             </Col>
