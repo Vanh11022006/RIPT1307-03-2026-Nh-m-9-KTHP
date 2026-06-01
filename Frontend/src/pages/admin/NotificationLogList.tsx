@@ -6,11 +6,13 @@ import {
 import { SearchOutlined, BellOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, EyeOutlined } from "@ant-design/icons";
 import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { NotificationLog } from "../../types/notification.types";
 
 const { Title, Text } = Typography;
 
 export const NotificationLogList: React.FC = () => {
+  const { isDarkMode } = useTheme();
   const safeLogs = useNotificationLogStore(state => state.notificationLogs);
   const loading = useNotificationLogStore(state => state.loading);
   const getNotificationLogs = useNotificationLogStore(state => state.getNotificationLogs);
@@ -24,6 +26,15 @@ export const NotificationLogList: React.FC = () => {
   
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
+
+  const drawerThemeStyles = {
+    content: { background: isDarkMode ? "#0f172a" : "#ffffff" },
+    header: {
+      background: isDarkMode ? "#0f172a" : "#ffffff",
+      borderBottom: `1px solid ${isDarkMode ? "rgba(255,255,255,0.1)" : "#e2e8f0"}`
+    },
+    body: { background: isDarkMode ? "#0f172a" : "#ffffff" }
+  };
 
   useEffect(() => {
     getNotificationLogs();
@@ -323,17 +334,13 @@ export const NotificationLogList: React.FC = () => {
       </Card>
 
       <Drawer
-        title={<span style={{ color: "#fff" }}>Chi tiết thông báo</span>}
+        title={<span style={{ color: isDarkMode ? "#fff" : "#0f172a" }}>Chi tiết thông báo</span>}
         placement="right"
         width={500}
         onClose={() => setDetailVisible(false)}
         open={detailVisible}
-        styles={{
-          content: { background: "#0f172a" },
-          header: { background: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.1)" },
-          body: { background: "#0f172a" }
-        }}
-        closeIcon={<CloseCircleOutlined style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }} />}
+        styles={drawerThemeStyles}
+        closeIcon={<CloseCircleOutlined style={{ color: isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)", fontSize: 18 }} />}
       >
         {selectedLog && (
           <Descriptions column={1} bordered size="small">
@@ -345,7 +352,7 @@ export const NotificationLogList: React.FC = () => {
             <Descriptions.Item label="Trạng thái đọc">
               {selectedLog.isRead ? <Tag color="success">Đã đọc</Tag> : <Tag color="default">Chưa đọc</Tag>}
             </Descriptions.Item>
-            <Descriptions.Item label="Hồ sơ liên kết (Application ID)">
+            <Descriptions.Item label="Hồ sơ liên kết">
               {selectedLog.applicationId ? (
                 <Text copyable>{selectedLog.applicationId}</Text>
               ) : (
@@ -359,7 +366,15 @@ export const NotificationLogList: React.FC = () => {
               <Text strong>{selectedLog.subject}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Nội dung" span={1}>
-              <div style={{ whiteSpace: "pre-wrap", background: "rgba(255,255,255,0.05)", padding: "12px", borderRadius: "4px" }}>
+              <div
+                style={{
+                  whiteSpace: "pre-wrap",
+                  background: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8fafc",
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.08)" : "#e2e8f0"}`
+                }}
+              >
                 {selectedLog.content}
               </div>
             </Descriptions.Item>

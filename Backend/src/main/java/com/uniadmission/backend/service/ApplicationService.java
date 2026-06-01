@@ -25,7 +25,7 @@ public interface ApplicationService {
 
         List<Application> getAllApplications();
 
-        void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
+        Application updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
 
         void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
 

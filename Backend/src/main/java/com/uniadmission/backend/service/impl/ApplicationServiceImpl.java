@@ -14,6 +14,7 @@ import com.uniadmission.backend.repository.AdmissionRoundRepository;
 import com.uniadmission.backend.repository.ApplicationRepository;
 import com.uniadmission.backend.repository.ApplicationReviewLogRepository;
 import com.uniadmission.backend.repository.CandidateRepository;
+import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.repository.MajorRepository;
 import com.uniadmission.backend.repository.SubjectGroupRepository;
 import com.uniadmission.backend.service.ApplicationService;
@@ -55,6 +56,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         private final ApplicationReviewLogRepository reviewLogRepository;
         private final NotificationLogService notificationService;
         private final CandidateRepository candidateRepository;
+        private final UserRepository userRepository;
         private final MajorRepository majorRepository;
         private final AdmissionRoundRepository admissionRoundRepository;
         private final SubjectGroupRepository subjectGroupRepository;
@@ -160,8 +162,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                                                         + ") đã được tiếp nhận. Trường: "
                                                         + universityName + ", Ngành: " + majorName
                                                         + ". Phòng Tuyển Sinh sẽ kiểm tra hồ sơ trong vòng 3-5 ngày làm việc.";
-                                        notificationService.createNotification(candidate.getUser().getId(), title,
-                                                        message);
+                                        notificationService.createNotification(
+                                                        candidate.getUser().getId(),
+                                                        title,
+                                                        message,
+                                                        applicationCode);
                                 }
                         } catch (Exception e) {
                                 LOGGER.warn("Failed to create in-app notification for application id={}: {}",
@@ -233,11 +238,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        public void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
+        @org.springframework.transaction.annotation.Transactional
+        public Application updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 applyStatusUpdate(application, status, notes, adminId);
+                // return refreshed application
+                return applicationRepository.findById(id).orElse(application);
         }
 
         @Override
@@ -619,7 +627,21 @@ public class ApplicationServiceImpl implements ApplicationService {
         private void applyStatusUpdate(Application application, ApplicationStatus status, String notes, Long adminId) {
                 String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
                 application.setStatus(status);
+                // set reviewedBy/reviewedAt when admin performs status update
+                try {
+                        if (adminId != null) {
+                                userRepository.findById(adminId)
+                                                .ifPresent(u -> application.setReviewedBy(u.getFullName()));
+                        }
+                } catch (Exception ex) {
+                        // ignore if user lookup fails
+                }
+                application.setReviewedAt(java.time.LocalDateTime.now());
+                LOGGER.info("Applying status update for application id={} - reviewedBy='{}', reviewedAt='{}' (before save)",
+                                application.getId(), application.getReviewedBy(), application.getReviewedAt());
                 applicationRepository.save(application);
+                LOGGER.info("Applied status update for application id={} - reviewedBy='{}', reviewedAt='{}' (after save)",
+                                application.getId(), application.getReviewedBy(), application.getReviewedAt());
 
                 ApplicationReviewLog log = new ApplicationReviewLog();
                 log.setApplicationId(application.getId());
@@ -639,9 +661,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 String title = "Cập nhật trạng thái hồ sơ xét tuyển";
                                 String message = "Hồ sơ của bạn đã chuyển sang trạng thái: " + status.name()
                                                 + ". Ghi chú: " + notes;
-                                notificationService.createNotification(application.getCandidate().getUser().getId(),
+                                String applicationCode = application.getApplicationCode() != null
+                                                ? application.getApplicationCode()
+                                                : String.valueOf(application.getId());
+                                notificationService.createNotification(
+                                                application.getCandidate().getUser().getId(),
                                                 title,
-                                                message);
+                                                message,
+                                                applicationCode);
                         }
                 } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email: " + e.getMessage());

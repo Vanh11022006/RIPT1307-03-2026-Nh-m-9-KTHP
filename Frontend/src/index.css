@@ -942,32 +942,42 @@ body {
   background: rgba(0,0,0,0.03) !important;
 }
 
-/* Global Modals & Drawers */
-:root .ant-modal .ant-modal-content,
-.ant-modal-content, 
-.ant-drawer-content,
-[data-theme="dark"] .ant-drawer-content {
+/* Global Modals & Drawers (Dark Theme Only) */
+[data-theme="dark"] .ant-modal .ant-modal-content,
+[data-theme="dark"] .ant-modal-content,
+[data-theme="dark"] .ant-drawer-content,
+.dark-modal .ant-modal-content {
   background: #0f172a !important;
   color: #fff !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.5) !important;
 }
-.ant-modal-header, .ant-drawer-header {
+[data-theme="dark"] .ant-modal-header,
+[data-theme="dark"] .ant-drawer-header,
+.dark-modal .ant-modal-header {
   background: transparent !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-modal-footer, .ant-drawer-footer {
+[data-theme="dark"] .ant-modal-footer,
+[data-theme="dark"] .ant-drawer-footer,
+.dark-modal .ant-modal-footer {
   background: transparent !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
-.ant-modal-title, .ant-drawer-title {
+[data-theme="dark"] .ant-modal-title,
+[data-theme="dark"] .ant-drawer-title,
+.dark-modal .ant-modal-title {
   color: #fff !important;
 }
-.ant-modal-close, .ant-drawer-close {
+[data-theme="dark"] .ant-modal-close,
+[data-theme="dark"] .ant-drawer-close,
+.dark-modal .ant-modal-close {
   color: rgba(255, 255, 255, 0.6) !important;
 }
-.ant-modal-close:hover, .ant-drawer-close:hover {
+[data-theme="dark"] .ant-modal-close:hover,
+[data-theme="dark"] .ant-drawer-close:hover,
+.dark-modal .ant-modal-close:hover {
   color: #fff !important;
   background: rgba(255, 255, 255, 0.1) !important;
 }
