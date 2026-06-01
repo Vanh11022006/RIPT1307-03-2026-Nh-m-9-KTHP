@@ -146,11 +146,25 @@ const normalizeEvidenceFiles = (files: any): EvidenceFile[] => {
 const normalizeApplicationRecord = (application: any): Application => ({
   id: String(application?.id ?? ""),
   applicationCode: resolveApplicationCode(application),
-  candidateId: String(application?.candidateId ?? ""),
-  universityId: String(application?.universityId ?? ""),
-  majorId: String(application?.majorId ?? ""),
-  subjectGroupCode: application?.subjectGroupCode ?? (application?.subjectGroupName ?? ""),
-  admissionRoundId: application?.admissionRoundId != null ? String(application.admissionRoundId) : undefined,
+  candidateId: String(application?.candidateId ?? application?.candidate?.id ?? application?.candidate?.userId ?? ""),
+  candidateName: application?.candidateName ?? application?.candidate?.fullName ?? application?.candidate?.user?.fullName ?? undefined,
+  candidateEmail: application?.candidateEmail ?? application?.candidate?.email ?? application?.candidate?.user?.email ?? undefined,
+  candidatePhone: application?.candidatePhone ?? application?.candidate?.phone ?? undefined,
+  candidateDateOfBirth: application?.candidateDateOfBirth ?? application?.candidate?.dateOfBirth ?? application?.candidate?.birthDate ?? undefined,
+  candidateGender: application?.candidateGender ?? application?.candidate?.gender ?? undefined,
+  candidateCitizenId: application?.candidateCitizenId ?? application?.candidate?.citizenId ?? undefined,
+  candidateAddress: application?.candidateAddress ?? application?.candidate?.address ?? undefined,
+  candidateCity: application?.candidateCity ?? application?.candidate?.city ?? undefined,
+  candidateHighSchool: application?.candidateHighSchool ?? application?.candidate?.highSchool ?? application?.candidate?.highSchoolName ?? undefined,
+  candidateGraduationYear: application?.candidateGraduationYear != null ? Number(application.candidateGraduationYear) : application?.candidate?.graduationYear != null ? Number(application.candidate.graduationYear) : undefined,
+  universityId: String(application?.universityId ?? application?.major?.university?.id ?? application?.major?.universityId ?? ""),
+  majorId: String(application?.majorId ?? application?.major?.id ?? ""),
+  subjectGroupCode: application?.subjectGroupCode ?? application?.subjectGroup?.code ?? (application?.subjectGroupName ?? ""),
+  admissionRoundId: application?.admissionRoundId != null
+    ? String(application.admissionRoundId)
+    : application?.admissionRound?.id != null
+      ? String(application.admissionRound.id)
+      : undefined,
   priorityGroup: application?.priorityGroup ?? undefined,
   // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
   priorityScore: Number(application?.priorityScore ?? 0),
@@ -265,6 +279,16 @@ const mergeApplicationRecords = (base?: Application | null, incoming?: Applicati
     id: incoming.id || base.id,
     applicationCode: incoming.applicationCode || base.applicationCode,
     candidateId: incoming.candidateId || base.candidateId,
+    candidateName: incoming.candidateName ?? base.candidateName,
+    candidateEmail: incoming.candidateEmail ?? base.candidateEmail,
+    candidatePhone: incoming.candidatePhone ?? base.candidatePhone,
+    candidateDateOfBirth: incoming.candidateDateOfBirth ?? base.candidateDateOfBirth,
+    candidateGender: incoming.candidateGender ?? base.candidateGender,
+    candidateCitizenId: incoming.candidateCitizenId ?? base.candidateCitizenId,
+    candidateAddress: incoming.candidateAddress ?? base.candidateAddress,
+    candidateCity: incoming.candidateCity ?? base.candidateCity,
+    candidateHighSchool: incoming.candidateHighSchool ?? base.candidateHighSchool,
+    candidateGraduationYear: incoming.candidateGraduationYear ?? base.candidateGraduationYear,
     universityId: incoming.universityId || base.universityId,
     majorId: incoming.majorId || base.majorId,
     subjectGroupCode: incoming.subjectGroupCode || base.subjectGroupCode,
@@ -304,8 +328,8 @@ interface ApplicationState {
   submitDraftApplication: (id: string, payload: any) => Promise<Application | null>;
   deleteApplication: (id: string) => Promise<void>;
   cancelApplication: (id: string) => Promise<void>;
-  approveApplication: (id: string, adminId: string, note?: string) => Promise<void>;
-  rejectApplication: (id: string, adminId: string, note: string) => Promise<void>;
+  approveApplication: (id: string, adminId: string, note?: string) => Promise<Application | null>;
+  rejectApplication: (id: string, adminId: string, note: string) => Promise<Application | null>;
   getApplicationReviewSummary: (id: string, reviewerCount?: number) => Promise<ApplicationReviewSummary | null>;
   getApplicationReviewLogs: (id: string) => Promise<any[]>;
   submitApplicationReviewScore: (
@@ -477,8 +501,10 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
           return { applications: nextApplications };
         });
       }
+      return updated ?? null;
     } catch (error) {
       console.error("Failed to approve application:", error);
+      return null;
     }
   },
 
@@ -565,8 +591,10 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
           return { applications: nextApplications };
         });
       }
+      return updated ?? null;
     } catch (error) {
       console.error("Failed to reject application:", error);
+      return null;
     }
   },
 

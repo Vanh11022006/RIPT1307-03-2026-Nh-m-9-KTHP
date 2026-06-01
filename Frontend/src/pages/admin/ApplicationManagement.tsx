@@ -241,7 +241,10 @@ export const ApplicationManagement: React.FC = () => {
       title: "Thí sinh",
       dataIndex: "candidateId",
       key: "candidateId",
-      render: (id: string) => getCandidateById(id)?.fullName || "Không rõ thí sinh"
+      render: (_: string, record: Application) => {
+        const candidate = getCandidateById(record.candidateId);
+        return record.candidateName || candidate?.fullName || "Không rõ thí sinh";
+      }
     },
     {
       title: "Trường",

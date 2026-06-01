@@ -32,8 +32,9 @@ public class NotificationLogController {
         Long userId = Long.valueOf(payload.get("userId").toString());
         String title = payload.get("title") != null ? payload.get("title").toString() : "Thông báo";
         String message = payload.get("message") != null ? payload.get("message").toString() : "";
+        String applicationId = payload.get("applicationId") != null ? payload.get("applicationId").toString() : null;
 
-        NotificationLog log = notificationService.createNotification(userId, title, message);
+        NotificationLog log = notificationService.createNotification(userId, title, message, applicationId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", log));
     }
 

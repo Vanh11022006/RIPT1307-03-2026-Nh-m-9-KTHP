@@ -19,6 +19,15 @@ public class NotificationLog {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "recipient_name")
+    private String recipientName;
+
+    @Column(name = "recipient_email")
+    private String recipientEmail;
+
+    @Column(name = "application_id")
+    private String applicationId;
+
     @Column(nullable = false)
     private String title;
 

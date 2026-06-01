@@ -150,6 +150,16 @@ export const AdminApplicationDetail: React.FC = () => {
   }
 
   const candidate = getCandidateById(application.candidateId);
+  const candidateName = application.candidateName || candidate?.fullName || "Không rõ thí sinh";
+  const candidateEmail = application.candidateEmail || candidate?.email || "Chưa cập nhật";
+  const candidatePhone = application.candidatePhone || candidate?.phone || "Chưa cập nhật";
+  const candidateDateOfBirth = application.candidateDateOfBirth || candidate?.dateOfBirth || "";
+  const candidateGender = application.candidateGender || candidate?.gender || "";
+  const candidateCitizenId = application.candidateCitizenId || candidate?.citizenId || "";
+  const candidateAddress = application.candidateAddress || candidate?.address || "";
+  const candidateCity = application.candidateCity || candidate?.city || "";
+  const candidateHighSchool = application.candidateHighSchool || candidate?.highSchool || "";
+  const candidateGraduationYear = application.candidateGraduationYear || candidate?.graduationYear || undefined;
   const university = getUniversityById(application.universityId);
   const major = getMajorById(application.majorId);
   const admissionRound = application.admissionRoundId ? getAdmissionRoundById(application.admissionRoundId) : undefined;
@@ -230,12 +240,25 @@ export const AdminApplicationDetail: React.FC = () => {
     },
   ];
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    approveApplication(application.id, currentUser.id);
+    try {
+      const updated = await approveApplication(application.id, currentUser.id);
+      if (updated) {
+        // if backend didn't populate reviewedAt/reviewedBy, set them locally for immediate UI feedback
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Approve failed', e);
+    }
 
     try {
       if (candidate) {
@@ -260,12 +283,24 @@ export const AdminApplicationDetail: React.FC = () => {
     message.success("Duyệt hồ sơ thành công");
   };
 
-  const handleRejectSubmit = (values: { reason: string }) => {
+  const handleRejectSubmit = async (values: { reason: string }) => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    rejectApplication(application.id, currentUser.id, values.reason);
+    try {
+      const updated = await rejectApplication(application.id, currentUser.id, values.reason);
+      if (updated) {
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Reject failed', e);
+    }
 
     try {
       if (candidate) {
@@ -428,18 +463,18 @@ export const AdminApplicationDetail: React.FC = () => {
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card title="Thông tin thí sinh" style={{ marginBottom: 24 }}>
-            {candidate ? (
+            {candidate || candidateName ? (
               <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
-                <Descriptions.Item label="Họ tên" span={2}><strong>{candidate.fullName || "Chưa cập nhật"}</strong></Descriptions.Item>
-                <Descriptions.Item label="Ngày sinh">{candidate.dateOfBirth ? formatDate(candidate.dateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Giới tính">{candidate.gender ? genderMap[candidate.gender] : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="CCCD">{candidate.citizenId || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Số điện thoại">{candidate.phone || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Email" span={2}>{candidate.email || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ" span={2}>{candidate.address || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Thành phố">{candidate.city || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Trường THPT">{candidate.highSchool || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Năm tốt nghiệp">{candidate.graduationYear || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Họ tên" span={2}><strong>{candidateName}</strong></Descriptions.Item>
+                <Descriptions.Item label="Ngày sinh">{candidateDateOfBirth ? formatDate(candidateDateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Giới tính">{candidateGender ? genderMap[candidateGender] : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="CCCD">{candidateCitizenId || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">{candidatePhone}</Descriptions.Item>
+                <Descriptions.Item label="Email" span={2}>{candidateEmail}</Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ" span={2}>{candidateAddress || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Thành phố">{candidateCity || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Trường THPT">{candidateHighSchool || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Năm tốt nghiệp">{candidateGraduationYear || "Chưa cập nhật"}</Descriptions.Item>
               </Descriptions>
             ) : (
               <EmptyState description="Không rõ thí sinh" />

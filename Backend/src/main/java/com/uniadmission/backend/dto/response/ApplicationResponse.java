@@ -16,6 +16,26 @@ public class ApplicationResponse {
     private Long id;
     @Schema(example = "1")
     private Long candidateId;
+    @Schema(example = "Nguyễn Văn A")
+    private String candidateName;
+    @Schema(example = "student@example.com")
+    private String candidateEmail;
+    @Schema(example = "0912345678")
+    private String candidatePhone;
+    @Schema(example = "2006-08-15")
+    private String candidateDateOfBirth;
+    @Schema(example = "male")
+    private String candidateGender;
+    @Schema(example = "079201001234")
+    private String candidateCitizenId;
+    @Schema(example = "123 Lê Lợi, Quận 1, TP.HCM")
+    private String candidateAddress;
+    @Schema(example = "TP.HCM")
+    private String candidateCity;
+    @Schema(example = "THPT Nguyễn Huệ")
+    private String candidateHighSchool;
+    @Schema(example = "2024")
+    private Integer candidateGraduationYear;
     @Schema(example = "3")
     private Long majorId;
     @Schema(example = "Công nghệ thông tin")

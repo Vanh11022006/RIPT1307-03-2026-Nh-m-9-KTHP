@@ -43,6 +43,16 @@ export interface Application {
   id: string;
   applicationCode: string;
   candidateId: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  candidateDateOfBirth?: string;
+  candidateGender?: string;
+  candidateCitizenId?: string;
+  candidateAddress?: string;
+  candidateCity?: string;
+  candidateHighSchool?: string;
+  candidateGraduationYear?: number;
   universityId: string;
   majorId: string;
   subjectGroupCode: string;

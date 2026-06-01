@@ -131,7 +131,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cập nhật trạng thái hồ sơ", description = "Admin cập nhật trạng thái và ghi chú cho hồ sơ")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "UpdateStatusExample", value = "{\"status\":\"APPROVED\",\"notes\":\"Đủ điều kiện\",\"adminId\":1}")))
-    public ResponseEntity<ApiResponse<Void>> updateStatus(
+    public ResponseEntity<ApiResponse<com.uniadmission.backend.dto.response.ApplicationResponse>> updateStatus(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
@@ -139,8 +139,10 @@ public class ApplicationController {
         String notes = payload.containsKey("notes") ? payload.get("notes").toString() : null;
         Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
 
-        applicationService.updateApplicationStatus(id, status, notes, adminId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", null));
+        com.uniadmission.backend.entity.Application updated = applicationService.updateApplicationStatus(id, status,
+                notes, adminId);
+        com.uniadmission.backend.dto.response.ApplicationResponse resp = mapToResponse(updated);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", resp));
     }
 
     @PostMapping("/admin-bulk-status")
@@ -223,7 +225,7 @@ public class ApplicationController {
     @GetMapping("/admin-list")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Danh sách hồ sơ cho admin", description = "Phân trang, lọc theo trạng thái, trường, ngành và đợt xét tuyển")
-    public ResponseEntity<ApiResponse<Page<Application>>> getAdminApplications(
+    public ResponseEntity<ApiResponse<Page<ApplicationResponse>>> getAdminApplications(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long universityId,
             @RequestParam(required = false) Long majorId,
@@ -237,7 +239,8 @@ public class ApplicationController {
 
         Page<Application> applications = applicationService.getApplicationsForAdmin(parsedStatus, universityId, majorId,
                 admissionRoundId, page, size);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", applications));
+        Page<ApplicationResponse> responsePage = applications.map(this::mapToResponse);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", responsePage));
     }
 
     @GetMapping("/admin-statistics")
@@ -323,6 +326,26 @@ public class ApplicationController {
         return ApplicationResponse.builder()
                 .id(application.getId())
                 .candidateId(application.getCandidate() != null ? application.getCandidate().getId() : null)
+                .candidateName(application.getCandidate() != null && application.getCandidate().getUser() != null
+                        ? application.getCandidate().getUser().getFullName()
+                        : null)
+                .candidateEmail(application.getCandidate() != null && application.getCandidate().getUser() != null
+                        ? application.getCandidate().getUser().getEmail()
+                        : null)
+                .candidatePhone(application.getCandidate() != null ? application.getCandidate().getPhone() : null)
+                .candidateDateOfBirth(
+                        application.getCandidate() != null && application.getCandidate().getBirthDate() != null
+                                ? application.getCandidate().getBirthDate().toString()
+                                : null)
+                .candidateGender(application.getCandidate() != null ? application.getCandidate().getGender() : null)
+                .candidateCitizenId(
+                        application.getCandidate() != null ? application.getCandidate().getCitizenId() : null)
+                .candidateAddress(application.getCandidate() != null ? application.getCandidate().getAddress() : null)
+                .candidateCity(application.getCandidate() != null ? application.getCandidate().getCity() : null)
+                .candidateHighSchool(
+                        application.getCandidate() != null ? application.getCandidate().getHighSchoolName() : null)
+                .candidateGraduationYear(
+                        application.getCandidate() != null ? application.getCandidate().getGraduationYear() : null)
                 .majorId(application.getMajor() != null ? application.getMajor().getId() : null)
                 .majorName(application.getMajor() != null ? application.getMajor().getName() : null)
                 .universityId(application.getMajor() != null && application.getMajor().getUniversity() != null

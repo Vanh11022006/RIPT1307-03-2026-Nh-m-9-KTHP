@@ -48,7 +48,7 @@ public class AdminController {
         @PutMapping("/applications/{id}/status")
         @Operation(summary = "Cập nhật trạng thái hồ sơ", description = "Admin cập nhật trạng thái hồ sơ từ trang quản trị")
         @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "AdminStatusExample", value = "{\"status\":\"APPROVED\",\"notes\":\"Đủ điều kiện\",\"adminId\":1}")))
-        public ResponseEntity<ApiResponse<Void>> updateApplicationStatus(
+        public ResponseEntity<ApiResponse<com.uniadmission.backend.dto.response.ApplicationResponse>> updateApplicationStatus(
                         @PathVariable Long id,
                         @RequestBody Map<String, Object> payload) {
 
