@@ -338,6 +338,19 @@ interface ApplicationState {
     reviewerCount?: number
   ) => Promise<ApplicationReviewSummary | null>;
   bulkUpdateApplicationStatus: (ids: string[], status: string, adminId: string, note?: string) => Promise<void>;
+  bulkSendCustomEmail: (
+    ids: string[],
+    subject: string,
+    message: string,
+    html: boolean,
+    adminId: string
+  ) => Promise<{
+    requestedApplicationCount?: number;
+    recipientCount?: number;
+    skippedApplicationIds?: string[];
+    html?: boolean;
+    adminId?: string;
+  }>;
   getAdminApplicationsCsv: (filters?: {
     status?: string;
     universityId?: string;
@@ -672,6 +685,24 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to bulk update application status:", error);
+      throw error;
+    }
+  },
+
+  bulkSendCustomEmail: async (ids, subject, message, html, adminId) => {
+    try {
+      const response = await axiosClient.post("/admin/bulk-email", {
+        applicationIds: ids,
+        subject,
+        message,
+        html,
+        adminId,
+      });
+
+      const payload = response?.data ?? response;
+      return payload?.data ?? payload ?? {};
+    } catch (error) {
+      console.error("Failed to send bulk custom email:", error);
       throw error;
     }
   },

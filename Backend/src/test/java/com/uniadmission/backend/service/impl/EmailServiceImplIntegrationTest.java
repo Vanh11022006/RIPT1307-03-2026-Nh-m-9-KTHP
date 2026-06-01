@@ -123,6 +123,26 @@ class EmailServiceImplIntegrationTest {
         assertThat(html).contains("Công nghệ thông tin");
     }
 
+    @Test
+    void sendCustomEmail_sendsProvidedSubjectAndBody() throws Exception {
+        (targetEmailService != null ? targetEmailService : emailService).sendCustomEmail(
+                "student@example.com",
+                "[UniAdmission] Thông báo riêng",
+                "Nội dung tùy chỉnh dành cho thí sinh",
+                false);
+        long start = System.currentTimeMillis();
+        while (lastSentMessage == null && System.currentTimeMillis() - start < 2000) {
+            Thread.sleep(50);
+        }
+
+        verify(mailSender).send(any(MimeMessage.class));
+        MimeMessage message = lastSentMessage;
+        String content = String.valueOf(message.getContent());
+
+        assertThat(message.getSubject()).contains("Thông báo riêng");
+        assertThat(content).contains("Nội dung tùy chỉnh dành cho thí sinh");
+    }
+
     private String extractHtml(MimeMessage message) throws Exception {
         Object content = message.getContent();
         if (content instanceof Multipart) {

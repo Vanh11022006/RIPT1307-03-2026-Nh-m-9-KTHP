@@ -228,6 +228,36 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
+    public void sendCustomEmail(String to, String subject, String message, boolean html) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            try {
+                helper.setFrom(fromAddress, "UniAdmission");
+            } catch (UnsupportedEncodingException uee) {
+                helper.setFrom(fromAddress);
+            }
+            helper.setTo(to);
+            helper.setSubject(subject != null ? subject : "[UniAdmission]");
+            helper.setText(message != null ? message : "", html);
+            sendMimeMessageWithRetry(mimeMessage, "custom email");
+        } catch (MessagingException ex) {
+            log.warn("Không gửi được email tùy chỉnh HTML, thử gửi text fallback: {}", ex.getMessage());
+            try {
+                SimpleMailMessage fallbackMessage = new SimpleMailMessage();
+                fallbackMessage.setFrom(fromAddress);
+                fallbackMessage.setTo(to);
+                fallbackMessage.setSubject(subject != null ? subject : "[UniAdmission]");
+                fallbackMessage.setText(message != null ? message : "");
+                sendSimpleMessageWithRetry(fallbackMessage, "custom email fallback");
+            } catch (Exception e) {
+                log.error("Gửi email tùy chỉnh fallback thất bại: {}", e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    @Async
     public void sendApplicationStatusEmail(String to, String candidateName, String status) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
