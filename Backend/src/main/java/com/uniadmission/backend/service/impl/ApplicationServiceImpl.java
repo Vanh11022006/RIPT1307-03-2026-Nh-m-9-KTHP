@@ -103,6 +103,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.setTotalScore(request.getTotalScore());
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
+                if (request.getAdmissionMethod() != null) {
+                        application.setAdmissionMethod(request.getAdmissionMethod());
+                }
                 try {
                         LOGGER.info("Persisting scores for application request: {}", request.getScores());
                         if (request.getScores() != null) {
@@ -637,6 +640,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         // ignore if user lookup fails
                 }
                 application.setReviewedAt(java.time.LocalDateTime.now());
+        application.setAdminNote(notes);
                 LOGGER.info("Applying status update for application id={} - reviewedBy='{}', reviewedAt='{}' (before save)",
                                 application.getId(), application.getReviewedBy(), application.getReviewedAt());
                 applicationRepository.save(application);

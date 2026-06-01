@@ -6,6 +6,7 @@ import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsRes
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import com.uniadmission.backend.repository.ApplicationRepository;
+import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.service.ApplicationService;
 import com.uniadmission.backend.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +37,7 @@ public class AdminController {
         private final ApplicationService applicationService;
         private final ApplicationRepository applicationRepository;
         private final EmailService emailService;
+        private final UserRepository userRepository;
 
         @GetMapping("/applications")
         @Operation(summary = "Danh sách hồ sơ cho admin", description = "Lấy danh sách hồ sơ có phân trang và lọc theo trạng thái, trường, ngành và đợt")
@@ -136,5 +138,46 @@ public class AdminController {
                 result.put("adminId", request.getAdminId());
 
                 return ResponseEntity.ok(new ApiResponse<>(true, "Gửi email hàng loạt thành công", result));
+        }
+
+        @GetMapping("/users")
+        @Operation(summary = "Danh sách người dùng", description = "Lấy toàn bộ danh sách tài khoản trong hệ thống")
+        public ResponseEntity<ApiResponse<java.util.List<com.uniadmission.backend.entity.User>>> getAllUsers() {
+                java.util.List<com.uniadmission.backend.entity.User> users = userRepository.findAll();
+                return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách người dùng thành công", users));
+        }
+
+        @PutMapping("/users/{id}/role")
+        @Operation(summary = "Cập nhật vai trò người dùng", description = "Admin thay đổi role của một tài khoản")
+        public ResponseEntity<ApiResponse<Void>> updateUserRole(
+                        @PathVariable Long id,
+                        @RequestBody java.util.Map<String, String> payload) {
+                String newRole = payload.get("role");
+                if (newRole == null || newRole.trim().isEmpty()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Role không được để trống", null));
+                }
+                com.uniadmission.backend.entity.User user = userRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng id=" + id));
+                user.setRole(newRole.trim().toLowerCase());
+                userRepository.save(user);
+                return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật role thành công", null));
+        }
+
+        @PutMapping("/users/{id}/status")
+        @Operation(summary = "Kích hoạt / khóa tài khoản", description = "Admin thay đổi trạng thái active/inactive của một tài khoản")
+        public ResponseEntity<ApiResponse<Void>> updateUserStatus(
+                        @PathVariable Long id,
+                        @RequestBody java.util.Map<String, String> payload) {
+                String newStatus = payload.get("status");
+                if (newStatus == null || newStatus.trim().isEmpty()) {
+                        return ResponseEntity.badRequest()
+                                        .body(new ApiResponse<>(false, "Status không được để trống", null));
+                }
+                com.uniadmission.backend.entity.User user = userRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng id=" + id));
+                user.setStatus(newStatus.trim().toLowerCase());
+                userRepository.save(user);
+                return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật trạng thái thành công", null));
         }
 }

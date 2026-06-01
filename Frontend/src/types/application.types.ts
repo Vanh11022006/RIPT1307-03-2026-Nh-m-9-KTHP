@@ -68,6 +68,7 @@ export interface Application {
   status: ApplicationStatus;
   candidateNote?: string;
   adminNote?: string;
+  admissionMethod?: string;
   submittedAt: string;
   reviewedAt?: string;
   reviewedBy?: string;

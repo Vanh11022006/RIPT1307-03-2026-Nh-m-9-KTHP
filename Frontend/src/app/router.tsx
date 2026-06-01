@@ -32,6 +32,7 @@ import { CandidateManagement } from "../pages/admin/CandidateManagement";
 import { ApplicationManagement } from "../pages/admin/ApplicationManagement";
 import { AdminApplicationDetail } from "../pages/admin/ApplicationDetail";
 import { NotificationLogList as AdminNotificationList } from "../pages/admin/NotificationLogList";
+import { UserRoleManagement } from "../pages/admin/UserRoleManagement";
 
 // Error Pages
 import { ForbiddenPage } from "../pages/errors/ForbiddenPage";
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
           { path: "applications", element: <ApplicationManagement /> },
           { path: "applications/:id", element: <AdminApplicationDetail /> },
           { path: "notifications", element: <AdminNotificationList /> },
+          { path: "users", element: <UserRoleManagement /> },
         ],
       },
     ],

@@ -373,6 +373,8 @@ public class ApplicationController {
                 .submittedAt(
                         application.getSubmissionDate() != null ? application.getSubmissionDate().toString() : null)
                 .status(application.getStatus() != null ? application.getStatus().name().toLowerCase() : null)
+                .adminNote(application.getAdminNote())
+                .admissionMethod(application.getAdmissionMethod())
                 .build();
     }
 }
