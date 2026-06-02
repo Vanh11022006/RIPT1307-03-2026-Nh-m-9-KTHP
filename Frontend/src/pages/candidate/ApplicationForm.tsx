@@ -61,7 +61,31 @@ export const ApplicationForm: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [loadedApplication, setLoadedApplication] = useState<Application | null>(null);
 
+  const selectedAdmissionRoundId = Form.useWatch("admissionRoundId", form);
+
   const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
+
+  const availableAdmissionMethods = useMemo(() => {
+    if (!selectedAdmissionRoundId) return [];
+    const safeRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
+    const round = safeRounds.find(r => String(r.id) === String(selectedAdmissionRoundId));
+    
+    const allMethods = [
+      { value: "THPT_SCORE", label: "Điểm thi THPT Quốc gia" },
+      { value: "SCHOOL_TRANSCRIPT", label: "Xét học bạ THPT" },
+      { value: "COMPETENCY_ASSESSMENT", label: "Đánh giá năng lực" },
+      { value: "THINKING_ASSESSMENT", label: "Đánh giá tư duy" },
+      { value: "TALENT_ADMISSION", label: "Xét tuyển tài năng" },
+      { value: "INTERVIEW", label: "Phỏng vấn / Xét tuyển thẳng" },
+    ];
+
+    if (!round || !round.admissionMethods) {
+      return allMethods;
+    }
+
+    const allowed = round.admissionMethods.split(",").map(s => s.trim());
+    return allMethods.filter(m => allowed.includes(m.value));
+  }, [selectedAdmissionRoundId, admissionRounds]);
 
   const isProfileComplete = useMemo(() => {
     if (!candidate) return false;
@@ -163,6 +187,10 @@ export const ApplicationForm: React.FC = () => {
   }, [editId, fetchApplicationById, form]);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
+    if (changedValues.admissionRoundId) {
+      form.setFieldsValue({ admissionMethod: undefined });
+    }
+
     if (changedValues.universityId) {
       setSelectedUniversityId(changedValues.universityId);
       setSelectedMajorId(undefined);
@@ -491,11 +519,10 @@ export const ApplicationForm: React.FC = () => {
                 label="Phương thức xét tuyển"
                 rules={[{ required: true, message: "Vui lòng chọn phương thức xét tuyển" }]}
               >
-                <Select placeholder="Chọn phương thức">
-                  <Option value="THPT_SCORE">Điểm thi THPT Quốc gia</Option>
-                  <Option value="SCHOOL_TRANSCRIPT">Xét học bạ THPT</Option>
-                  <Option value="COMPETENCY_ASSESSMENT">Đánh giá năng lực</Option>
-                  <Option value="INTERVIEW">Phỏng vấn / Xét tuyển thẳng</Option>
+                <Select placeholder="Chọn phương thức" disabled={!selectedAdmissionRoundId}>
+                  {availableAdmissionMethods.map(m => (
+                    <Option key={m.value} value={m.value}>{m.label}</Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>

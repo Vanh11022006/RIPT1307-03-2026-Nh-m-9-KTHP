@@ -326,6 +326,8 @@ export const ApplicationDetail: React.FC = () => {
                     THPT_SCORE: "Điểm thi THPT Quốc gia",
                     SCHOOL_TRANSCRIPT: "Xét học bạ THPT",
                     COMPETENCY_ASSESSMENT: "Đánh giá năng lực",
+                    THINKING_ASSESSMENT: "Đánh giá tư duy",
+                    TALENT_ADMISSION: "Xét tuyển tài năng",
                     INTERVIEW: "Phỏng vấn / Xét tuyển thẳng",
                   }[application.admissionMethod] ?? application.admissionMethod}
                 </Descriptions.Item>

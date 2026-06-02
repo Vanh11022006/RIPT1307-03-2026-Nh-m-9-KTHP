@@ -110,6 +110,9 @@ public class AdmissionRound {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "admission_methods", columnDefinition = "TEXT")
+    private String admissionMethods;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
