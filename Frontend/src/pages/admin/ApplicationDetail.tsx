@@ -281,6 +281,7 @@ export const AdminApplicationDetail: React.FC = () => {
     }
 
     message.success("Duyệt hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
   const handleRejectSubmit = async (values: { reason: string }) => {
@@ -325,6 +326,7 @@ export const AdminApplicationDetail: React.FC = () => {
     setIsRejectModalOpen(false);
     form.resetFields();
     message.success("Từ chối hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
   const renderStatusAlert = () => {
@@ -501,6 +503,8 @@ export const AdminApplicationDetail: React.FC = () => {
                     THPT_SCORE: "Điểm thi THPT Quốc gia",
                     SCHOOL_TRANSCRIPT: "Xét học bạ THPT",
                     COMPETENCY_ASSESSMENT: "Đánh giá năng lực",
+                    THINKING_ASSESSMENT: "Đánh giá tư duy",
+                    TALENT_ADMISSION: "Xét tuyển tài năng",
                     INTERVIEW: "Phỏng vấn / Xét tuyển thẳng",
                   }[application.admissionMethod] ?? application.admissionMethod}
                 </Descriptions.Item>

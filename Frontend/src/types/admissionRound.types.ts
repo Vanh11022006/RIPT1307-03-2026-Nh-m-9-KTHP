@@ -9,6 +9,7 @@ export interface AdmissionRound {
   endDate: string;
   status: AdmissionRoundStatus;
   description?: string;
+  admissionMethods?: string;
   createdAt: string;
   updatedAt: string;
 }

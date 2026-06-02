@@ -65,9 +65,34 @@ public class AdminController {
                         @PathVariable Long id,
                         @RequestBody Map<String, Object> payload) {
 
-                ApplicationStatus status = ApplicationStatus.valueOf(payload.get("status").toString().toUpperCase());
-                String notes = payload.containsKey("notes") ? payload.get("notes").toString() : null;
-                Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
+                Object statusObj = payload != null ? payload.get("status") : null;
+                if (statusObj == null) {
+                        return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không được để trống", null));
+                }
+                ApplicationStatus status;
+                try {
+                        status = ApplicationStatus.valueOf(statusObj.toString().trim().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không hợp lệ", null));
+                }
+
+                Object notesObj = payload != null ? payload.get("notes") : null;
+                String notes = notesObj != null ? notesObj.toString() : null;
+
+                Object adminIdObj = payload != null ? payload.get("adminId") : null;
+                Long adminId = 1L;
+                if (adminIdObj != null) {
+                        try {
+                                String adminIdStr = adminIdObj.toString().trim();
+                                if (adminIdStr.contains(".")) {
+                                        adminId = Double.valueOf(adminIdStr).longValue();
+                                } else {
+                                        adminId = Long.valueOf(adminIdStr);
+                                }
+                        } catch (Exception e) {
+                                // keep default 1L
+                        }
+                }
 
                 applicationService.updateApplicationStatus(id, status, notes, adminId);
                 return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật trạng thái hồ sơ thành công", null));

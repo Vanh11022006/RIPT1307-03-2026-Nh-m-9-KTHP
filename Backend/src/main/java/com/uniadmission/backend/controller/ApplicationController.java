@@ -135,9 +135,34 @@ public class ApplicationController {
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
-        ApplicationStatus status = ApplicationStatus.valueOf(payload.get("status").toString().toUpperCase());
-        String notes = payload.containsKey("notes") ? payload.get("notes").toString() : null;
-        Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
+        Object statusObj = payload != null ? payload.get("status") : null;
+        if (statusObj == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không được để trống", null));
+        }
+        ApplicationStatus status;
+        try {
+            status = ApplicationStatus.valueOf(statusObj.toString().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không hợp lệ", null));
+        }
+
+        Object notesObj = payload != null ? payload.get("notes") : null;
+        String notes = notesObj != null ? notesObj.toString() : null;
+
+        Object adminIdObj = payload != null ? payload.get("adminId") : null;
+        Long adminId = 1L;
+        if (adminIdObj != null) {
+            try {
+                String adminIdStr = adminIdObj.toString().trim();
+                if (adminIdStr.contains(".")) {
+                    adminId = Double.valueOf(adminIdStr).longValue();
+                } else {
+                    adminId = Long.valueOf(adminIdStr);
+                }
+            } catch (Exception e) {
+                // keep default 1L
+            }
+        }
 
         com.uniadmission.backend.entity.Application updated = applicationService.updateApplicationStatus(id, status,
                 notes, adminId);
@@ -149,7 +174,15 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cập nhật trạng thái hàng loạt", description = "Admin cập nhật trạng thái cho nhiều hồ sơ cùng lúc")
     public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(@RequestBody ApplicationBulkStatusRequest request) {
-        ApplicationStatus status = ApplicationStatus.valueOf(request.getStatus().trim().toUpperCase());
+        if (request == null || request.getStatus() == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không được để trống", null));
+        }
+        ApplicationStatus status;
+        try {
+            status = ApplicationStatus.valueOf(request.getStatus().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không hợp lệ", null));
+        }
         Long adminId = request.getAdminId() != null ? request.getAdminId() : 1L;
         applicationService.bulkUpdateApplicationStatus(request.getIds(), status, request.getNotes(), adminId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Bulk update status success", null));
@@ -211,11 +244,33 @@ public class ApplicationController {
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
-        String priorityGroup = payload.containsKey("priorityGroup") ? payload.get("priorityGroup").toString() : null;
-        Double priorityScore = payload.containsKey("priorityScore") && payload.get("priorityScore") != null
-                ? Double.valueOf(payload.get("priorityScore").toString())
-                : null;
-        Long adminId = payload.containsKey("adminId") ? Long.valueOf(payload.get("adminId").toString()) : 1L;
+        Object priorityGroupObj = payload != null ? payload.get("priorityGroup") : null;
+        String priorityGroup = priorityGroupObj != null ? priorityGroupObj.toString() : null;
+
+        Object priorityScoreObj = payload != null ? payload.get("priorityScore") : null;
+        Double priorityScore = null;
+        if (priorityScoreObj != null) {
+            try {
+                priorityScore = Double.valueOf(priorityScoreObj.toString());
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        Object adminIdObj = payload != null ? payload.get("adminId") : null;
+        Long adminId = 1L;
+        if (adminIdObj != null) {
+            try {
+                String adminIdStr = adminIdObj.toString().trim();
+                if (adminIdStr.contains(".")) {
+                    adminId = Double.valueOf(adminIdStr).longValue();
+                } else {
+                    adminId = Long.valueOf(adminIdStr);
+                }
+            } catch (Exception e) {
+                // keep default 1L
+            }
+        }
 
         applicationService.updateApplicationPriority(id, priorityGroup, priorityScore, adminId);
 

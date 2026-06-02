@@ -88,7 +88,8 @@ export const AdmissionRoundList: React.FC = () => {
       startDate: record.startDate ? dayjs(record.startDate) : null,
       endDate: record.endDate ? dayjs(record.endDate) : null,
       status: record.status,
-      description: record.description
+      description: record.description,
+      admissionMethods: record.admissionMethods ? record.admissionMethods.split(",") : []
     });
     setIsModalVisible(true);
   };
@@ -121,6 +122,7 @@ export const AdmissionRoundList: React.FC = () => {
         endDate: values.endDate.toISOString(),
         status: values.status,
         description: values.description?.trim(),
+        admissionMethods: values.admissionMethods ? values.admissionMethods.join(",") : "",
       };
 
       if (editingRound) {
@@ -188,6 +190,29 @@ export const AdmissionRoundList: React.FC = () => {
       render: (_: any, record: any) => {
         const count = safeApplications.filter((app) => app.admissionRoundId === record.id).length;
         return <Text strong>{count}</Text>;
+      }
+    },
+    {
+      title: "Phương thức xét tuyển",
+      dataIndex: "admissionMethods",
+      key: "admissionMethods",
+      render: (methods: string) => {
+        if (!methods) return <Tag color="warning">Tất cả</Tag>;
+        const allMethods: Record<string, string> = {
+          THPT_SCORE: "THPT",
+          SCHOOL_TRANSCRIPT: "Học bạ",
+          COMPETENCY_ASSESSMENT: "ĐGNL",
+          THINKING_ASSESSMENT: "ĐG tư duy",
+          TALENT_ADMISSION: "Tài năng",
+          INTERVIEW: "Phỏng vấn/Xét tuyển thẳng",
+        };
+        return (
+          <Space size={[0, 4]} wrap style={{ maxWidth: 200 }}>
+            {methods.split(",").map(m => (
+              <Tag color="cyan" key={m}>{allMethods[m] || m}</Tag>
+            ))}
+          </Space>
+        );
       }
     },
     {
@@ -365,6 +390,21 @@ export const AdmissionRoundList: React.FC = () => {
               <Option value="upcoming">Sắp diễn ra</Option>
               <Option value="active">Đang diễn ra</Option>
               <Option value="closed">Đã kết thúc</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="admissionMethods"
+            label="Các phương thức xét tuyển chấp nhận trong đợt"
+            rules={[{ required: true, message: "Vui lòng chọn ít nhất một phương thức" }]}
+          >
+            <Select mode="multiple" placeholder="Chọn các phương thức xét tuyển" style={{ width: "100%" }}>
+              <Option value="THPT_SCORE">Điểm thi THPT Quốc gia</Option>
+              <Option value="SCHOOL_TRANSCRIPT">Xét học bạ THPT</Option>
+              <Option value="COMPETENCY_ASSESSMENT">Đánh giá năng lực</Option>
+              <Option value="THINKING_ASSESSMENT">Đánh giá tư duy</Option>
+              <Option value="TALENT_ADMISSION">Xét tuyển tài năng</Option>
+              <Option value="INTERVIEW">Phỏng vấn / Xét tuyển thẳng</Option>
             </Select>
           </Form.Item>
 
