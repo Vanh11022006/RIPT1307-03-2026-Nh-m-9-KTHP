@@ -342,12 +342,12 @@ public class ApplicationController {
         if (application == null)
             return null;
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        java.util.Map<String, Double> parsedScores = new java.util.HashMap<>();
+        java.util.Map<String, Object> parsedScores = new java.util.HashMap<>();
         try {
             if (application.getScores() != null && !application.getScores().trim().isEmpty()
                     && !"null".equalsIgnoreCase(application.getScores().trim())) {
-                java.util.Map<String, Double> temp = mapper.readValue(application.getScores(),
-                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Double>>() {
+                java.util.Map<String, Object> temp = mapper.readValue(application.getScores(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {
                         });
                 if (temp != null) {
                     parsedScores.putAll(temp);

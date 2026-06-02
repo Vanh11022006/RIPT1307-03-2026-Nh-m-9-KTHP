@@ -16,6 +16,7 @@ import { formatDate, formatDateTime } from "../../utils/date";
 import { formatFileSize } from "../../utils/file";
 import { getPriorityGroupLabel } from "../../constants/priorityGroups";
 import { getEvidenceCategoryLabel } from "../../constants/evidenceCategories";
+import { SUBJECT_NAMES } from "../../constants/admissionMethodConfig";
 import { Empty } from "antd";
 
 const { Title, Text } = Typography;
@@ -173,17 +174,46 @@ export const AdminApplicationDetail: React.FC = () => {
   const safeScores = application.scores ?? {};
   const scoreData = Object.entries(safeScores).map(([subject, score]) => ({
     subject,
-    score: Number(score)
-  })).filter((item) => Number.isFinite(item.score));
+    score
+  }));
+
+  const renderScoreValue = (key: string, val: any) => {
+    if (val === undefined || val === null) return "-";
+    if (key === "gnlType") {
+      return val === "hcm" ? "ĐHQG TP.HCM" : "ĐHQG Hà Nội";
+    }
+    if (key === "hsgAward") {
+      return val === true || val === "true" || val === 1 ? "Có giải" : "Không";
+    }
+    if (key === "hsgLevel") {
+      return val === "national" ? "Cấp Quốc gia" : val === "provincial" ? "Cấp Tỉnh/Thành phố" : val;
+    }
+    if (key === "directAdmission") {
+      return val === "pass" ? "ĐẠT (Xét tuyển thẳng)" : val === "fail" ? "KHÔNG ĐẠT" : val;
+    }
+    if (typeof val === "number") {
+      return val.toFixed(2);
+    }
+    const num = Number(val);
+    if (!isNaN(num)) {
+      return num.toFixed(2);
+    }
+    return String(val);
+  };
 
   const scoreColumns = [
-    { title: "Môn thi", dataIndex: "subject", key: "subject" },
+    { 
+      title: "Môn thi / Trường điểm", 
+      dataIndex: "subject", 
+      key: "subject",
+      render: (subject: string) => SUBJECT_NAMES[subject] || subject
+    },
     {
-      title: "Điểm",
+      title: "Điểm / Giá trị",
       dataIndex: "score",
       key: "score",
       align: "center" as const,
-      render: (val: number | string | undefined) => <Text strong>{Number(val ?? 0).toFixed(2)}</Text>
+      render: (val: any, record: any) => <Text strong>{renderScoreValue(record.subject, val)}</Text>
     }
   ];
 

@@ -13,6 +13,7 @@ import { formatDateTime } from "../../utils/date";
 import { formatFileSize } from "../../utils/file";
 import { getPriorityGroupLabel } from "../../constants/priorityGroups";
 import { getEvidenceCategoryLabel } from "../../constants/evidenceCategories";
+import { SUBJECT_NAMES } from "../../constants/admissionMethodConfig";
 import { PaperClipOutlined, CheckCircleOutlined, SyncOutlined, CloseCircleOutlined, UploadOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -147,18 +148,6 @@ export const ApplicationDetail: React.FC = () => {
   const university = getUniversityById(application.universityId);
   const major = getMajorById(application.majorId);
   const admissionRound = application.admissionRoundId ? getAdmissionRoundById(application.admissionRoundId) : undefined;
-
-  const subjectNames: Record<string, string> = {
-    math: "Toán học",
-    physics: "Vật lý",
-    chemistry: "Hóa học",
-    literature: "Ngữ văn",
-    english: "Tiếng Anh",
-    biology: "Sinh học",
-    history: "Lịch sử",
-    geography: "Địa lý",
-    civicEducation: "Giáo dục công dân"
-  };
 
   const safeEvidenceFiles = Array.isArray(application.evidenceFiles) ? application.evidenceFiles : [];
 
@@ -347,20 +336,48 @@ export const ApplicationDetail: React.FC = () => {
             </Descriptions>
 
             <Title level={5}>Điểm thành phần</Title>
-            <div style={{ marginBottom: 12 }}>
-              <Tag color="cyan">Tổ hợp: {application.subjectGroupCode || "Chưa cập nhật"}</Tag>
-            </div>
+            {application.subjectGroupCode && (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="cyan">Tổ hợp: {application.subjectGroupCode}</Tag>
+              </div>
+            )}
             <Card type="inner" style={{ marginBottom: 24 }}>
               {Object.keys(application.scores || {}).length > 0 ? (
                 <Row gutter={[16, 16]}>
-                  {Object.entries(application.scores || {}).map(([subject, score]) => (
-                    <Col xs={12} sm={8} md={6} key={subject}>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <Text type="secondary">{subjectNames[subject] || subject}</Text>
-                        <Text strong style={{ fontSize: 16 }}>{score !== undefined ? score.toFixed(2) : "-"}</Text>
-                      </div>
-                    </Col>
-                  ))}
+                  {Object.entries(application.scores || {}).map(([subject, score]) => {
+                    const renderScoreValue = (key: string, val: any) => {
+                      if (val === undefined || val === null) return "-";
+                      if (key === "gnlType") {
+                        return val === "hcm" ? "ĐHQG TP.HCM" : "ĐHQG Hà Nội";
+                      }
+                      if (key === "hsgAward") {
+                        return val === true || val === "true" || val === 1 ? "Có giải" : "Không";
+                      }
+                      if (key === "hsgLevel") {
+                        return val === "national" ? "Cấp Quốc gia" : val === "provincial" ? "Cấp Tỉnh/Thành phố" : val;
+                      }
+                      if (key === "directAdmission") {
+                        return val === "pass" ? "ĐẠT (Xét tuyển thẳng)" : val === "fail" ? "KHÔNG ĐẠT" : val;
+                      }
+                      if (typeof val === "number") {
+                        return val.toFixed(2);
+                      }
+                      const num = Number(val);
+                      if (!isNaN(num)) {
+                        return num.toFixed(2);
+                      }
+                      return String(val);
+                    };
+
+                    return (
+                      <Col xs={12} sm={8} md={6} key={subject}>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <Text type="secondary">{SUBJECT_NAMES[subject] || subject}</Text>
+                          <Text strong style={{ fontSize: 16 }}>{renderScoreValue(subject, score)}</Text>
+                        </div>
+                      </Col>
+                    );
+                  })}
                 </Row>
               ) : (
                 <Empty description="Chưa có dữ liệu điểm" />
