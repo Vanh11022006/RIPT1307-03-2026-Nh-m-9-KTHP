@@ -25,7 +25,7 @@ public class ApplicationSubmitRequest {
     @Schema(example = "0.75")
     private Double priorityScore;
     @Schema(description = "Điểm thành phần theo môn học", example = "{\"toan\":8.5,\"van\":7.5,\"anh\":8.75}")
-    private java.util.Map<String, Double> scores;
+    private java.util.Map<String, Object> scores;
     @Schema(description = "Phương thức xét tuyển", example = "THPT_SCORE", allowableValues = {"THPT_SCORE", "SCHOOL_TRANSCRIPT", "COMPETENCY_ASSESSMENT", "THINKING_ASSESSMENT", "TALENT_ADMISSION", "INTERVIEW"})
     private String admissionMethod;
 }

@@ -61,7 +61,7 @@ public class ApplicationResponse {
     @Schema(example = "0.75")
     private Double priorityScore;
     @Schema(description = "Điểm thành phần theo môn", example = "{\"toan\":8.5,\"van\":7.5,\"anh\":8.75}")
-    private java.util.Map<String, Double> scores;
+    private java.util.Map<String, Object> scores;
     @Schema(example = "8.75")
     private Double reviewScoreAverage;
     @Schema(example = "3")
