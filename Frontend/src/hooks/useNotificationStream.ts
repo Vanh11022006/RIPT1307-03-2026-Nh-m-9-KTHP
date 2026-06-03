@@ -14,7 +14,7 @@ export const useNotificationStream = () => {
     }
 
     let isActive = true;
-    const baseUrl = axiosClient.defaults.baseURL || "http://localhost:8080/api";
+    const baseUrl = axiosClient.defaults.baseURL || "https://backend-production-eb2d.up.railway.app/api";
 
     getNotificationLogsByUserId(String(currentUser.id)).catch((error) => {
       console.error("Failed to bootstrap notification stream data", error);
