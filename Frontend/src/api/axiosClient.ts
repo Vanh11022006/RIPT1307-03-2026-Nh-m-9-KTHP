@@ -49,7 +49,7 @@ let refreshPromise: Promise<string> | null = null;
 
 // Khởi tạo instance của axios
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://backend-production-eb2d.up.railway.app/api',
   headers: {
     'Content-Type': 'application/json',
   },
