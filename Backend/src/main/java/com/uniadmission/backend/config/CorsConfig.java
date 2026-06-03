@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(@org.springframework.lang.NonNull CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOriginPatterns("http://localhost:5173", "http://127.0.0.1:5173")
+                        .allowedOriginPatterns("http://localhost:5173", "http://127.0.0.1:5173", "https://thltw-nhom9.netlify.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With")
                         .allowCredentials(true)
