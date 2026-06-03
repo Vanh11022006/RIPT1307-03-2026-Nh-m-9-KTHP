@@ -1,8 +1,11 @@
 FROM maven:3.8.5-openjdk-8 AS build
-COPY . .
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:8-jre-alpine
-COPY --from=build /target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app.jar"]
