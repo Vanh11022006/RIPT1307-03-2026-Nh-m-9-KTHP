@@ -6,11 +6,13 @@ import {
 import { SearchOutlined, BellOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, EyeOutlined } from "@ant-design/icons";
 import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { NotificationLog } from "../../types/notification.types";
 
 const { Title, Text } = Typography;
 
 export const NotificationLogList: React.FC = () => {
+  const { isDarkMode } = useTheme();
   const safeLogs = useNotificationLogStore(state => state.notificationLogs);
   const loading = useNotificationLogStore(state => state.loading);
   const getNotificationLogs = useNotificationLogStore(state => state.getNotificationLogs);
@@ -21,34 +23,48 @@ export const NotificationLogList: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [channelFilter, setChannelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [readFilter, setReadFilter] = useState("all");
   
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
+
+  const drawerThemeStyles = {
+    content: { background: isDarkMode ? "#0f172a" : "#ffffff" },
+    header: {
+      background: isDarkMode ? "#0f172a" : "#ffffff",
+      borderBottom: `1px solid ${isDarkMode ? "rgba(255,255,255,0.1)" : "#e2e8f0"}`
+    },
+    body: { background: isDarkMode ? "#0f172a" : "#ffffff" }
+  };
 
   useEffect(() => {
     getNotificationLogs();
   }, [getNotificationLogs]);
 
   // Statistics
-  const totalLogs = safeLogs.length;
-  const sentLogs = safeLogs.filter(log => log.status === "sent").length;
-  const pendingLogs = safeLogs.filter(log => log.status === "pending").length;
-  const failedLogs = safeLogs.filter(log => log.status === "failed").length;
+  const totalLogs = safeLogsArr.length;
+  const sentLogs = safeLogsArr.filter(log => log.status === "sent").length;
+  const pendingLogs = safeLogsArr.filter(log => log.status === "pending").length;
+  const failedLogs = safeLogsArr.filter(log => log.status === "failed").length;
 
   // Filtering
-  const filteredLogs = safeLogs.filter((log) => {
+  const filteredLogs = safeLogsArr.filter((log) => {
     const matchSearch = 
-      log.recipientName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.recipientEmail?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.subject?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.content?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.applicationId?.toLowerCase().includes(searchText.toLowerCase());
+      String(log.recipientName || "").toLowerCase().includes(searchText.toLowerCase()) ||
+      String(log.recipientEmail || "").toLowerCase().includes(searchText.toLowerCase()) ||
+      String(log.subject || "").toLowerCase().includes(searchText.toLowerCase()) ||
+      String(log.content || "").toLowerCase().includes(searchText.toLowerCase()) ||
+      String(log.applicationId || "").toLowerCase().includes(searchText.toLowerCase());
 
     const matchType = typeFilter === "all" || log.type === typeFilter;
     const matchChannel = channelFilter === "all" || log.channel === channelFilter;
     const matchStatus = statusFilter === "all" || log.status === statusFilter;
+    const matchRead = 
+      readFilter === "all" || 
+      (readFilter === "read" && log.isRead) || 
+      (readFilter === "unread" && !log.isRead);
 
-    return matchSearch && matchType && matchChannel && matchStatus;
+    return matchSearch && matchType && matchChannel && matchStatus && matchRead;
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Helpers
@@ -268,7 +284,7 @@ export const NotificationLogList: React.FC = () => {
               allowClear
             />
           </Col>
-          <Col xs={24} sm={8} md={5}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               style={{ width: "100%" }}
               value={typeFilter}
@@ -282,7 +298,7 @@ export const NotificationLogList: React.FC = () => {
               ]}
             />
           </Col>
-          <Col xs={24} sm={8} md={5}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               style={{ width: "100%" }}
               value={channelFilter}
@@ -294,7 +310,7 @@ export const NotificationLogList: React.FC = () => {
               ]}
             />
           </Col>
-          <Col xs={24} sm={8} md={6}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               style={{ width: "100%" }}
               value={statusFilter}
@@ -304,6 +320,18 @@ export const NotificationLogList: React.FC = () => {
                 { value: "sent", label: "Đã gửi" },
                 { value: "failed", label: "Gửi thất bại" },
                 { value: "pending", label: "Chờ gửi" },
+              ]}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              style={{ width: "100%" }}
+              value={readFilter}
+              onChange={setReadFilter}
+              options={[
+                { value: "all", label: "Tất cả trạng thái đọc" },
+                { value: "read", label: "Đã đọc" },
+                { value: "unread", label: "Chưa đọc" },
               ]}
             />
           </Col>
@@ -323,17 +351,13 @@ export const NotificationLogList: React.FC = () => {
       </Card>
 
       <Drawer
-        title={<span style={{ color: "#fff" }}>Chi tiết thông báo</span>}
+        title={<span style={{ color: isDarkMode ? "#fff" : "#0f172a" }}>Chi tiết thông báo</span>}
         placement="right"
         width={500}
         onClose={() => setDetailVisible(false)}
         open={detailVisible}
-        styles={{
-          content: { background: "#0f172a" },
-          header: { background: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.1)" },
-          body: { background: "#0f172a" }
-        }}
-        closeIcon={<CloseCircleOutlined style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }} />}
+        styles={drawerThemeStyles}
+        closeIcon={<CloseCircleOutlined style={{ color: isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)", fontSize: 18 }} />}
       >
         {selectedLog && (
           <Descriptions column={1} bordered size="small">
@@ -345,7 +369,7 @@ export const NotificationLogList: React.FC = () => {
             <Descriptions.Item label="Trạng thái đọc">
               {selectedLog.isRead ? <Tag color="success">Đã đọc</Tag> : <Tag color="default">Chưa đọc</Tag>}
             </Descriptions.Item>
-            <Descriptions.Item label="Hồ sơ liên kết (Application ID)">
+            <Descriptions.Item label="Hồ sơ liên kết">
               {selectedLog.applicationId ? (
                 <Text copyable>{selectedLog.applicationId}</Text>
               ) : (
@@ -359,7 +383,15 @@ export const NotificationLogList: React.FC = () => {
               <Text strong>{selectedLog.subject}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Nội dung" span={1}>
-              <div style={{ whiteSpace: "pre-wrap", background: "rgba(255,255,255,0.05)", padding: "12px", borderRadius: "4px" }}>
+              <div
+                style={{
+                  whiteSpace: "pre-wrap",
+                  background: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8fafc",
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.08)" : "#e2e8f0"}`
+                }}
+              >
                 {selectedLog.content}
               </div>
             </Descriptions.Item>

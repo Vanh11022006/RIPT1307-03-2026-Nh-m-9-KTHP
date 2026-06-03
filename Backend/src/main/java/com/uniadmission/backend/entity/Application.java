@@ -45,6 +45,8 @@ public class Application {
 
     private String applicationCode;
 
+    private String admissionMethod;
+
     private Double totalScore;
     private String priorityGroup;
     private Double priorityScore;
@@ -66,6 +68,9 @@ public class Application {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+
+    @Column(name = "admin_note", length = 1000)
+    private String adminNote;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL)
     @JsonIgnore

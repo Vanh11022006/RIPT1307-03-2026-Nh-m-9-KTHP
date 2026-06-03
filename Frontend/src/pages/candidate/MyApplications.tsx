@@ -144,9 +144,9 @@ export const MyApplications: React.FC = () => {
     });
   }, [applications, searchText, statusFilter]);
 
-  // Sort applications: pending (chờ duyệt) first, then approved, then rejected
+  // Sort applications: draft first, then pending, then approved, then rejected
   const sortedApplications = useMemo(() => {
-    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+    const order: Record<string, number> = { draft: 0, pending: 1, approved: 2, rejected: 3 };
     return filteredApplications.slice().sort((a, b) => {
       const oa = order[a.status] ?? 99;
       const ob = order[b.status] ?? 99;
@@ -211,11 +211,11 @@ export const MyApplications: React.FC = () => {
       title: "Hành động",
       key: "action",
       render: (_: any, record: any) => {
-        const isPending = record.status === "pending";
+        const isEditable = record.status === "pending" || record.status === "draft";
         return (
           <div>
             <Button type="link" onClick={() => navigate(`/candidate/applications/${record.id}`)}>Xem chi tiết</Button>
-            {isPending && (
+            {isEditable && (
               <>
                 <Button type="link" onClick={() => {
                   setEditingApp(record);
@@ -327,34 +327,14 @@ export const MyApplications: React.FC = () => {
       }
       const values = await form.validateFields();
       if (!editingApp) return;
-      // build scores object based on current subjectFields mapping
-      const scoresPayload: any = { ...(editingApp.scores ?? {}) };
-      if (Array.isArray(subjectFields) && subjectFields.length > 0) {
-        subjectFields.forEach((sub, idx) => {
-          const val = values[`info${idx + 1}`];
-          if (val !== undefined) scoresPayload[sub] = Number(val);
-        });
+      const payload = buildEditPayload(values);
+      if (!payload) return;
+
+      if (editingApp.status === "draft") {
+        await appStore.saveDraftApplication({ ...payload, id: editingApp.id });
       } else {
-        // fallback to write info1..info3 into generic numeric slots if needed
-        if (values.info1 !== undefined) scoresPayload.math = Number(values.info1);
-        if (values.info2 !== undefined) scoresPayload.literature = Number(values.info2);
-        if (values.info3 !== undefined) scoresPayload.english = Number(values.info3);
+        await appStore.updateApplication(editingApp.id, payload);
       }
-
-      const totalExam = Object.values(scoresPayload).reduce<number>((acc, v) => acc + Number(v || 0), 0);
-
-      const payload: any = {
-        candidateId: Number(editingApp.candidateId),
-        majorId: Number(values.majorId),
-        admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
-        subjectGroupCode: values.subjectGroupCode,
-        scores: scoresPayload,
-        totalScore: totalExam,
-        priorityGroup: values.priorityGroup,
-        priorityScore: Number(values.priorityScore || 0),
-      };
-
-      await appStore.updateApplication(editingApp.id, payload);
       const apps = await appStore.getApplicationsByCandidateId(editingApp.candidateId);
       setApplications(apps);
       setIsEditModalOpen(false);
@@ -381,6 +361,73 @@ export const MyApplications: React.FC = () => {
       console.error(err);
       message.error('Cập nhật hồ sơ thất bại');
     }
+  };
+
+  const handleSubmitDraft = async () => {
+    try {
+      if (!editingApp) return;
+      const values = await form.validateFields();
+      const payload = buildEditPayload(values);
+      if (!payload) return;
+
+      if (!payload.subjectGroupId) {
+        message.error('Không xác định được tổ hợp xét tuyển. Vui lòng chọn lại tổ hợp trước khi nộp.');
+        return;
+      }
+
+      if (editingApp.status === "draft") {
+        await appStore.submitDraftApplication(editingApp.id, payload);
+      } else {
+        await appStore.updateApplication(editingApp.id, payload);
+      }
+
+      const apps = await appStore.getApplicationsByCandidateId(editingApp.candidateId);
+      setApplications(apps);
+      setIsEditModalOpen(false);
+      setEditingApp(null);
+      originalValuesRef.current = null;
+      setIsFormDirty(false);
+      message.success('Nộp hồ sơ thành công');
+    } catch (err) {
+      console.error(err);
+      message.error('Không thể nộp hồ sơ');
+    }
+  };
+
+  const buildEditPayload = (values: any) => {
+    if (!editingApp) return null;
+
+    const subjectGroupRecord = Array.isArray(subjectGroups)
+      ? subjectGroups.find((sg) => sg.code === values.subjectGroupCode)
+      : undefined;
+
+    // build scores object based on current subjectFields mapping
+    const scoresPayload: any = { ...(editingApp.scores ?? {}) };
+    if (Array.isArray(subjectFields) && subjectFields.length > 0) {
+      subjectFields.forEach((sub, idx) => {
+        const val = values[`info${idx + 1}`];
+        if (val !== undefined) scoresPayload[sub] = Number(val);
+      });
+    } else {
+      // fallback to write info1..info3 into generic numeric slots if needed
+      if (values.info1 !== undefined) scoresPayload.math = Number(values.info1);
+      if (values.info2 !== undefined) scoresPayload.literature = Number(values.info2);
+      if (values.info3 !== undefined) scoresPayload.english = Number(values.info3);
+    }
+
+    const totalExam = Object.values(scoresPayload).reduce<number>((acc, v) => acc + Number(v || 0), 0);
+
+    return {
+      candidateId: Number(editingApp.candidateId),
+      majorId: Number(values.majorId),
+      admissionRoundId: values.admissionRoundId ? Number(values.admissionRoundId) : undefined,
+      subjectGroupCode: values.subjectGroupCode,
+      subjectGroupId: subjectGroupRecord?.id != null ? Number(subjectGroupRecord.id) : undefined,
+      scores: scoresPayload,
+      totalScore: totalExam,
+      priorityGroup: values.priorityGroup,
+      priorityScore: Number(values.priorityScore || 0),
+    };
   };
 
   return (
@@ -412,6 +459,7 @@ export const MyApplications: React.FC = () => {
               onChange={value => setStatusFilter(value)}
             >
               <Option value="all">Tất cả trạng thái</Option>
+              <Option value="draft">Bản nháp</Option>
               <Option value="pending">Chờ duyệt</Option>
               <Option value="approved">Đã duyệt</Option>
               <Option value="rejected">Từ chối</Option>
@@ -610,6 +658,9 @@ export const MyApplications: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
                   <Button className="modal-cancel-btn" onClick={() => { setIsEditModalOpen(false); setEditingApp(null); originalValuesRef.current = null; setIsFormDirty(false); form.resetFields(); }}>Hủy</Button>
                   <Button type="primary" onClick={handleEditSave} disabled={!isFormDirty}>Lưu</Button>
+                  {editingApp?.status === "draft" && (
+                    <Button type="primary" onClick={handleSubmitDraft}>Nộp hồ sơ</Button>
+                  )}
                 </div>
               </Form>
             </Modal>

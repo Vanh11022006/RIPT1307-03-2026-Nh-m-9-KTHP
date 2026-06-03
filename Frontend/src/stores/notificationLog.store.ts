@@ -3,20 +3,78 @@ import type { NotificationLog } from "../types/notification.types";
 import axiosClient from "../api/axiosClient";
 import { useAuthStore } from "./auth.store";
 
-export const normalizeNotification = (notification: any): NotificationLog => ({
-  id: String(notification?.id ?? `noti_${Date.now()}`),
-  recipientUserId: String(notification?.recipientUserId ?? notification?.userId ?? ""),
-  recipientEmail: String(notification?.recipientEmail ?? ""),
-  recipientName: String(notification?.recipientName ?? ""),
-  applicationId: notification?.applicationId != null ? String(notification.applicationId) : undefined,
-  type: notification?.type ?? "system",
-  channel: notification?.channel ?? "in_app",
-  subject: String(notification?.subject ?? notification?.title ?? "Thông báo"),
-  content: String(notification?.content ?? notification?.message ?? ""),
-  status: notification?.status ?? "sent",
-  isRead: Boolean(notification?.isRead ?? notification?.read ?? false),
-  createdAt: notification?.createdAt ?? new Date().toISOString(),
-});
+export const normalizeNotification = (notification: any): NotificationLog => {
+  const subject = String(notification?.subject ?? notification?.title ?? "Thông báo");
+  const content = String(notification?.content ?? notification?.message ?? "");
+  
+  let type = notification?.type;
+  if (!type || type === "system") {
+    const lowerSubject = subject.toLowerCase();
+    const lowerContent = content.toLowerCase();
+    
+    if (
+      lowerSubject.includes("duyệt") || 
+      lowerSubject.includes("chúc mừng") || 
+      lowerContent.includes("approved") || 
+      lowerContent.includes("đã duyệt")
+    ) {
+      type = "application_approved";
+    } else if (
+      lowerSubject.includes("từ chối") || 
+      lowerSubject.includes("hủy") || 
+      lowerContent.includes("rejected") || 
+      lowerContent.includes("từ chối")
+    ) {
+      type = "application_rejected";
+    } else if (
+      lowerSubject.includes("tiếp nhận") || 
+      lowerSubject.includes("đã nộp") || 
+      lowerSubject.includes("gửi thành công") || 
+      lowerContent.includes("submitted") || 
+      lowerContent.includes("đã nộp") || 
+      lowerContent.includes("nộp hồ sơ")
+    ) {
+      type = "application_submitted";
+    } else {
+      type = "system";
+    }
+  }
+
+  let channel = notification?.channel;
+  if (!channel) {
+    const lowerSubject = subject.toLowerCase();
+    const lowerContent = content.toLowerCase();
+    if (
+      type === "application_approved" || 
+      type === "application_rejected" ||
+      lowerSubject.includes("email") ||
+      lowerSubject.includes("gửi thư") ||
+      lowerSubject.includes("thư thông báo") ||
+      lowerSubject.includes("uniadmission") ||
+      lowerContent.includes("kính gửi") ||
+      lowerContent.includes("email")
+    ) {
+      channel = "email";
+    } else {
+      channel = "in_app";
+    }
+  }
+
+  return {
+    id: String(notification?.id ?? `noti_${Date.now()}`),
+    recipientUserId: String(notification?.recipientUserId ?? notification?.userId ?? ""),
+    recipientEmail: String(notification?.recipientEmail ?? ""),
+    recipientName: String(notification?.recipientName ?? ""),
+    applicationId: notification?.applicationId != null ? String(notification.applicationId) : undefined,
+    type: type as any,
+    channel: channel as any,
+    subject,
+    content,
+    status: notification?.status ?? "sent",
+    isRead: Boolean(notification?.isRead ?? notification?.read ?? false),
+    createdAt: notification?.createdAt ?? new Date().toISOString(),
+  };
+};
 
 interface NotificationLogState {
   notificationLogs: NotificationLog[];

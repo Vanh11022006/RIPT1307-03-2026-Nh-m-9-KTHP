@@ -16,6 +16,7 @@ import { formatDate, formatDateTime } from "../../utils/date";
 import { formatFileSize } from "../../utils/file";
 import { getPriorityGroupLabel } from "../../constants/priorityGroups";
 import { getEvidenceCategoryLabel } from "../../constants/evidenceCategories";
+import { SUBJECT_NAMES } from "../../constants/admissionMethodConfig";
 import { Empty } from "antd";
 
 const { Title, Text } = Typography;
@@ -150,6 +151,16 @@ export const AdminApplicationDetail: React.FC = () => {
   }
 
   const candidate = getCandidateById(application.candidateId);
+  const candidateName = application.candidateName || candidate?.fullName || "Không rõ thí sinh";
+  const candidateEmail = application.candidateEmail || candidate?.email || "Chưa cập nhật";
+  const candidatePhone = application.candidatePhone || candidate?.phone || "Chưa cập nhật";
+  const candidateDateOfBirth = application.candidateDateOfBirth || candidate?.dateOfBirth || "";
+  const candidateGender = application.candidateGender || candidate?.gender || "";
+  const candidateCitizenId = application.candidateCitizenId || candidate?.citizenId || "";
+  const candidateAddress = application.candidateAddress || candidate?.address || "";
+  const candidateCity = application.candidateCity || candidate?.city || "";
+  const candidateHighSchool = application.candidateHighSchool || candidate?.highSchool || "";
+  const candidateGraduationYear = application.candidateGraduationYear || candidate?.graduationYear || undefined;
   const university = getUniversityById(application.universityId);
   const major = getMajorById(application.majorId);
   const admissionRound = application.admissionRoundId ? getAdmissionRoundById(application.admissionRoundId) : undefined;
@@ -163,17 +174,46 @@ export const AdminApplicationDetail: React.FC = () => {
   const safeScores = application.scores ?? {};
   const scoreData = Object.entries(safeScores).map(([subject, score]) => ({
     subject,
-    score: Number(score)
-  })).filter((item) => Number.isFinite(item.score));
+    score
+  }));
+
+  const renderScoreValue = (key: string, val: any) => {
+    if (val === undefined || val === null) return "-";
+    if (key === "gnlType") {
+      return val === "hcm" ? "ĐHQG TP.HCM" : "ĐHQG Hà Nội";
+    }
+    if (key === "hsgAward") {
+      return val === true || val === "true" || val === 1 ? "Có giải" : "Không";
+    }
+    if (key === "hsgLevel") {
+      return val === "national" ? "Cấp Quốc gia" : val === "provincial" ? "Cấp Tỉnh/Thành phố" : val;
+    }
+    if (key === "directAdmission") {
+      return val === "pass" ? "ĐẠT (Xét tuyển thẳng)" : val === "fail" ? "KHÔNG ĐẠT" : val;
+    }
+    if (typeof val === "number") {
+      return val.toFixed(2);
+    }
+    const num = Number(val);
+    if (!isNaN(num)) {
+      return num.toFixed(2);
+    }
+    return String(val);
+  };
 
   const scoreColumns = [
-    { title: "Môn thi", dataIndex: "subject", key: "subject" },
+    { 
+      title: "Môn thi / Trường điểm", 
+      dataIndex: "subject", 
+      key: "subject",
+      render: (subject: string) => SUBJECT_NAMES[subject] || subject
+    },
     {
-      title: "Điểm",
+      title: "Điểm / Giá trị",
       dataIndex: "score",
       key: "score",
       align: "center" as const,
-      render: (val: number | string | undefined) => <Text strong>{Number(val ?? 0).toFixed(2)}</Text>
+      render: (val: any, record: any) => <Text strong>{renderScoreValue(record.subject, val)}</Text>
     }
   ];
 
@@ -230,12 +270,25 @@ export const AdminApplicationDetail: React.FC = () => {
     },
   ];
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    approveApplication(application.id, currentUser.id);
+    try {
+      const updated = await approveApplication(application.id, currentUser.id);
+      if (updated) {
+        // if backend didn't populate reviewedAt/reviewedBy, set them locally for immediate UI feedback
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Approve failed', e);
+    }
 
     try {
       if (candidate) {
@@ -258,14 +311,27 @@ export const AdminApplicationDetail: React.FC = () => {
     }
 
     message.success("Duyệt hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
-  const handleRejectSubmit = (values: { reason: string }) => {
+  const handleRejectSubmit = async (values: { reason: string }) => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    rejectApplication(application.id, currentUser.id, values.reason);
+    try {
+      const updated = await rejectApplication(application.id, currentUser.id, values.reason);
+      if (updated) {
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Reject failed', e);
+    }
 
     try {
       if (candidate) {
@@ -290,6 +356,7 @@ export const AdminApplicationDetail: React.FC = () => {
     setIsRejectModalOpen(false);
     form.resetFields();
     message.success("Từ chối hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
   const renderStatusAlert = () => {
@@ -428,18 +495,18 @@ export const AdminApplicationDetail: React.FC = () => {
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card title="Thông tin thí sinh" style={{ marginBottom: 24 }}>
-            {candidate ? (
+            {candidate || candidateName ? (
               <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
-                <Descriptions.Item label="Họ tên" span={2}><strong>{candidate.fullName || "Chưa cập nhật"}</strong></Descriptions.Item>
-                <Descriptions.Item label="Ngày sinh">{candidate.dateOfBirth ? formatDate(candidate.dateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Giới tính">{candidate.gender ? genderMap[candidate.gender] : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="CCCD">{candidate.citizenId || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Số điện thoại">{candidate.phone || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Email" span={2}>{candidate.email || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ" span={2}>{candidate.address || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Thành phố">{candidate.city || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Trường THPT">{candidate.highSchool || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Năm tốt nghiệp">{candidate.graduationYear || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Họ tên" span={2}><strong>{candidateName}</strong></Descriptions.Item>
+                <Descriptions.Item label="Ngày sinh">{candidateDateOfBirth ? formatDate(candidateDateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Giới tính">{candidateGender ? genderMap[candidateGender] : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="CCCD">{candidateCitizenId || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">{candidatePhone}</Descriptions.Item>
+                <Descriptions.Item label="Email" span={2}>{candidateEmail}</Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ" span={2}>{candidateAddress || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Thành phố">{candidateCity || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Trường THPT">{candidateHighSchool || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Năm tốt nghiệp">{candidateGraduationYear || "Chưa cập nhật"}</Descriptions.Item>
               </Descriptions>
             ) : (
               <EmptyState description="Không rõ thí sinh" />
@@ -460,6 +527,18 @@ export const AdminApplicationDetail: React.FC = () => {
               <Descriptions.Item label="Tổ hợp xét tuyển">
                 <Tag color="blue">{application.subjectGroupCode || "Chưa cập nhật"}</Tag>
               </Descriptions.Item>
+              {application.admissionMethod && (
+                <Descriptions.Item label="Phương thức xét tuyển">
+                  {{
+                    THPT_SCORE: "Điểm thi THPT Quốc gia",
+                    SCHOOL_TRANSCRIPT: "Xét học bạ THPT",
+                    COMPETENCY_ASSESSMENT: "Đánh giá năng lực",
+                    THINKING_ASSESSMENT: "Đánh giá tư duy",
+                    TALENT_ADMISSION: "Xét tuyển tài năng",
+                    INTERVIEW: "Phỏng vấn / Xét tuyển thẳng",
+                  }[application.admissionMethod] ?? application.admissionMethod}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Điểm sàn ngành">
                 {major?.minScore !== undefined ? <Text strong>{major.minScore}</Text> : "Chưa cập nhật"}
               </Descriptions.Item>

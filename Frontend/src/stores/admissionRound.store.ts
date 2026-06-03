@@ -11,6 +11,7 @@ const normalizeAdmissionRound = (round: any): AdmissionRound => ({
   endDate: round?.endDate ?? "",
   status: String(round?.status ?? "").toLowerCase() as AdmissionRound["status"],
   description: round?.description ?? "",
+  admissionMethods: round?.admissionMethods ?? round?.admission_methods ?? "",
   createdAt: round?.createdAt ?? "",
   updatedAt: round?.updatedAt ?? "",
 });

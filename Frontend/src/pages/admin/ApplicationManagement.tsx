@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Card, Table, Input, Select, Row, Col, Typography, Button, Space, Modal, message } from "antd";
+import { Card, Table, Input, Select, Row, Col, Typography, Button, Space, Modal, message, Form, Switch } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -21,7 +21,7 @@ const { Option } = Select;
 export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
-  const { applications, loading, getApplications, bulkUpdateApplicationStatus, getAdminApplicationsExcel } = useApplicationStore();
+  const { applications, loading, getApplications, bulkUpdateApplicationStatus, getAdminApplicationsExcel, bulkSendCustomEmail } = useApplicationStore();
   const { getCandidateById } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
@@ -43,6 +43,9 @@ export const ApplicationManagement: React.FC = () => {
   const [subjectGroupFilter, setSubjectGroupFilter] = useState<string>("all");
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkEmailModalOpen, setBulkEmailModalOpen] = useState(false);
+  const [bulkEmailSubmitting, setBulkEmailSubmitting] = useState(false);
+  const [bulkEmailForm] = Form.useForm();
   const hasLoadedInitialApplications = useRef(false);
 
   const buildApplicationFilters = () => ({
@@ -141,9 +144,9 @@ export const ApplicationManagement: React.FC = () => {
     getMajorById
   ]);
 
-  // Sort applications: pending (chờ duyệt) first, then approved, then rejected
+  // Sort applications: draft first, then pending, approved, and rejected
   const sortedApplications = useMemo(() => {
-    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+    const order: Record<string, number> = { draft: 0, pending: 1, approved: 2, rejected: 3 };
     return filteredApplications.slice().sort((a, b) => {
       const oa = order[a.status] ?? 99;
       const ob = order[b.status] ?? 99;
@@ -165,6 +168,54 @@ export const ApplicationManagement: React.FC = () => {
 
   const clearSelection = () => {
     setSelectedRowKeys([]);
+  };
+
+  const openBulkEmailModal = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Chọn ít nhất một hồ sơ để gửi email");
+      return;
+    }
+
+    bulkEmailForm.setFieldsValue({
+      subject: "Thông báo từ UniAdmission",
+      message: "",
+      html: false,
+    });
+    setBulkEmailModalOpen(true);
+  };
+
+  const closeBulkEmailModal = () => {
+    setBulkEmailModalOpen(false);
+    bulkEmailForm.resetFields();
+  };
+
+  const handleBulkEmailSubmit = async () => {
+    if (!currentUser) {
+      message.error("Không xác định được quản trị viên đang đăng nhập");
+      return;
+    }
+
+    try {
+      const values = await bulkEmailForm.validateFields();
+      const selectedIds = selectedRowKeys.map(String);
+
+      setBulkEmailSubmitting(true);
+      const result = await bulkSendCustomEmail(
+        selectedIds,
+        String(values.subject).trim(),
+        String(values.message).trim(),
+        Boolean(values.html),
+        String(currentUser.id)
+      );
+
+      message.success(`Đã gửi email đến ${result?.recipientCount ?? selectedIds.length} người nhận`);
+      closeBulkEmailModal();
+      clearSelection();
+    } catch (error) {
+      message.error("Không thể gửi email hàng loạt");
+    } finally {
+      setBulkEmailSubmitting(false);
+    }
   };
 
   const handleBulkStatusChange = (status: "APPROVED" | "REJECTED") => {
@@ -241,7 +292,10 @@ export const ApplicationManagement: React.FC = () => {
       title: "Thí sinh",
       dataIndex: "candidateId",
       key: "candidateId",
-      render: (id: string) => getCandidateById(id)?.fullName || "Không rõ thí sinh"
+      render: (_: string, record: Application) => {
+        const candidate = getCandidateById(record.candidateId);
+        return record.candidateName || candidate?.fullName || "Không rõ thí sinh";
+      }
     },
     {
       title: "Trường",
@@ -320,6 +374,7 @@ export const ApplicationManagement: React.FC = () => {
               onChange={value => setStatusFilter(value)}
             >
               <Option value="all">Tất cả trạng thái</Option>
+              <Option value="draft">Bản nháp</Option>
               <Option value="pending">Chờ duyệt</Option>
               <Option value="approved">Đã duyệt</Option>
               <Option value="rejected">Từ chối</Option>
@@ -417,6 +472,14 @@ export const ApplicationManagement: React.FC = () => {
             >
               Từ chối hàng loạt
             </Button>
+            <Button
+              type="primary"
+              onClick={openBulkEmailModal}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkEmailSubmitting}
+            >
+              Gửi email hàng loạt
+            </Button>
           </Space>
         </Space>
         {loading && filteredApplications.length === 0 ? (
@@ -444,6 +507,39 @@ export const ApplicationManagement: React.FC = () => {
           <EmptyState description="Không tìm thấy hồ sơ xét tuyển phù hợp" />
         )}
       </Card>
+
+      <Modal
+        title="Gửi email hàng loạt"
+        open={bulkEmailModalOpen}
+        onCancel={closeBulkEmailModal}
+        onOk={handleBulkEmailSubmit}
+        okText="Gửi email"
+        cancelText="Hủy"
+        confirmLoading={bulkEmailSubmitting}
+        destroyOnClose
+      >
+        <Form form={bulkEmailForm} layout="vertical">
+          <Form.Item
+            name="subject"
+            label="Tiêu đề email"
+            rules={[{ required: true, message: "Nhập tiêu đề email" }]}
+          >
+            <Input placeholder="Ví dụ: Thông báo từ UniAdmission" />
+          </Form.Item>
+
+          <Form.Item
+            name="message"
+            label="Nội dung"
+            rules={[{ required: true, message: "Nhập nội dung email" }]}
+          >
+            <Input.TextArea rows={8} placeholder="Nhập nội dung email cho các thí sinh đã chọn" />
+          </Form.Item>
+
+          <Form.Item name="html" label="Gửi dưới dạng HTML" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

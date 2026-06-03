@@ -14,6 +14,7 @@ import com.uniadmission.backend.repository.AdmissionRoundRepository;
 import com.uniadmission.backend.repository.ApplicationRepository;
 import com.uniadmission.backend.repository.ApplicationReviewLogRepository;
 import com.uniadmission.backend.repository.CandidateRepository;
+import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.repository.MajorRepository;
 import com.uniadmission.backend.repository.SubjectGroupRepository;
 import com.uniadmission.backend.service.ApplicationService;
@@ -55,44 +56,63 @@ public class ApplicationServiceImpl implements ApplicationService {
         private final ApplicationReviewLogRepository reviewLogRepository;
         private final NotificationLogService notificationService;
         private final CandidateRepository candidateRepository;
+        private final UserRepository userRepository;
         private final MajorRepository majorRepository;
         private final AdmissionRoundRepository admissionRoundRepository;
         private final SubjectGroupRepository subjectGroupRepository;
 
-        @Override
-        public Application submit(ApplicationSubmitRequest request) {
+        private Application applyRequest(Application application, ApplicationSubmitRequest request,
+                        boolean requireMajorAndSubjectGroup) {
+                if (request.getCandidateId() == null) {
+                        throw new RuntimeException("Candidate not found");
+                }
+
                 Candidate candidate = candidateRepository
                                 .findById(java.util.Objects.requireNonNull(request.getCandidateId()))
                                 .orElseThrow(() -> new RuntimeException(
                                                 "Candidate not found: " + request.getCandidateId()));
-
-                Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
-                                .orElseThrow(() -> new RuntimeException("Major not found: " + request.getMajorId()));
-
-                AdmissionRound admissionRound = request.getAdmissionRoundId() != null
-                                ? admissionRoundRepository
-                                                .findById(java.util.Objects
-                                                                .requireNonNull(request.getAdmissionRoundId()))
-                                                .orElseThrow(() -> new RuntimeException("Admission round not found: "
-                                                                + request.getAdmissionRoundId()))
-                                : null;
-
-                SubjectGroup subjectGroup = subjectGroupRepository
-                                .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
-                                .orElseThrow(() -> new RuntimeException(
-                                                "Subject group not found: " + request.getSubjectGroupId()));
-
-                Application application = new Application();
                 application.setCandidate(candidate);
-                application.setMajor(major);
-                application.setAdmissionRound(admissionRound);
-                application.setSubjectGroup(subjectGroup);
-                application.setTotalScore(request.getTotalScore());
+
+                if (request.getMajorId() != null) {
+                        Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Major not found: " + request.getMajorId()));
+                        application.setMajor(major);
+                } else if (requireMajorAndSubjectGroup) {
+                        throw new RuntimeException("Major not found");
+                }
+
+                if (request.getAdmissionRoundId() != null) {
+                        AdmissionRound admissionRound = admissionRoundRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getAdmissionRoundId()))
+                                        .orElseThrow(() -> new RuntimeException("Admission round not found: "
+                                                        + request.getAdmissionRoundId()));
+                        application.setAdmissionRound(admissionRound);
+                }
+
+                if (request.getSubjectGroupId() != null) {
+                        SubjectGroup subjectGroup = subjectGroupRepository
+                                        .findById(java.util.Objects.requireNonNull(request.getSubjectGroupId()))
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Subject group not found: " + request.getSubjectGroupId()));
+                        application.setSubjectGroup(subjectGroup);
+                } else {
+                        application.setSubjectGroup(null);
+                        if (requireMajorAndSubjectGroup) {
+                                String method = request.getAdmissionMethod() != null ? request.getAdmissionMethod() : application.getAdmissionMethod();
+                                if ("THPT_SCORE".equals(method) || "SCHOOL_TRANSCRIPT".equals(method)) {
+                                        throw new RuntimeException("Subject group not found");
+                                }
+                        }
+                }
+
                 application.setPriorityGroup(request.getPriorityGroup());
                 application.setPriorityScore(request.getPriorityScore());
+                if (request.getAdmissionMethod() != null) {
+                        application.setAdmissionMethod(request.getAdmissionMethod());
+                }
                 try {
-                        LOGGER.info("Persisting scores for application candidateId={}: {}", request.getCandidateId(),
-                                        request.getScores());
+                        LOGGER.info("Persisting scores for application request: {}", request.getScores());
                         if (request.getScores() != null) {
                                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                                 String json = mapper.writeValueAsString(request.getScores());
@@ -101,8 +121,213 @@ public class ApplicationServiceImpl implements ApplicationService {
                 } catch (Exception e) {
                         LOGGER.warn("Failed to serialize scores", e);
                 }
-                application.setSubmissionDate(java.time.LocalDateTime.now());
-                application.setStatus(ApplicationStatus.PENDING);
+
+                // Recalculate totalScore server-side if not provided or zero
+                try {
+                        Double clientTotal = request.getTotalScore();
+                        if (clientTotal == null || clientTotal == 0.0) {
+                                Double calculated = calculateTotalScoreByMethod(
+                                                request.getAdmissionMethod(),
+                                                request.getScores(),
+                                                request.getPriorityScore() != null ? request.getPriorityScore() : 0.0);
+                                application.setTotalScore(calculated);
+                        } else {
+                                application.setTotalScore(clientTotal);
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Failed to calculate total score server-side", e);
+                        application.setTotalScore(request.getTotalScore());
+                }
+
+                return application;
+        }
+
+        /**
+         * Tính điểm xét tuyển (subjectScore) theo phương thức xét tuyển.
+         * Logic đồng bộ với frontend: admissionMethodConfig.ts →
+         * calculateScoreByMethod()
+         */
+        @SuppressWarnings("unchecked")
+        private Double calculateTotalScoreByMethod(String method, Object scoresObj, double priorityScore) {
+                if (method == null || scoresObj == null)
+                        return 0.0;
+
+                Map<String, Object> scores;
+                try {
+                        if (scoresObj instanceof Map) {
+                                scores = (Map<String, Object>) scoresObj;
+                        } else {
+                                // Parse JSON string if needed
+                                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                scores = mapper.readValue(scoresObj.toString(), Map.class);
+                        }
+                } catch (Exception e) {
+                        LOGGER.warn("Cannot parse scores map", e);
+                        return 0.0;
+                }
+
+                switch (method) {
+                        case "THPT_SCORE":
+                        case "SCHOOL_TRANSCRIPT": {
+                                // Tổng 3 môn thi / ĐTB (đã được frontend gửi đúng môn)
+                                String[] subjectKeys = { "math", "literature", "english", "physics",
+                                                "chemistry", "biology", "history", "geography", "civicEducation" };
+                                double total = 0.0;
+                                for (String key : subjectKeys) {
+                                        Object val = scores.get(key);
+                                        if (val != null) {
+                                                try {
+                                                        total += Double.parseDouble(val.toString());
+                                                } catch (Exception ignored) {
+                                                }
+                                        }
+                                }
+                                return Math.round(total * 100.0) / 100.0;
+                        }
+                        case "COMPETENCY_ASSESSMENT": {
+                                // Quy về thang 30: HCM (1200) ÷ 40, HN (150) ÷ 5
+                                Object gnl = scores.get("gnlScore");
+                                Object gnlTypeObj = scores.get("gnlType");
+                                if (gnl == null)
+                                        return 0.0;
+                                try {
+                                        double raw = Double.parseDouble(gnl.toString());
+                                        double scale = "hanoi".equals(gnlTypeObj != null ? gnlTypeObj.toString() : "")
+                                                        ? 150.0
+                                                        : 1200.0;
+                                        return Math.round((raw * 30.0 / scale) * 100.0) / 100.0;
+                                } catch (Exception e) {
+                                        return 0.0;
+                                }
+                        }
+                        case "THINKING_ASSESSMENT": {
+                                // Điểm ĐGTD quy đổi về thang 30: score × 3 / 10
+                                Object gtd = scores.get("gtdScore");
+                                if (gtd == null)
+                                        return 0.0;
+                                try {
+                                        double raw = Double.parseDouble(gtd.toString());
+                                        return Math.round((raw * 3.0 / 10.0) * 100.0) / 100.0;
+                                } catch (Exception e) {
+                                        return 0.0;
+                                }
+                        }
+                        case "TALENT_ADMISSION": {
+                                // CC quy đổi + môn 2 + môn 3 + điểm HSG
+                                double certConverted = 0.0;
+                                Object ccType = scores.get("certificateType");
+                                Object ccRaw = scores.get("certificateRawScore");
+                                Object ccConverted = scores.get("certificateConvertedScore");
+                                if (ccConverted != null) {
+                                        try {
+                                                certConverted = Double.parseDouble(ccConverted.toString());
+                                        } catch (Exception ignored) {
+                                        }
+                                } else if (ccType != null && ccRaw != null) {
+                                        try {
+                                                certConverted = convertCertificateScoreJava(ccType.toString(),
+                                                                Double.parseDouble(ccRaw.toString()));
+                                        } catch (Exception ignored) {
+                                        }
+                                }
+                                double s2 = getDoubleOrZero(scores, "subject2Score");
+                                double s3 = getDoubleOrZero(scores, "subject3Score");
+                                double hsg = getDoubleOrZero(scores, "hsgBonusScore");
+                                return Math.round((certConverted + s2 + s3 + hsg) * 100.0) / 100.0;
+                        }
+                        case "INTERVIEW": {
+                                Object da = scores.get("directAdmission");
+                                if ("pass".equals(da) || "fail".equals(da))
+                                        return 0.0;
+                                double profile = getDoubleOrZero(scores, "profileScore");
+                                double interview = getDoubleOrZero(scores, "interviewScore");
+                                return Math.round((profile + interview) * 100.0) / 100.0;
+                        }
+                        default:
+                                return 0.0;
+                }
+        }
+
+        private double getDoubleOrZero(Map<String, Object> map, String key) {
+                Object val = map.get(key);
+                if (val == null)
+                        return 0.0;
+                try {
+                        return Double.parseDouble(val.toString());
+                } catch (Exception e) {
+                        return 0.0;
+                }
+        }
+
+        /** Bảng quy đổi chứng chỉ IELTS (đồng bộ với frontend) */
+        private double convertCertificateScoreJava(String type, double raw) {
+                switch (type) {
+                        case "IELTS": {
+                                if (raw >= 7.0)
+                                        return 10.0;
+                                if (raw >= 6.5)
+                                        return 9.0;
+                                if (raw >= 6.0)
+                                        return 8.5;
+                                if (raw >= 5.5)
+                                        return 8.0;
+                                if (raw >= 5.0)
+                                        return 7.0;
+                                if (raw >= 4.5)
+                                        return 6.0;
+                                return 0.0;
+                        }
+                        case "TOEFL_IBT": {
+                                if (raw >= 100)
+                                        return 10.0;
+                                if (raw >= 87)
+                                        return 9.0;
+                                if (raw >= 72)
+                                        return 8.5;
+                                if (raw >= 60)
+                                        return 8.0;
+                                if (raw >= 46)
+                                        return 7.0;
+                                if (raw >= 35)
+                                        return 6.0;
+                                return 0.0;
+                        }
+                        case "SAT": {
+                                if (raw >= 1500)
+                                        return 10.0;
+                                if (raw >= 1400)
+                                        return 9.5;
+                                if (raw >= 1300)
+                                        return 9.0;
+                                if (raw >= 1200)
+                                        return 8.5;
+                                if (raw >= 1100)
+                                        return 8.0;
+                                if (raw >= 1000)
+                                        return 7.0;
+                                return 0.0;
+                        }
+                        case "ACT": {
+                                if (raw >= 34)
+                                        return 10.0;
+                                if (raw >= 31)
+                                        return 9.5;
+                                if (raw >= 28)
+                                        return 9.0;
+                                if (raw >= 25)
+                                        return 8.5;
+                                if (raw >= 22)
+                                        return 8.0;
+                                if (raw >= 19)
+                                        return 7.0;
+                                return 0.0;
+                        }
+                        default:
+                                return 0.0;
+                }
+        }
+
+        private Application saveWithApplicationCode(Application application) {
 
                 Application saved = applicationRepository.save(application);
                 if (saved.getApplicationCode() == null || saved.getApplicationCode().isEmpty()) {
@@ -111,16 +336,26 @@ public class ApplicationServiceImpl implements ApplicationService {
                         saved.setApplicationCode(code);
                         saved = applicationRepository.save(saved);
                 }
+                return saved;
+        }
 
+        private void sendSubmissionNotifications(Application saved) {
                 String applicationCode = saved.getApplicationCode() != null ? saved.getApplicationCode()
                                 : "Chưa cập nhật";
 
                 try {
-                        String candidateName = candidate.getUser() != null ? candidate.getUser().getFullName()
+                        Candidate candidate = saved.getCandidate();
+                        Major major = saved.getMajor();
+                        String candidateName = candidate != null && candidate.getUser() != null
+                                        ? candidate.getUser().getFullName()
                                         : "thí sinh";
-                        String email = candidate.getUser() != null ? candidate.getUser().getEmail() : null;
-                        String universityName = major.getUniversity() != null ? major.getUniversity().getName() : "";
-                        String majorName = major.getName() != null ? major.getName() : "";
+                        String email = candidate != null && candidate.getUser() != null
+                                        ? candidate.getUser().getEmail()
+                                        : null;
+                        String universityName = major != null && major.getUniversity() != null
+                                        ? major.getUniversity().getName()
+                                        : "";
+                        String majorName = major != null && major.getName() != null ? major.getName() : "";
 
                         if (email != null && !email.trim().isEmpty()) {
                                 emailService.sendApplicationSubmittedEmail(
@@ -130,16 +365,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                                                 universityName,
                                                 majorName);
                         }
-                        // create in-app notification for candidate
                         try {
-                                if (candidate.getUser() != null && candidate.getUser().getId() != null) {
+                                if (candidate != null && candidate.getUser() != null
+                                                && candidate.getUser().getId() != null) {
                                         String title = "Xác nhận: hồ sơ đã được tiếp nhận";
                                         String message = "Hồ sơ của bạn (Mã: " + applicationCode
                                                         + ") đã được tiếp nhận. Trường: "
                                                         + universityName + ", Ngành: " + majorName
                                                         + ". Phòng Tuyển Sinh sẽ kiểm tra hồ sơ trong vòng 3-5 ngày làm việc.";
-                                        notificationService.createNotification(candidate.getUser().getId(), title,
-                                                        message);
+                                        notificationService.createNotification(
+                                                        candidate.getUser().getId(),
+                                                        title,
+                                                        message,
+                                                        applicationCode);
                                 }
                         } catch (Exception e) {
                                 LOGGER.warn("Failed to create in-app notification for application id={}: {}",
@@ -149,7 +387,45 @@ public class ApplicationServiceImpl implements ApplicationService {
                         LOGGER.warn("Failed to send application submitted email for application id={}: {}",
                                         saved.getId(), e.getMessage());
                 }
+        }
 
+        @Override
+        public Application submit(ApplicationSubmitRequest request) {
+                Application application = applyRequest(new Application(), request, true);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.PENDING);
+                Application saved = saveWithApplicationCode(application);
+                sendSubmissionNotifications(saved);
+                return saved;
+        }
+
+        @Override
+        public Application saveDraft(ApplicationSubmitRequest request) {
+                Application application = applyRequest(new Application(), request, false);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.DRAFT);
+                return saveWithApplicationCode(application);
+        }
+
+        @Override
+        public Application updateDraft(Long id, ApplicationSubmitRequest request) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+                application = applyRequest(application, request, false);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.DRAFT);
+                return saveWithApplicationCode(application);
+        }
+
+        @Override
+        public Application submitDraft(Long id, ApplicationSubmitRequest request) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Application not found"));
+                application = applyRequest(application, request, true);
+                application.setSubmissionDate(java.time.LocalDateTime.now());
+                application.setStatus(ApplicationStatus.PENDING);
+                Application saved = saveWithApplicationCode(application);
+                sendSubmissionNotifications(saved);
                 return saved;
         }
 
@@ -173,11 +449,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         @Override
-        public void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
+        @org.springframework.transaction.annotation.Transactional
+        public Application updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 applyStatusUpdate(application, status, notes, adminId);
+                // return refreshed application
+                return applicationRepository.findById(id).orElse(application);
         }
 
         @Override
@@ -424,6 +703,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                 return ApplicationStatisticsResponse.builder()
                                 .total((long) applications.size())
+                                .draft(statusTotals.getOrDefault(ApplicationStatus.DRAFT, 0L))
                                 .pending(statusTotals.getOrDefault(ApplicationStatus.PENDING, 0L))
                                 .approved(statusTotals.getOrDefault(ApplicationStatus.APPROVED, 0L))
                                 .rejected(statusTotals.getOrDefault(ApplicationStatus.REJECTED, 0L))
@@ -498,6 +778,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 private final String code;
                 private final String name;
                 private long total;
+                private long draft;
                 private long pending;
                 private long approved;
                 private long rejected;
@@ -511,6 +792,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                 private void increment(ApplicationStatus status) {
                         switch (status) {
+                                case DRAFT:
+                                        draft++;
+                                        break;
                                 case PENDING:
                                         pending++;
                                         break;
@@ -542,6 +826,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         .code(code)
                                         .name(name)
                                         .total(total)
+                                        .draft(draft)
                                         .pending(pending)
                                         .approved(approved)
                                         .rejected(rejected)
@@ -553,7 +838,22 @@ public class ApplicationServiceImpl implements ApplicationService {
         private void applyStatusUpdate(Application application, ApplicationStatus status, String notes, Long adminId) {
                 String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
                 application.setStatus(status);
+                // set reviewedBy/reviewedAt when admin performs status update
+                try {
+                        if (adminId != null) {
+                                userRepository.findById(adminId)
+                                                .ifPresent(u -> application.setReviewedBy(u.getFullName()));
+                        }
+                } catch (Exception ex) {
+                        // ignore if user lookup fails
+                }
+                application.setReviewedAt(java.time.LocalDateTime.now());
+                application.setAdminNote(notes);
+                LOGGER.info("Applying status update for application id={} - reviewedBy='{}', reviewedAt='{}' (before save)",
+                                application.getId(), application.getReviewedBy(), application.getReviewedAt());
                 applicationRepository.save(application);
+                LOGGER.info("Applied status update for application id={} - reviewedBy='{}', reviewedAt='{}' (after save)",
+                                application.getId(), application.getReviewedBy(), application.getReviewedAt());
 
                 ApplicationReviewLog log = new ApplicationReviewLog();
                 log.setApplicationId(application.getId());
@@ -573,9 +873,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 String title = "Cập nhật trạng thái hồ sơ xét tuyển";
                                 String message = "Hồ sơ của bạn đã chuyển sang trạng thái: " + status.name()
                                                 + ". Ghi chú: " + notes;
-                                notificationService.createNotification(application.getCandidate().getUser().getId(),
+                                String applicationCode = application.getApplicationCode() != null
+                                                ? application.getApplicationCode()
+                                                : String.valueOf(application.getId());
+                                notificationService.createNotification(
+                                                application.getCandidate().getUser().getId(),
                                                 title,
-                                                message);
+                                                message,
+                                                applicationCode);
                         }
                 } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email: " + e.getMessage());

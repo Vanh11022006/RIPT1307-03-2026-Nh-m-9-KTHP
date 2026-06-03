@@ -80,6 +80,13 @@ public class ApplicationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Submit application success", resp));
     }
 
+    @PostMapping("/draft")
+    @Operation(summary = "Lưu nháp hồ sơ", description = "Tạo một hồ sơ ở trạng thái nháp")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> saveDraft(@RequestBody ApplicationSubmitRequest request) {
+        Application application = applicationService.saveDraft(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lưu nháp thành công", mapToResponse(application)));
+    }
+
     @GetMapping("/candidate/{candidateId}")
     @Operation(summary = "Lấy hồ sơ theo thí sinh", description = "Trả về danh sách hồ sơ của một candidate")
     public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getApplicationsByCandidate(
@@ -96,6 +103,22 @@ public class ApplicationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Cancel application success", null));
     }
 
+    @PutMapping("/{id}/draft")
+    @Operation(summary = "Cập nhật nháp", description = "Cập nhật một hồ sơ đang ở trạng thái nháp")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> updateDraft(@PathVariable Long id,
+            @RequestBody ApplicationSubmitRequest request) {
+        Application updated = applicationService.updateDraft(id, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật nháp thành công", mapToResponse(updated)));
+    }
+
+    @PutMapping("/{id}/submit")
+    @Operation(summary = "Nộp nháp", description = "Chuyển một hồ sơ nháp sang trạng thái chờ duyệt")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> submitDraft(@PathVariable Long id,
+            @RequestBody ApplicationSubmitRequest request) {
+        Application updated = applicationService.submitDraft(id, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Nộp hồ sơ thành công", mapToResponse(updated)));
+    }
+
     @GetMapping
     @Operation(summary = "Danh sách hồ sơ", description = "Lấy toàn bộ hồ sơ hiện có")
     public ResponseEntity<ApiResponse<List<ApplicationResponse>>> getAll() {
@@ -108,23 +131,58 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cập nhật trạng thái hồ sơ", description = "Admin cập nhật trạng thái và ghi chú cho hồ sơ")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "UpdateStatusExample", value = "{\"status\":\"APPROVED\",\"notes\":\"Đủ điều kiện\",\"adminId\":1}")))
-    public ResponseEntity<ApiResponse<Void>> updateStatus(
+    public ResponseEntity<ApiResponse<com.uniadmission.backend.dto.response.ApplicationResponse>> updateStatus(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
-        ApplicationStatus status = ApplicationStatus.valueOf(payload.get("status").toString().toUpperCase());
-        String notes = payload.containsKey("notes") ? payload.get("notes").toString() : null;
-        Long adminId = Long.valueOf(payload.getOrDefault("adminId", 1).toString());
+        Object statusObj = payload != null ? payload.get("status") : null;
+        if (statusObj == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không được để trống", null));
+        }
+        ApplicationStatus status;
+        try {
+            status = ApplicationStatus.valueOf(statusObj.toString().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không hợp lệ", null));
+        }
 
-        applicationService.updateApplicationStatus(id, status, notes, adminId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", null));
+        Object notesObj = payload != null ? payload.get("notes") : null;
+        String notes = notesObj != null ? notesObj.toString() : null;
+
+        Object adminIdObj = payload != null ? payload.get("adminId") : null;
+        Long adminId = 1L;
+        if (adminIdObj != null) {
+            try {
+                String adminIdStr = adminIdObj.toString().trim();
+                if (adminIdStr.contains(".")) {
+                    adminId = Double.valueOf(adminIdStr).longValue();
+                } else {
+                    adminId = Long.valueOf(adminIdStr);
+                }
+            } catch (Exception e) {
+                // keep default 1L
+            }
+        }
+
+        com.uniadmission.backend.entity.Application updated = applicationService.updateApplicationStatus(id, status,
+                notes, adminId);
+        com.uniadmission.backend.dto.response.ApplicationResponse resp = mapToResponse(updated);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Update status success", resp));
     }
 
     @PostMapping("/admin-bulk-status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cập nhật trạng thái hàng loạt", description = "Admin cập nhật trạng thái cho nhiều hồ sơ cùng lúc")
     public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(@RequestBody ApplicationBulkStatusRequest request) {
-        ApplicationStatus status = ApplicationStatus.valueOf(request.getStatus().trim().toUpperCase());
+        if (request == null || request.getStatus() == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không được để trống", null));
+        }
+        ApplicationStatus status;
+        try {
+            status = ApplicationStatus.valueOf(request.getStatus().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Trạng thái (status) không hợp lệ", null));
+        }
         Long adminId = request.getAdminId() != null ? request.getAdminId() : 1L;
         applicationService.bulkUpdateApplicationStatus(request.getIds(), status, request.getNotes(), adminId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Bulk update status success", null));
@@ -186,11 +244,33 @@ public class ApplicationController {
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> payload) {
 
-        String priorityGroup = payload.containsKey("priorityGroup") ? payload.get("priorityGroup").toString() : null;
-        Double priorityScore = payload.containsKey("priorityScore") && payload.get("priorityScore") != null
-                ? Double.valueOf(payload.get("priorityScore").toString())
-                : null;
-        Long adminId = payload.containsKey("adminId") ? Long.valueOf(payload.get("adminId").toString()) : 1L;
+        Object priorityGroupObj = payload != null ? payload.get("priorityGroup") : null;
+        String priorityGroup = priorityGroupObj != null ? priorityGroupObj.toString() : null;
+
+        Object priorityScoreObj = payload != null ? payload.get("priorityScore") : null;
+        Double priorityScore = null;
+        if (priorityScoreObj != null) {
+            try {
+                priorityScore = Double.valueOf(priorityScoreObj.toString());
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        Object adminIdObj = payload != null ? payload.get("adminId") : null;
+        Long adminId = 1L;
+        if (adminIdObj != null) {
+            try {
+                String adminIdStr = adminIdObj.toString().trim();
+                if (adminIdStr.contains(".")) {
+                    adminId = Double.valueOf(adminIdStr).longValue();
+                } else {
+                    adminId = Long.valueOf(adminIdStr);
+                }
+            } catch (Exception e) {
+                // keep default 1L
+            }
+        }
 
         applicationService.updateApplicationPriority(id, priorityGroup, priorityScore, adminId);
 
@@ -200,7 +280,7 @@ public class ApplicationController {
     @GetMapping("/admin-list")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Danh sách hồ sơ cho admin", description = "Phân trang, lọc theo trạng thái, trường, ngành và đợt xét tuyển")
-    public ResponseEntity<ApiResponse<Page<Application>>> getAdminApplications(
+    public ResponseEntity<ApiResponse<Page<ApplicationResponse>>> getAdminApplications(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long universityId,
             @RequestParam(required = false) Long majorId,
@@ -214,7 +294,8 @@ public class ApplicationController {
 
         Page<Application> applications = applicationService.getApplicationsForAdmin(parsedStatus, universityId, majorId,
                 admissionRoundId, page, size);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", applications));
+        Page<ApplicationResponse> responsePage = applications.map(this::mapToResponse);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lấy danh sách hồ sơ thành công", responsePage));
     }
 
     @GetMapping("/admin-statistics")
@@ -261,12 +342,12 @@ public class ApplicationController {
         if (application == null)
             return null;
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        java.util.Map<String, Double> parsedScores = new java.util.HashMap<>();
+        java.util.Map<String, Object> parsedScores = new java.util.HashMap<>();
         try {
             if (application.getScores() != null && !application.getScores().trim().isEmpty()
                     && !"null".equalsIgnoreCase(application.getScores().trim())) {
-                java.util.Map<String, Double> temp = mapper.readValue(application.getScores(),
-                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Double>>() {
+                java.util.Map<String, Object> temp = mapper.readValue(application.getScores(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {
                         });
                 if (temp != null) {
                     parsedScores.putAll(temp);
@@ -300,6 +381,26 @@ public class ApplicationController {
         return ApplicationResponse.builder()
                 .id(application.getId())
                 .candidateId(application.getCandidate() != null ? application.getCandidate().getId() : null)
+                .candidateName(application.getCandidate() != null && application.getCandidate().getUser() != null
+                        ? application.getCandidate().getUser().getFullName()
+                        : null)
+                .candidateEmail(application.getCandidate() != null && application.getCandidate().getUser() != null
+                        ? application.getCandidate().getUser().getEmail()
+                        : null)
+                .candidatePhone(application.getCandidate() != null ? application.getCandidate().getPhone() : null)
+                .candidateDateOfBirth(
+                        application.getCandidate() != null && application.getCandidate().getBirthDate() != null
+                                ? application.getCandidate().getBirthDate().toString()
+                                : null)
+                .candidateGender(application.getCandidate() != null ? application.getCandidate().getGender() : null)
+                .candidateCitizenId(
+                        application.getCandidate() != null ? application.getCandidate().getCitizenId() : null)
+                .candidateAddress(application.getCandidate() != null ? application.getCandidate().getAddress() : null)
+                .candidateCity(application.getCandidate() != null ? application.getCandidate().getCity() : null)
+                .candidateHighSchool(
+                        application.getCandidate() != null ? application.getCandidate().getHighSchoolName() : null)
+                .candidateGraduationYear(
+                        application.getCandidate() != null ? application.getCandidate().getGraduationYear() : null)
                 .majorId(application.getMajor() != null ? application.getMajor().getId() : null)
                 .majorName(application.getMajor() != null ? application.getMajor().getName() : null)
                 .universityId(application.getMajor() != null && application.getMajor().getUniversity() != null
@@ -327,6 +428,8 @@ public class ApplicationController {
                 .submittedAt(
                         application.getSubmissionDate() != null ? application.getSubmissionDate().toString() : null)
                 .status(application.getStatus() != null ? application.getStatus().name().toLowerCase() : null)
+                .adminNote(application.getAdminNote())
+                .admissionMethod(application.getAdmissionMethod())
                 .build();
     }
 }

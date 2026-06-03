@@ -15,7 +15,8 @@ import {
   BulbOutlined,
   BulbFilled,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  SafetyCertificateOutlined
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";
@@ -68,6 +69,7 @@ export const AdminLayout: React.FC = () => {
       label: <span>Trung tâm thông báo {unreadCount > 0 ? `(${unreadCount})` : ""}</span>,
     },
     { key: "/admin/admission-rounds", icon: <CalendarOutlined />, label: "Quản lý đợt" },
+    { key: "/admin/users", icon: <SafetyCertificateOutlined />, label: "Quản lý tài khoản" },
   ];
 
   const userMenu = {

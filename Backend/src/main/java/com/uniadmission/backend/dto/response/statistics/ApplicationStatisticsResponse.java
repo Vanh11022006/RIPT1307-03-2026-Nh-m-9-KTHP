@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ApplicationStatisticsResponse {
     private Long total;
+    private Long draft;
     private Long pending;
     private Long approved;
     private Long rejected;

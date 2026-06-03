@@ -1,6 +1,0 @@
-/Backend/target/
-/Frontend/dist/
-/Frontend/node_modules/
-**/uploads/
-*.log
-.env

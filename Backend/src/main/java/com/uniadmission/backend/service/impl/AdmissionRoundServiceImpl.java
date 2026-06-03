@@ -84,6 +84,7 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
         }
         round.setStatus(details.getStatus());
         round.setDescription(details.getDescription());
+        round.setAdmissionMethods(details.getAdmissionMethods());
 
         return repository.save(round);
     }
