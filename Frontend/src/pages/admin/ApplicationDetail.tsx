@@ -202,9 +202,9 @@ export const AdminApplicationDetail: React.FC = () => {
   };
 
   const scoreColumns = [
-    { 
-      title: "Môn thi / Trường điểm", 
-      dataIndex: "subject", 
+    {
+      title: "Môn thi / Trường điểm",
+      dataIndex: "subject",
       key: "subject",
       render: (subject: string) => SUBJECT_NAMES[subject] || subject
     },
@@ -475,7 +475,11 @@ export const AdminApplicationDetail: React.FC = () => {
           { title: "Chi tiết" }
         ]}
         extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/admin/applications")}>
+          <Button 
+            icon={<ArrowLeftOutlined />} 
+            onClick={() => navigate("/admin/applications")}
+            style={{ marginRight: 32, marginTop: 24 }}
+          >
             Quay lại danh sách
           </Button>
         }

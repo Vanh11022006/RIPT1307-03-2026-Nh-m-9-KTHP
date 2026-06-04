@@ -119,16 +119,7 @@ export const AdminLayout: React.FC = () => {
           })}
         </nav>
 
-        {/* Footer/Settings menu */}
-        <div className="px-3 mt-auto space-y-1 border-t border-black/[0.08] pt-3 pb-6">
-          <button
-            onClick={() => {}}
-            className="flex items-center gap-3 px-6 py-3 text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/5 duration-200 ease-in-out font-bold text-xs uppercase tracking-widest border-0 cursor-pointer w-full text-left bg-transparent"
-          >
-            <span className="material-symbols-outlined text-lg shrink-0">settings</span>
-            {!collapsed && "CÀI ĐẶT"}
-          </button>
-        </div>
+
       </aside>
 
       {/* Main Wrapper */}
