@@ -27,6 +27,25 @@ export const AuthPage: React.FC = () => {
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  // Local state for the new login page
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginRemember, setLoginRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail || !loginPassword) {
+      message.error("Vui lòng nhập email hoặc mã hồ sơ và mật khẩu.");
+      return;
+    }
+    await onFinishLogin({
+      email: loginEmail,
+      password: loginPassword,
+      remember: loginRemember
+    });
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regFullName || !regPhone || !regEmail || !regPassword || !regConfirmPassword) {
@@ -397,6 +416,187 @@ export const AuthPage: React.FC = () => {
                     Đã có tài khoản?{" "}
                     <Link to="/login" className="text-[#006874] font-bold hover:text-[#006874]/80 transition-colors">
                       Đăng nhập ngay
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Links */}
+              <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
+                <div className="flex gap-4">
+                  <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Terms</a>
+                </div>
+                <div>© 2024 UniAdmission</div>
+              </footer>
+            </div>
+          </section>
+        </main>
+
+        {/* Floating Atmosphere Elements */}
+        <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
+        <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
+      </div>
+    );
+  }
+
+  if (isLogin) {
+    return (
+      <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
+        {/* TopNavBar */}
+        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
+          <div 
+            onClick={() => navigate("/")}
+            className="font-bold text-2xl text-[#00616d] tracking-tight cursor-pointer"
+          >
+            UniAdmission
+          </div>
+          <div className="hidden md:flex items-center gap-6">
+            <a className="text-slate-600 font-medium hover:text-[#00616d] transition-colors duration-300" href="/">Support</a>
+            <button 
+              className="bg-[#00616d] text-white px-6 py-2.5 rounded-full font-semibold hover:scale-95 transition-transform duration-200 border-0 cursor-pointer"
+              onClick={() => navigate("/register")}
+            >
+              Apply Now
+            </button>
+          </div>
+        </header>
+
+        <main className="min-h-screen flex flex-col md:flex-row relative">
+          {/* Left Side: Cinematic Background (Lightened) */}
+          <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
+            <div className="absolute inset-0">
+              <img 
+                alt="University Campus" 
+                className="w-full h-full object-cover opacity-40" 
+                style={{ height: "100%", objectFit: "cover" }}
+                src="https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+            </div>
+            
+            {/* Content Overlay */}
+            <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
+              <div className="max-w-xl">
+                <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
+                  Chạm tay <br/>
+                  vào <br/>
+                  <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
+                </h1>
+                <p className="text-lg text-slate-600 mb-8 max-w-md">
+                  Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
+                </p>
+                
+                {/* Success Indicators (Floating Cards) */}
+                <div className="flex flex-col gap-4">
+                  <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
+                    <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
+                      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800 text-lg">98% Success Rate</div>
+                      <div className="text-xs font-medium text-slate-500">Top University Admissions 2023</div>
+                    </div>
+                  </div>
+                  
+                  <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit ml-0 md:ml-12 shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
+                    <div className="w-12 h-12 rounded-full bg-[#6b00af] text-white flex items-center justify-center shadow-md shrink-0">
+                      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800 text-lg">Active Community</div>
+                      <div className="text-xs font-medium text-slate-500">1M+ Students Globally</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Background Atmosphere */}
+            <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
+            <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
+          </section>
+
+          {/* Right Side: Login Form */}
+          <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
+            <div className="w-full max-w-md">
+              <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
+                {/* Glow effect inside card */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="relative z-10">
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Chào mừng trở lại</h2>
+                  <p className="text-slate-500 text-sm mb-8">Vui lòng đăng nhập để tiếp tục hành trình của bạn.</p>
+                  
+                  <form className="space-y-6" onSubmit={handleLoginSubmit}>
+                    {/* Email/Phone */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-slate-700 ml-1">Email hoặc Số điện thoại</label>
+                      <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">person</span>
+                        <input 
+                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          placeholder="example@email.com" 
+                          type="text"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          onFocus={() => setFocusedField('email')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
+                      <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">lock</span>
+                        <input 
+                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          placeholder="••••••••" 
+                          type={showPassword ? "text" : "password"}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          onFocus={() => setFocusedField('password')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                        <button 
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#006874] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
+                          onClick={() => setShowPassword(!showPassword)}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined">{showPassword ? "visibility_off" : "visibility"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Options */}
+                    <div className="flex items-center justify-between px-1">
+                      <label className="flex items-center gap-2 cursor-pointer group select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={loginRemember}
+                          onChange={(e) => setLoginRemember(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-[#006874] focus:ring-[#006874]/20 cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-500 group-hover:text-slate-800 transition-colors">Ghi nhớ đăng nhập</span>
+                      </label>
+                      <Link to="/forgot-password" className="text-sm text-[#006874] font-medium hover:text-[#006874]/80 transition-colors">
+                        Quên mật khẩu?
+                      </Link>
+                    </div>
+
+                    {/* CTA Button */}
+                    <button 
+                      type="submit" 
+                      disabled={loadingLogin}
+                      className="w-full mt-8 h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                    >
+                      {loadingLogin ? "Đang đăng nhập..." : "Đăng nhập"}
+                    </button>
+                  </form>
+                  <div className="mt-6 text-center text-sm text-slate-500">
+                    Chưa có tài khoản?{" "}
+                    <Link to="/register" className="text-[#006874] font-bold hover:text-[#006874]/80 transition-colors">
+                      Đăng ký ngay
                     </Link>
                   </div>
                 </div>
