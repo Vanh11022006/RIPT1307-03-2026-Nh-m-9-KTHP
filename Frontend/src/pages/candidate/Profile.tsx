@@ -5,11 +5,14 @@ import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
 export const Profile: React.FC = () => {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const { currentUser } = useAuthStore();
   const { getCandidateByUserId, getProfile, saveProfile } = useCandidateStore();
   const profile = currentUser ? getCandidateByUserId(currentUser.id) : undefined;
@@ -63,7 +66,14 @@ export const Profile: React.FC = () => {
   return (
     <div>
       {loading && <LoadingScreen tip="Đang tải thông tin cá nhân..." />}
-      <PageHeader title="Thông tin cá nhân" />
+      <PageHeader
+        title="Thông tin cá nhân"
+        extra={
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/candidate/dashboard")}>
+            Quay lại danh sách
+          </Button>
+        }
+      />
       <Card>
         <Form
           form={form}

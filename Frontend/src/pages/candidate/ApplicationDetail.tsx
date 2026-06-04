@@ -14,7 +14,7 @@ import { formatFileSize } from "../../utils/file";
 import { getPriorityGroupLabel } from "../../constants/priorityGroups";
 import { getEvidenceCategoryLabel } from "../../constants/evidenceCategories";
 import { SUBJECT_NAMES } from "../../constants/admissionMethodConfig";
-import { PaperClipOutlined, CheckCircleOutlined, SyncOutlined, CloseCircleOutlined, UploadOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, CheckCircleOutlined, SyncOutlined, CloseCircleOutlined, UploadOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -227,6 +227,11 @@ export const ApplicationDetail: React.FC = () => {
           { title: "Hồ sơ của tôi", href: "/candidate/applications" }, 
           { title: application.applicationCode }
         ]}
+        extra={
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/candidate/applications")}>
+            Quay lại danh sách
+          </Button>
+        }
       />
 
       <Row gutter={[24, 24]}>
