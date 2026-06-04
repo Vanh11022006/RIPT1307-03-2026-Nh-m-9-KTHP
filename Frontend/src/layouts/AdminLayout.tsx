@@ -77,14 +77,17 @@ export const AdminLayout: React.FC = () => {
         {/* Logo Section */}
         <div className="px-6 mb-8 mt-2">
           {!collapsed ? (
-            <div>
-              <h1 className="text-2xl font-extrabold text-[#00616D] tracking-tight m-0">UniAdmission</h1>
-              <p className="text-xs font-bold uppercase tracking-widest text-[#44474E] m-0 mt-1">System Admin</p>
-              <p className="text-[10px] text-[#00616D]/60 font-bold uppercase tracking-widest m-0 mt-1">Niên khóa 2025</p>
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 shrink-0" style={{ objectFit: "contain" }} />
+              <div>
+                <h1 className="text-xl font-extrabold text-[#00616D] tracking-tight m-0">UniAdmission</h1>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#44474E] m-0 mt-0.5">System Admin</p>
+                <p className="text-[9px] text-[#00616D]/60 font-bold uppercase tracking-widest m-0 mt-0.5">Niên khóa 2025</p>
+              </div>
             </div>
           ) : (
             <div className="flex justify-center">
-              <img src="/favicon.svg" alt="Logo" className="w-8 h-8 shrink-0" />
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 shrink-0" style={{ objectFit: "contain" }} />
             </div>
           )}
         </div>

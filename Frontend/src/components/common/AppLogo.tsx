@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap } from "lucide-react";
 
 interface AppLogoProps {
   collapsed?: boolean;
@@ -8,10 +7,10 @@ interface AppLogoProps {
 
 export const AppLogo: React.FC<AppLogoProps> = ({ collapsed }) => {
   return (
-    <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}>
-      <GraduationCap size={32} color="#1677ff" />
+    <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+      <img src="/logo.png" alt="Logo" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
       {!collapsed && (
-        <span style={{ fontSize: "16px", fontWeight: "bold", color: "inherit", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: "18px", fontWeight: "bold", color: "inherit", whiteSpace: "nowrap" }}>
           UniAdmission
         </span>
       )}
