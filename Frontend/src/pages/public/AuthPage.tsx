@@ -948,7 +948,7 @@ export const AuthPage: React.FC = () => {
                           return (
                             <input
                               key={index}
-                              ref={(el) => (codeHtmlInputRefs.current[index] = el)}
+                              ref={(el) => { codeHtmlInputRefs.current[index] = el; }}
                               className="w-full h-12 bg-white border border-slate-200/50 rounded-2xl text-center text-slate-800 text-lg font-bold shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10"
                               maxLength={1}
                               inputMode="numeric"
