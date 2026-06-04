@@ -228,7 +228,11 @@ export const ApplicationDetail: React.FC = () => {
           { title: application.applicationCode }
         ]}
         extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/candidate/applications")}>
+          <Button 
+            icon={<ArrowLeftOutlined />} 
+            onClick={() => navigate("/candidate/applications")}
+            style={{ marginRight: 32, marginTop: 24 }}
+          >
             Quay lại danh sách
           </Button>
         }
