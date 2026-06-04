@@ -16,27 +16,37 @@ export const PublicLayout: React.FC = () => {
   const isForgotPassword = location.pathname === "/forgot-password";
   const isResetPassword = location.pathname === "/reset-password";
   const isLanding = location.pathname === "/";
-  const isDarkTheme = isLanding;
+  const isDarkTheme = false; // Landing page uses a light theme now
 
   // Add a class to body when on landing or auth pages to apply dark mode specifically
   useEffect(() => {
-    if (isDarkTheme) {
+    if (isLanding) {
+      document.body.classList.add("landing-new-body");
+      document.body.classList.remove("landing-body");
+      document.body.classList.remove("dashboard-body");
+    } else if (isDarkTheme) {
       document.body.classList.add("landing-body");
       document.body.classList.remove("dashboard-body");
+      document.body.classList.remove("landing-new-body");
     } else {
       document.body.classList.remove("landing-body");
       document.body.classList.add("dashboard-body");
+      document.body.classList.remove("landing-new-body");
     }
     return () => {
       document.body.classList.remove("landing-body");
       document.body.classList.remove("dashboard-body");
+      document.body.classList.remove("landing-new-body");
     };
-  }, [isDarkTheme]);
+  }, [isLanding, isDarkTheme]);
 
   if (isLogin || isRegister || isForgotPassword || isResetPassword) {
     return <Outlet />;
   }
 
+  if (isLanding) {
+    return <Outlet />;
+  }
   const layoutStyle = isDarkTheme 
     ? { minHeight: "100vh", background: "transparent", position: "relative" as const, overflowX: "hidden" as const }
     : { minHeight: "100vh", background: "transparent" };
