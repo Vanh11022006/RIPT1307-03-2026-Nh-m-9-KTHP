@@ -44,8 +44,8 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.frontend.base-url:http://localhost:5173}")
     private String frontendBaseUrl;
 
-    @Value("${app.resend.api-key:}")
-    private String resendApiKey;
+    @Value("${app.brevo.api-key:}")
+    private String brevoApiKey;
 
     @Override
     @Async
@@ -154,44 +154,44 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void sendMimeMessageWithRetry(MimeMessage mimeMessage, String context) {
-        if (resendApiKey != null && !resendApiKey.trim().isEmpty()) {
+        if (brevoApiKey != null && !brevoApiKey.trim().isEmpty()) {
             retrySend(() -> {
                 try {
-                    sendMimeMessageViaResend(mimeMessage, context);
+                    sendMimeMessageViaBrevo(mimeMessage, context);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }, "Resend: " + context);
+            }, "Brevo: " + context);
         } else {
             retrySend(() -> mailSender.send(mimeMessage), context);
         }
     }
 
     private void sendSimpleMessageWithRetry(SimpleMailMessage message, String context) {
-        if (resendApiKey != null && !resendApiKey.trim().isEmpty()) {
-            retrySend(() -> sendSimpleMailMessageViaResend(message, context), "Resend: " + context);
+        if (brevoApiKey != null && !brevoApiKey.trim().isEmpty()) {
+            retrySend(() -> sendSimpleMailMessageViaBrevo(message, context), "Brevo: " + context);
         } else {
             retrySend(() -> mailSender.send(message), context);
         }
     }
 
     private void sendMimeMessageWithRetryOrThrow(MimeMessage mimeMessage, String context) {
-        if (resendApiKey != null && !resendApiKey.trim().isEmpty()) {
+        if (brevoApiKey != null && !brevoApiKey.trim().isEmpty()) {
             retrySendOrThrow(() -> {
                 try {
-                    sendMimeMessageViaResend(mimeMessage, context);
+                    sendMimeMessageViaBrevo(mimeMessage, context);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }, "Resend: " + context);
+            }, "Brevo: " + context);
         } else {
             retrySendOrThrow(() -> mailSender.send(mimeMessage), context);
         }
     }
 
     private void sendSimpleMessageWithRetryOrThrow(SimpleMailMessage message, String context) {
-        if (resendApiKey != null && !resendApiKey.trim().isEmpty()) {
-            retrySendOrThrow(() -> sendSimpleMailMessageViaResend(message, context), "Resend: " + context);
+        if (brevoApiKey != null && !brevoApiKey.trim().isEmpty()) {
+            retrySendOrThrow(() -> sendSimpleMailMessageViaBrevo(message, context), "Brevo: " + context);
         } else {
             retrySendOrThrow(() -> mailSender.send(message), context);
         }
@@ -406,16 +406,18 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private void sendMimeMessageViaResend(MimeMessage mimeMessage, String context) throws Exception {
+
+
+    private void sendMimeMessageViaBrevo(MimeMessage mimeMessage, String context) throws Exception {
         String to = mimeMessage.getRecipients(javax.mail.Message.RecipientType.TO)[0].toString();
         String subject = mimeMessage.getSubject();
         String body = "";
         
-        Object content = mimeMessage.getContent();
-        if (content instanceof String) {
-            body = (String) content;
-        } else if (content instanceof javax.mail.internet.MimeMultipart) {
-            javax.mail.internet.MimeMultipart multipart = (javax.mail.internet.MimeMultipart) content;
+        Object contentObj = mimeMessage.getContent();
+        if (contentObj instanceof String) {
+            body = (String) contentObj;
+        } else if (contentObj instanceof javax.mail.internet.MimeMultipart) {
+            javax.mail.internet.MimeMultipart multipart = (javax.mail.internet.MimeMultipart) contentObj;
             int count = multipart.getCount();
             for (int i = 0; i < count; i++) {
                 javax.mail.BodyPart bodyPart = multipart.getBodyPart(i);
@@ -429,40 +431,47 @@ public class EmailServiceImpl implements EmailService {
             }
         }
         
-        sendEmailViaResend(to, subject, body, true);
+        sendEmailViaBrevo(to, subject, body, true);
     }
 
-    private void sendSimpleMailMessageViaResend(SimpleMailMessage message, String context) {
+    private void sendSimpleMailMessageViaBrevo(SimpleMailMessage message, String context) {
         String to = message.getTo() != null && message.getTo().length > 0 ? message.getTo()[0] : "";
         String subject = message.getSubject() != null ? message.getSubject() : "";
         String body = message.getText() != null ? message.getText() : "";
-        sendEmailViaResend(to, subject, body, false);
+        sendEmailViaBrevo(to, subject, body, false);
     }
 
-    private void sendEmailViaResend(String to, String subject, String content, boolean isHtml) {
+    private void sendEmailViaBrevo(String to, String subject, String content, boolean isHtml) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(resendApiKey);
+        headers.set("api-key", brevoApiKey);
+
+        Map<String, Object> senderMap = new HashMap<>();
+        senderMap.put("name", "UniAdmission");
+        senderMap.put("email", fromAddress != null && !fromAddress.trim().isEmpty() ? fromAddress : "hethongxettuyen.uniadmission@gmail.com");
+
+        Map<String, Object> recipientMap = new HashMap<>();
+        recipientMap.put("email", to);
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("from", "UniAdmission <onboarding@resend.dev>");
-        payload.put("to", new String[]{to});
+        payload.put("sender", senderMap);
+        payload.put("to", java.util.Collections.singletonList(recipientMap));
         payload.put("subject", subject);
         if (isHtml) {
-            payload.put("html", content);
+            payload.put("htmlContent", content);
         } else {
-            payload.put("text", content);
+            payload.put("textContent", content);
         }
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
         
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity("https://api.resend.com/emails", request, String.class);
-            log.info("Email sent successfully via Resend API to {}, response={}", to, response.getBody());
+            ResponseEntity<String> response = restTemplate.postForEntity("https://api.brevo.com/v3/smtp/email", request, String.class);
+            log.info("Email sent successfully via Brevo API to {}, response={}", to, response.getBody());
         } catch (Exception e) {
-            log.error("Failed to send email via Resend API to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Resend API error: " + e.getMessage(), e);
+            log.error("Failed to send email via Brevo API to {}: {}", to, e.getMessage());
+            throw new RuntimeException("Brevo API error: " + e.getMessage(), e);
         }
     }
 }
