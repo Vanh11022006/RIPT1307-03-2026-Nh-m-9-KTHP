@@ -50,6 +50,7 @@ export const CandidateLayout: React.FC = () => {
     { path: "/candidate/dashboard", icon: "dashboard", label: "BẢNG ĐIỀU KHIỂN" },
     { path: "/candidate/profile", icon: "person", label: "THÔNG TIN CÁ NHÂN" },
     { path: "/candidate/universities", icon: "school", label: "DANH SÁCH TRƯỜNG" },
+    { path: "/candidate/apply", icon: "assignment", label: "NỘP HỒ SƠ" },
     { path: "/candidate/applications", icon: "description", label: "HỒ SƠ CỦA TÔI" },
     { path: "/candidate/notifications", icon: "notifications", label: "THÔNG BÁO", badge: unreadCount },
     { path: "/candidate/results", icon: "military_tech", label: "KẾT QUẢ XÉT TUYỂN" },
