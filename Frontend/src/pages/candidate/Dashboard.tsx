@@ -1,19 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Card, Row, Col, Statistic, Table, Alert, Button, Space, Typography, Progress, Empty, Tag } from "antd";
-import { 
-  FileTextOutlined, 
-  ClockCircleOutlined, 
-  CheckCircleOutlined, 
-  CloseCircleOutlined,
-  PlusOutlined,
-  FolderOpenOutlined,
-  UserOutlined,
-  EyeOutlined,
-  InfoCircleOutlined
-} from "@ant-design/icons";
+import { Alert } from "antd";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "../../components/common/PageHeader";
-import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useApplicationStore } from "../../stores/application.store";
@@ -22,8 +9,6 @@ import { useMajorStore } from "../../stores/major.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { formatDate } from "../../utils/date";
 import type { Application } from "../../types/application.types";
-
-const { Title, Text, Paragraph } = Typography;
 
 export const CandidateDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -35,7 +20,6 @@ export const CandidateDashboard: React.FC = () => {
   const { admissionRounds, getAdmissionRounds } = useAdmissionRoundStore();
 
   const [applications, setApplications] = useState<Application[]>([]);
-  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const safeUniversities = Array.isArray(universities) ? universities : [];
   const safeMajors = Array.isArray(majors) ? majors : [];
@@ -59,19 +43,16 @@ export const CandidateDashboard: React.FC = () => {
         return;
       }
 
-      setApplicationsLoading(true);
       await Promise.all([getUniversities(), getMajors(), getAdmissionRounds()]);
       const data = await getApplicationsByCandidateId(resolvedCandidate.id);
 
       if (mounted) {
         setApplications(Array.isArray(data) ? data : []);
-        setApplicationsLoading(false);
       }
     };
 
     loadDashboardData().catch((error) => {
       console.error("Failed to load candidate dashboard data", error);
-      if (mounted) setApplicationsLoading(false);
     });
 
     return () => {
@@ -102,76 +83,12 @@ export const CandidateDashboard: React.FC = () => {
     return round ? `${round.code}` : "Chưa xác định";
   };
 
-  const percentPending = stats.total > 0 ? (stats.pending / stats.total) * 100 : 0;
-  const percentApproved = stats.total > 0 ? (stats.approved / stats.total) * 100 : 0;
-  const percentRejected = stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0;
-
-  const columns = [
-    {
-      title: "Mã hồ sơ",
-      dataIndex: "applicationCode",
-      key: "applicationCode",
-      render: (text: string) => <Text strong>{text}</Text>
-    },
-    {
-      title: "Đợt xét tuyển",
-      dataIndex: "admissionRoundId",
-      key: "admissionRoundId",
-      render: (id?: string) => getRoundName(id)
-    },
-    {
-      title: "Trường",
-      dataIndex: "universityId",
-      key: "universityId",
-      render: (id: string) => getUniversityName(id)
-    },
-    {
-      title: "Ngành",
-      dataIndex: "majorId",
-      key: "majorId",
-      render: (id: string) => getMajorName(id)
-    },
-    {
-      title: "Tổng điểm",
-      dataIndex: "totalScore",
-      key: "totalScore",
-      align: "center" as const,
-      render: (_: number, record: any) => {
-        const final = record?.finalScore ?? (Number(record?.totalScore ?? 0) + Number(record?.priorityScore ?? 0));
-        return <Text strong>{(final ?? 0).toFixed(2)}</Text>;
-      }
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status: any) => <ApplicationStatusTag status={status} />
-    },
-    {
-      title: "Ngày nộp",
-      dataIndex: "submittedAt",
-      key: "submittedAt",
-      render: (date: string) => formatDate(date)
-    },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_: any, record: any) => (
-        <Button 
-          type="link" 
-          icon={<EyeOutlined />}
-          onClick={() => navigate(`/candidate/applications/${record.id}`)}
-        >
-          Xem chi tiết
-        </Button>
-      )
-    }
-  ];
-
   return (
-    <div>
-      <PageHeader title="Bảng điều khiển" />
-      
+    <div className="space-y-12 relative">
+      {/* Atmospheric Glows */}
+      <div className="glow-bg -top-20 -left-20 pointer-events-none"></div>
+      <div className="glow-bg top-1/2 -right-20 opacity-50 pointer-events-none"></div>
+
       {!candidate && (
         <Alert 
           message="Chưa cập nhật thông tin cá nhân" 
@@ -182,196 +99,264 @@ export const CandidateDashboard: React.FC = () => {
         />
       )}
 
-      {/* 1. Premium hero section */}
-      <Card 
-        className="premium-card"
-        style={{ 
-          marginBottom: 24, 
-          background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(0, 240, 255, 0.15) 100%)",
-          border: "1px solid rgba(0, 240, 255, 0.2)",
-        }}
-      >
-        <Row align="middle" justify="space-between">
-          <Col xs={24} md={16}>
-            <Title level={3} style={{ marginTop: 0, textShadow: "0 2px 10px rgba(16, 185, 129, 0.1)" }}>
-              Xin chào, {currentUser?.fullName || "Thí sinh"}!
-            </Title>
-            <Paragraph style={{ fontSize: 16, marginBottom: 24 }} type="secondary">
-              Theo dõi hồ sơ xét tuyển, kết quả và cập nhật thông tin cá nhân một cách dễ dàng.
-            </Paragraph>
-            <Space size="middle" wrap>
-              <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => navigate("/candidate/apply")}>
+      {/* Welcome Section */}
+      <section className="relative overflow-hidden rounded-lg p-12 bg-white border border-black/[0.08] shadow-sm">
+        <div className="relative z-10 flex flex-col xl:flex-row justify-between xl:items-end gap-6">
+          <div className="space-y-3">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C1E] leading-tight m-0">
+              Xin chào, <span className="text-[#00616D]">{currentUser?.fullName || "Thí sinh"}!</span>
+            </h2>
+            <p className="text-base text-[#44474E] max-w-xl m-0 leading-relaxed">
+              Hồ sơ của bạn hiện đạt 85% độ hoàn thiện. Bạn còn {stats.pending} ứng tuyển đang chờ xử lý và 2 hạn chót sắp tới trong tuần này.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-3">
+              <button 
+                onClick={() => navigate("/candidate/apply")}
+                className="bg-[#00616D] text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:shadow-lg active:scale-95 transition-all border-0 cursor-pointer text-sm"
+              >
+                <span className="material-symbols-outlined text-sm">send</span>
                 Nộp hồ sơ ngay
-              </Button>
-              <Button size="large" icon={<FolderOpenOutlined />} onClick={() => navigate("/candidate/applications")}>
+              </button>
+              <button 
+                onClick={() => navigate("/candidate/applications")}
+                className="bg-[#F1F4F5] text-[#1A1C1E] font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white hover:shadow-sm border border-transparent hover:border-black/[0.08] active:scale-95 transition-all border-0 cursor-pointer text-sm"
+              >
+                <span className="material-symbols-outlined text-sm">visibility</span>
                 Xem hồ sơ của tôi
-              </Button>
-            </Space>
-          </Col>
-          <Col xs={24} md={8} style={{ textAlign: "right", marginTop: 24 }}>
-            {stats.pending > 0 ? (
-              <Tag color="gold" style={{ padding: "8px 16px", fontSize: 14, borderRadius: 20 }}>
-                <ClockCircleOutlined /> Bạn có {stats.pending} hồ sơ đang chờ duyệt
-              </Tag>
+              </button>
+            </div>
+          </div>
+          <div className="hidden xl:flex items-center gap-2 bg-[#00616D]/5 p-6 rounded-xl border border-[#00616D]/10 shrink-0">
+            <div className="w-16 h-16 rounded-full border-4 border-[#00616D] border-t-transparent animate-spin duration-[2000ms]"></div>
+            <div>
+              <p className="text-[#00616D] font-bold text-2xl m-0">85%</p>
+              <p className="text-xs text-[#44474E] uppercase tracking-tighter m-0 font-bold">Hoàn thiện hồ sơ</p>
+            </div>
+          </div>
+        </div>
+        {/* Decorative element */}
+        <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00616D]/5 blur-[100px] rounded-full pointer-events-none"></div>
+      </section>
+
+      {/* Stats Cards (Row of 4) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        {/* Card 1: Tổng hồ sơ */}
+        <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08]">
+          <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
+            <span className="material-symbols-outlined text-3xl">all_inbox</span>
+          </div>
+          <div>
+            <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Tổng hồ sơ</p>
+            <p className="text-2xl font-bold text-[#1A1C1E] m-0 mt-1">{String(stats.total).padStart(2, '0')}</p>
+          </div>
+        </div>
+        
+        {/* Card 2: Đang chờ */}
+        <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-[#00E3FD]">
+          <div className="w-12 h-12 rounded-xl bg-[#00E3FD]/10 flex items-center justify-center text-[#00616D] shrink-0">
+            <span className="material-symbols-outlined text-3xl">pending_actions</span>
+          </div>
+          <div>
+            <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Đang chờ</p>
+            <p className="text-2xl font-bold text-[#1A1C1E] m-0 mt-1">{String(stats.pending).padStart(2, '0')}</p>
+          </div>
+        </div>
+
+        {/* Card 3: Đã duyệt */}
+        <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-green-500">
+          <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600 shrink-0">
+            <span className="material-symbols-outlined text-3xl">verified</span>
+          </div>
+          <div>
+            <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Đã duyệt</p>
+            <p className="text-2xl font-bold text-[#1A1C1E] m-0 mt-1">{String(stats.approved).padStart(2, '0')}</p>
+          </div>
+        </div>
+
+        {/* Card 4: Từ chối */}
+        <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-[#BA1A1A]">
+          <div className="w-12 h-12 rounded-xl bg-[#BA1A1A]/10 flex items-center justify-center text-[#BA1A1A] shrink-0">
+            <span className="material-symbols-outlined text-3xl">cancel</span>
+          </div>
+          <div>
+            <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Từ chối</p>
+            <p className="text-2xl font-bold text-[#1A1C1E] m-0 mt-1">{String(stats.rejected).padStart(2, '0')}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Bento Grid */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Quick Actions (Left 4 cols) */}
+        <div className="xl:col-span-4 space-y-6">
+          <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Thao tác nhanh</h3>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate("/candidate/apply")}
+              className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#00616D]/10 flex items-center justify-center text-[#00616D] group-hover:bg-[#00616D] group-hover:text-white transition-all shrink-0">
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+              </div>
+              <div>
+                <p className="font-bold text-[#1A1C1E] m-0">Hồ sơ mới</p>
+                <p className="text-xs text-[#44474E] m-0 mt-0.5">Tạo hồ sơ ứng tuyển mới</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => navigate("/candidate/applications")}
+              className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#F1F4F5] flex items-center justify-center text-[#44474E] group-hover:bg-[#00616D] group-hover:text-white transition-all shrink-0">
+                <span className="material-symbols-outlined text-lg">folder_shared</span>
+              </div>
+              <div>
+                <p className="font-bold text-[#1A1C1E] m-0">Tài liệu của tôi</p>
+                <p className="text-xs text-[#44474E] m-0 mt-0.5">Quản lý các chứng chỉ & học bạ</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => navigate("/candidate/profile")}
+              className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#F1F4F5] flex items-center justify-center text-[#44474E] group-hover:bg-[#00616D] group-hover:text-white transition-all shrink-0">
+                <span className="material-symbols-outlined text-lg">manage_accounts</span>
+              </div>
+              <div>
+                <p className="font-bold text-[#1A1C1E] m-0">Cập nhật hồ sơ</p>
+                <p className="text-xs text-[#44474E] m-0 mt-0.5">Cập nhật thông tin cá nhân</p>
+              </div>
+            </button>
+          </div>
+
+          {/* AI Suggestions Card */}
+          <div className="p-6 rounded-lg bg-[#00616D]/5 border border-[#00616D]/10">
+            <p className="font-bold text-[#00616D] flex items-center gap-2 m-0 text-sm">
+              <span className="material-symbols-outlined text-base">auto_awesome</span>
+              Gợi ý từ AI
+            </p>
+            <p className="text-sm text-[#44474E] mt-2 leading-relaxed m-0">
+              Dựa trên học bạ của bạn, chúng tôi đề xuất bạn nên ứng tuyển vào ngành <span className="text-[#00616D] font-bold">Khoa học máy tính</span> tại VinUniversity để có tỷ lệ đậu cao nhất.
+            </p>
+          </div>
+        </div>
+
+        {/* Recent Applications (Right 8 cols) */}
+        <div className="xl:col-span-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Trạng thái hồ sơ gần đây</h3>
+            <a 
+              onClick={() => navigate("/candidate/applications")}
+              className="text-[#00616D] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              Xem tất cả
+              <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {applications.length > 0 ? (
+              [...applications]
+                .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+                .slice(0, 3)
+                .map((app) => {
+                  const univName = getUniversityName(app.universityId);
+                  const majorName = getMajorName(app.majorId);
+                  const roundName = getRoundName(app.admissionRoundId);
+                  
+                  // Fallback images matching mockup
+                  let imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh";
+                  let imageAlt = "Bách Khoa Hanoi";
+                  if (univName.toLowerCase().includes("vinuniversity") || univName.toLowerCase().includes("vinuni")) {
+                    imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLtCvuBmB7J7bbqOtGWgdfRwAotrfX_IJF43RuYnfCOMgar3uiJ5qL7pzmLU1LucNeZngeRGSmexs2SGOgZ01HPXoZD8AjlK-kTT8yYpPGeT5vBsL2jIrEJdxJ8zJ0hecfMYfk1QkdvzOJT571Aj4BOoa9q8XtH_2ovwCKkGBd5hBN9rAYsxj293m6SGV6BrRcpRgQf65zb8C0z6p3d0QgHnbhOok9eZq6OrWFqPZs_RqXyNuMtUN_AVwdA";
+                    imageAlt = "VinUniversity";
+                  } else if (univName.toLowerCase().includes("quốc gia") || univName.toLowerCase().includes("vnu")) {
+                    imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvV9YZffv4RNtTr2B5sC_J_n6MIwWBj4atOKZ2fPziOz9JSfVO4_Tpkr2jEWiuCRJQwubLAP8fp5QVyY9LphGEekhm8XWk0TcNyyE0FpHF78phFXPMIaEYTpxS5GqJHlcPRARv92TRwqmtAl7irWY8X6IDEmxapoix7MaOGWwQuMocNKCNRZiE8VBUQ0Z97unTRZaLAguto3H27Tl9fpHW4mh9nsocET48juVkcUm0-2_16DtXx";
+                    imageAlt = "Đại học Quốc gia TP.HCM";
+                  }
+                  
+                  // Status configurations
+                  let statusText = "Đang xử lý";
+                  let statusClass = "bg-[#00616D]/5 text-[#00616D]";
+                  let progressPercent = 60;
+                  let progressBarColor = "bg-[#00616D]";
+                  
+                  if (app.status === "approved") {
+                    statusText = "Đã trúng tuyển";
+                    statusClass = "bg-green-100 text-green-700";
+                    progressPercent = 100;
+                    progressBarColor = "bg-green-500";
+                  } else if (app.status === "rejected") {
+                    statusText = "Từ chối";
+                    statusClass = "bg-rose-100 text-rose-700";
+                    progressPercent = 100;
+                    progressBarColor = "bg-rose-500";
+                  }
+                  
+                  return (
+                    <div 
+                      key={app.id}
+                      onClick={() => navigate(`/candidate/applications/${app.id}`)}
+                      className="bg-white border border-black/[0.08] p-3 rounded-lg flex flex-col md:flex-row gap-6 hover:border-[#00E3FD]/50 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,227,253,0.08)] transition-all duration-300 group cursor-pointer"
+                    >
+                      <div className="w-full md:w-48 h-32 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          alt={imageAlt} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          src={imageUrl}
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center py-2">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <p className="text-xs font-bold text-[#00616D] uppercase tracking-wider m-0">{majorName}</p>
+                            <h4 className="font-bold text-lg text-[#1A1C1E] m-0 mt-1">{univName}</h4>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter shrink-0 ${statusClass}`}>
+                            {statusText}
+                          </span>
+                        </div>
+                        
+                        <div className="mt-4 flex flex-wrap items-center gap-6">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-[#44474E] uppercase font-semibold">Ngày nộp</span>
+                            <span className="text-sm font-bold text-[#1A1C1E] mt-0.5">{formatDate(app.submittedAt)}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-[#44474E] uppercase font-semibold">Hệ đào tạo</span>
+                            <span className="text-sm font-bold text-[#1A1C1E] mt-0.5">{roundName}</span>
+                          </div>
+                          <div className="flex-1 min-w-[120px] max-w-[180px]">
+                            <div className="flex justify-between text-[10px] text-[#44474E] mb-1 font-semibold uppercase">
+                              <span>Tiến độ</span>
+                              <span className="text-[#00616D] font-bold">{progressPercent}%</span>
+                            </div>
+                            <div className="w-full h-1 bg-[#F1F4F5] rounded-full overflow-hidden">
+                              <div className={`h-full ${progressBarColor}`} style={{ width: `${progressPercent}%` }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
             ) : (
-              <Tag color="blue" style={{ padding: "8px 16px", fontSize: 14, borderRadius: 20 }}>
-                <InfoCircleOutlined /> Hệ thống xét tuyển đang mở
-              </Tag>
-            )}
-          </Col>
-        </Row>
-      </Card>
-
-      {/* 2. Premium statistic cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <Statistic 
-              title={<Text type="secondary">Tổng hồ sơ đã nộp</Text>} 
-              value={stats.total} 
-              prefix={<FileTextOutlined style={{ color: "#1677ff" }} />} 
-              valueStyle={{ fontSize: 28, fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <Statistic 
-              title={<Text type="secondary">Đang chờ duyệt</Text>} 
-              value={stats.pending} 
-              prefix={<ClockCircleOutlined style={{ color: "#faad14" }} />} 
-              valueStyle={{ color: "#faad14", fontSize: 28, fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <Statistic 
-              title={<Text type="secondary">Đã duyệt</Text>} 
-              value={stats.approved} 
-              prefix={<CheckCircleOutlined style={{ color: "#52c41a" }} />} 
-              valueStyle={{ color: "#52c41a", fontSize: 28, fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <Statistic 
-              title={<Text type="secondary">Từ chối</Text>} 
-              value={stats.rejected} 
-              prefix={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />} 
-              valueStyle={{ color: "#ff4d4f", fontSize: 28, fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-        {/* 3. Quick actions section */}
-        <Col xs={24} lg={16}>
-          <Card title={<Title level={5} style={{ margin: 0 }}>Thao tác nhanh</Title>} style={{ borderRadius: 12, height: "100%" }}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={8}>
-                <Card 
-                  hoverable 
+              <div className="bg-white border border-black/[0.08] p-8 rounded-lg text-center">
+                <span className="material-symbols-outlined text-slate-300 text-4xl">folder_off</span>
+                <p className="text-[#44474E] text-sm mt-2 m-0">Bạn chưa có hồ sơ ứng tuyển nào</p>
+                <button 
                   onClick={() => navigate("/candidate/apply")}
-                  style={{ textAlign: "center", border: "1px dashed var(--border-color)", background: "transparent" }}
+                  className="mt-4 bg-[#00616D] text-white font-bold px-6 py-2 rounded-full border-0 cursor-pointer hover:shadow-md transition-all text-xs"
                 >
-                  <PlusOutlined style={{ fontSize: 32, color: "#10b981", marginBottom: 12 }} />
-                  <Title level={5} style={{ margin: "0 0 8px 0" }}>Nộp hồ sơ mới</Title>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Đăng ký xét tuyển vào các trường đại học</Text>
-                </Card>
-              </Col>
-              <Col xs={24} sm={8}>
-                <Card 
-                  hoverable 
-                  onClick={() => navigate("/candidate/applications")}
-                  style={{ textAlign: "center", border: "1px dashed var(--border-color)", background: "transparent" }}
-                >
-                  <FolderOpenOutlined style={{ fontSize: 32, color: "#3b82f6", marginBottom: 12 }} />
-                  <Title level={5} style={{ margin: "0 0 8px 0" }}>Hồ sơ của tôi</Title>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Quản lý và theo dõi trạng thái hồ sơ</Text>
-                </Card>
-              </Col>
-              <Col xs={24} sm={8}>
-                <Card 
-                  hoverable 
-                  onClick={() => navigate("/candidate/profile")}
-                  style={{ textAlign: "center", border: "1px dashed var(--border-color)", background: "transparent" }}
-                >
-                  <UserOutlined style={{ fontSize: 32, color: "#8b5cf6", marginBottom: 12 }} />
-                  <Title level={5} style={{ margin: "0 0 8px 0" }}>Thông tin cá nhân</Title>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Cập nhật thông tin và điểm số</Text>
-                </Card>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-
-        {/* 4. Application status overview section */}
-        <Col xs={24} lg={8}>
-          <Card title={<Title level={5} style={{ margin: 0 }}>Tình trạng hồ sơ</Title>} style={{ borderRadius: 12, height: "100%" }}>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text type="secondary">Chờ duyệt</Text>
-                <Text strong>{stats.pending} ({percentPending.toFixed(1)}%)</Text>
+                  Nộp hồ sơ ngay
+                </button>
               </div>
-              <Progress percent={percentPending} strokeColor="#3b82f6" showInfo={false} size="small" />
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text type="secondary">Đã duyệt</Text>
-                <Text strong>{stats.approved} ({percentApproved.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentApproved} strokeColor="#10b981" showInfo={false} size="small" />
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text type="secondary">Từ chối</Text>
-                <Text strong>{stats.rejected} ({percentRejected.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentRejected} strokeColor="#ef4444" showInfo={false} size="small" />
-            </div>
-            
-            {/* 6. Optional support info block */}
-            <div style={{ marginTop: 24, padding: 12, background: "rgba(16, 185, 129, 0.05)", borderRadius: 8, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-              <Space align="start">
-                <InfoCircleOutlined style={{ color: "#10b981", marginTop: 4 }} />
-                <Text style={{ fontSize: 13 }} type="secondary">
-                  Hãy kiểm tra kỹ thông tin và minh chứng trước khi nộp hồ sơ. Theo dõi trạng thái thường xuyên để không bỏ lỡ cập nhật mới.
-                </Text>
-              </Space>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 5. Improve recent applications section */}
-      <Card title={<Title level={5} style={{ margin: 0 }}>Hồ sơ gần đây</Title>} style={{ borderRadius: 12 }}>
-        {applications.length > 0 ? (
-          <Table 
-            dataSource={[...applications].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).slice(0, 5)} 
-            columns={columns} 
-            rowKey="id" 
-            pagination={false}
-            scroll={{ x: true }}
-            size="middle"
-            loading={applicationsLoading}
-          />
-        ) : (
-          /* 7. Better empty states */
-          <Empty 
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <span>
-                Bạn chưa có hồ sơ nào
-              </span>
-            }
-          >
-            <Button type="primary" onClick={() => navigate("/candidate/apply")}>Nộp hồ sơ ngay</Button>
-          </Empty>
-        )}
-      </Card>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

@@ -322,9 +322,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Họ và tên</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'fullName' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">person</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">person</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="Nguyễn Văn A" 
                           type="text"
                           value={regFullName}
@@ -339,9 +339,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'phone' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">call</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">call</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="0901 234 567" 
                           type="tel"
                           value={regPhone}
@@ -356,9 +356,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">mail</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">mail</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="example@email.com" 
                           type="email"
                           value={regEmail}
@@ -373,9 +373,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">lock</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">lock</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="••••••••" 
                           type="password"
                           value={regPassword}
@@ -390,9 +390,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Xác nhận mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'confirmPassword' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">enhanced_encryption</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">enhanced_encryption</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="••••••••" 
                           type="password"
                           value={regConfirmPassword}
@@ -531,9 +531,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email hoặc Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">person</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">person</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="example@email.com" 
                           type="text"
                           value={loginEmail}
@@ -548,9 +548,9 @@ export const AuthPage: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#006874] transition-colors text-slate-400">lock</span>
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">lock</span>
                         <input 
-                          className="w-full h-12 bg-white border border-slate-200 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm transition-all focus:border-[#006874] focus:ring-2 focus:ring-[#006874]/10" 
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
                           placeholder="••••••••" 
                           type={showPassword ? "text" : "password"}
                           value={loginPassword}
@@ -559,7 +559,7 @@ export const AuthPage: React.FC = () => {
                           onBlur={() => setFocusedField(null)}
                         />
                         <button 
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#006874] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
                           onClick={() => setShowPassword(!showPassword)}
                           type="button"
                         >

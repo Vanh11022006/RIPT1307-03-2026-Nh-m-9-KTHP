@@ -1390,3 +1390,34 @@ body {
   border-radius: 16px !important;
   padding: 16px !important;
 }
+
+/* Dashboard Premium Aura Student Styles */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.glass-card-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(0, 227, 253, 0.5) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(0, 227, 253, 0.2);
+}
+
+.glow-bg {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 227, 253, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+  filter: blur(60px);
+  z-index: -1;
+  pointer-events: none;
+}
+
