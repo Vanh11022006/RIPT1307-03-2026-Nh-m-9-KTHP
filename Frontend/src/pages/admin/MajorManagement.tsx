@@ -1,25 +1,38 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Tag, Button, Modal, Form, Space, message, InputNumber, Popconfirm } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useMajorStore } from "../../stores/major.store";
 import { useUniversityStore } from "../../stores/university.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import type { Major } from "../../types/major.types";
+import { loadMajorManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 const { Text } = Typography;
 
 export const MajorManagement: React.FC = () => {
-  const { majors, createMajor, updateMajor, toggleMajorStatus } = useMajorStore();
-  const { universities, getUniversityById } = useUniversityStore();
-  const { subjectGroups } = useSubjectGroupStore();
+  const { majors, loading, createMajor, updateMajor, toggleMajorStatus, getMajors } = useMajorStore();
+  const { universities, getUniversityById, getUniversities } = useUniversityStore();
+  const { subjectGroups, getAllSubjectGroups } = useSubjectGroupStore();
 
   const safeMajors = Array.isArray(majors) ? majors : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
   const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadMajorManagementData();
+      } catch (error) {
+        console.error("Failed to load major management data:", error);
+      }
+    };
+    loadData();
+  }, [getMajors, getUniversities, getAllSubjectGroups]);
 
   const [searchText, setSearchText] = useState("");
   const [universityFilter, setUniversityFilter] = useState<string>("all");
@@ -71,7 +84,7 @@ export const MajorManagement: React.FC = () => {
     setEditingId(null);
   };
 
-  const handleModalSubmit = (values: any) => {
+  const handleModalSubmit = async (values: any) => {
     const now = new Date().toISOString();
     
     // Safety for subjectGroupCodes
@@ -83,26 +96,30 @@ export const MajorManagement: React.FC = () => {
       description: values.description || ""
     };
 
-    if (editingId) {
-      updateMajor(editingId, {
-        ...payload,
-        updatedAt: now
-      });
-      message.success("Cập nhật ngành học thành công");
-    } else {
-      const newId = `major_${Date.now()}`;
-      createMajor({
-        ...payload,
-        id: newId,
-        createdAt: now,
-        updatedAt: now
-      });
-      message.success("Thêm ngành học thành công");
+    try {
+      if (editingId) {
+        await updateMajor(editingId, {
+          ...payload,
+          updatedAt: now
+        });
+        await getMajors();
+        message.success("Cập nhật ngành học thành công");
+      } else {
+        await createMajor({
+          ...payload,
+          createdAt: now,
+          updatedAt: now
+        });
+        await getMajors();
+        message.success("Thêm ngành học thành công");
+      }
+
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingId(null);
+    } catch (error) {
+      message.error("Không thể lưu thông tin ngành học");
     }
-    
-    setIsModalVisible(false);
-    form.resetFields();
-    setEditingId(null);
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {
@@ -261,12 +278,15 @@ export const MajorManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredMajors.length > 0 ? (
+        {loading && filteredMajors.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách ngành học..." />
+        ) : filteredMajors.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredMajors} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
           />
         ) : (
           <EmptyState description="Không tìm thấy ngành học phù hợp" />

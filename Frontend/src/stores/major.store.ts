@@ -24,7 +24,7 @@ interface MajorState {
   getMajorsByUniversityId: (universityId: string) => Major[];
   getActiveMajorsByUniversityId: (universityId: string) => Major[];
   getMajorById: (id: string) => Major | undefined;
-  createMajor: (major: Major) => Promise<void>;
+  createMajor: (major: Partial<Major>) => Promise<void>;
   updateMajor: (id: string, data: Partial<Major>) => Promise<void>;
   toggleMajorStatus: (id: string) => Promise<void>;
 }
@@ -63,7 +63,12 @@ export const useMajorStore = create<MajorState>((set, get) => ({
     try {
       const response = await axiosClient.post("/majors", major);
       const payload = response?.data ?? response;
-      const createdMajor = normalizeMajor(payload?.data ?? payload);
+      const serverMajor = payload?.data ?? payload;
+      const createdMajor = normalizeMajor({
+        ...major,
+        ...(serverMajor || {}),
+        id: String(serverMajor?.id ?? major?.id ?? ""),
+      });
       if (createdMajor.id) {
         set((state) => ({
           majors: [...state.majors, createdMajor]
@@ -71,6 +76,7 @@ export const useMajorStore = create<MajorState>((set, get) => ({
       }
     } catch (error) {
       console.error("Failed to create major:", error);
+      throw error;
     }
   },
 
@@ -78,16 +84,25 @@ export const useMajorStore = create<MajorState>((set, get) => ({
     try {
       const response = await axiosClient.put(`/majors/${id}`, data);
       const payload = response?.data ?? response;
-      const updatedMajor = normalizeMajor(payload?.data ?? payload);
-      if (updatedMajor.id) {
-        set((state) => ({
-          majors: state.majors.map((m) =>
-            m.id === id ? updatedMajor : m
-          )
-        }));
-      }
+      const serverMajor = payload?.data ?? payload;
+
+      set((state) => ({
+        majors: state.majors.map((m) => {
+          if (String(m.id) !== String(id)) {
+            return m;
+          }
+
+          return normalizeMajor({
+            ...m,
+            ...data,
+            ...(serverMajor || {}),
+            id: String(serverMajor?.id ?? m.id),
+          });
+        })
+      }));
     } catch (error) {
       console.error("Failed to update major:", error);
+      throw error;
     }
   },
 

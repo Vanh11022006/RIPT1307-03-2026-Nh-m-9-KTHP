@@ -45,6 +45,8 @@ public class Application {
 
     private String applicationCode;
 
+    private String admissionMethod;
+
     private Double totalScore;
     private String priorityGroup;
     private Double priorityScore;
@@ -54,6 +56,21 @@ public class Application {
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
+
+    @Column(name = "review_score_average")
+    private Double reviewScoreAverage;
+
+    @Column(name = "review_count")
+    private Long reviewCount;
+
+    @Column(name = "reviewed_by")
+    private String reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @Column(name = "admin_note", length = 1000)
+    private String adminNote;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL)
     @JsonIgnore

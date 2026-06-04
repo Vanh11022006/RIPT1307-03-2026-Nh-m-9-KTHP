@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, Row, Col, Input, Select, Button, Space, Typography, Pagination } from "antd";
 import { SearchOutlined, BankOutlined, EnvironmentOutlined, GlobalOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useUniversityStore } from "../../stores/university.store";
+import { loadUniversityListData } from "../../utils/dataLoader";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -14,8 +16,19 @@ export const UniversityList: React.FC = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   
-  const { getActiveUniversities } = useUniversityStore();
+  const { universities, loading, getActiveUniversities, getUniversities } = useUniversityStore();
   const activeUniversities = getActiveUniversities();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadUniversityListData();
+      } catch (error) {
+        console.error("Failed to load university list data:", error);
+      }
+    };
+    loadData();
+  }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -93,7 +106,11 @@ export const UniversityList: React.FC = () => {
         </Row>
       </Card>
 
-      {filteredUniversities.length > 0 ? (
+      {loading && universities.length === 0 ? (
+        <Card>
+          <LoadingScreen tip="Đang tải danh sách trường đại học..." />
+        </Card>
+      ) : filteredUniversities.length > 0 ? (
         <>
         <Row gutter={[24, 24]}>
           {paginatedUniversities.map((university) => (

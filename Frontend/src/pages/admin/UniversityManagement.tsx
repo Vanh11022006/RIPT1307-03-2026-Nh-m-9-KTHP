@@ -1,18 +1,31 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Typography, Button, Modal, Form, Space, message, Popconfirm } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { EntityStatusTag } from "../../components/status/EntityStatusTag";
 import { useUniversityStore } from "../../stores/university.store";
 import type { University } from "../../types/university.types";
+import { loadUniversityManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 const { Text } = Typography;
 
 export const UniversityManagement: React.FC = () => {
-  const { universities, createUniversity, updateUniversity, toggleUniversityStatus } = useUniversityStore();
+  const { universities, loading, createUniversity, updateUniversity, toggleUniversityStatus, getUniversities } = useUniversityStore();
   const safeUniversities = Array.isArray(universities) ? universities : [];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadUniversityManagementData();
+      } catch (error) {
+        console.error("Failed to load university management data:", error);
+      }
+    };
+    loadData();
+  }, [getUniversities]);
 
   const [searchText, setSearchText] = useState("");
   const [cityFilter, setCityFilter] = useState<string>("all");
@@ -69,29 +82,33 @@ export const UniversityManagement: React.FC = () => {
     setEditingId(null);
   };
 
-  const handleModalSubmit = (values: any) => {
+  const handleModalSubmit = async (values: any) => {
     const now = new Date().toISOString();
-    
-    if (editingId) {
-      updateUniversity(editingId, {
-        ...values,
-        updatedAt: now
-      });
-      message.success("Cập nhật trường đại học thành công");
-    } else {
-      const newId = `university_${Date.now()}`;
-      createUniversity({
-        ...values,
-        id: newId,
-        createdAt: now,
-        updatedAt: now
-      });
-      message.success("Thêm trường đại học thành công");
+
+    try {
+      if (editingId) {
+        await updateUniversity(editingId, {
+          ...values,
+          updatedAt: now
+        });
+        await getUniversities();
+        message.success("Cập nhật trường đại học thành công");
+      } else {
+        await createUniversity({
+          ...values,
+          createdAt: now,
+          updatedAt: now
+        });
+        await getUniversities();
+        message.success("Thêm trường đại học thành công");
+      }
+
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingId(null);
+    } catch (error) {
+      message.error("Không thể lưu thông tin trường đại học");
     }
-    
-    setIsModalVisible(false);
-    form.resetFields();
-    setEditingId(null);
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {
@@ -221,12 +238,15 @@ export const UniversityManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredUniversities.length > 0 ? (
+        {loading && filteredUniversities.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách trường đại học..." />
+        ) : filteredUniversities.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredUniversities} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
           />
         ) : (
           <EmptyState description="Không tìm thấy trường đại học phù hợp" />

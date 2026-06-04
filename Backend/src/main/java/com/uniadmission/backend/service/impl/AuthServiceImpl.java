@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
                 user.setEmail(request.getEmail());
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setRole("candidate");
-                user.setStatus("active");
+                user.setStatus("pending_verification");
 
                 userRepository.save(user);
 
@@ -54,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                String jwt = tokenProvider.generateToken(authentication);
+                String jwt = tokenProvider.generateAccessToken(authentication);
 
                 User user = userRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));

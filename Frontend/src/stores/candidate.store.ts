@@ -40,12 +40,14 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
     try {
       const response = await axiosClient.get("/candidates");
       const payload = response?.data ?? response;
-      if (payload) {
-        set({
-          candidates: Array.isArray(payload)
-            ? payload.map((candidate) => normalizeCandidate(candidate))
-            : [],
-        });
+      const candidatesData = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+
+      set({
+        candidates: candidatesData.map((candidate: any) => normalizeCandidate(candidate)),
+      });
+      
+      if (!Array.isArray(candidatesData)) {
+        console.warn("Unexpected candidates payload shape:", payload);
       }
     } catch (error) {
       console.error("Failed to fetch candidates:", error);
@@ -92,7 +94,7 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
             candidates: exists
               ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
               : [...state.candidates, normalizedCandidate]
-          } as any;
+          };
         });
         return true;
       }
@@ -117,7 +119,7 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
             candidates: exists
               ? state.candidates.map((c) => (String(c.userId) === String(userId) ? normalizedCandidate : c))
               : [...state.candidates, normalizedCandidate]
-          } as any;
+          };
         });
         return normalizedCandidate;
       }

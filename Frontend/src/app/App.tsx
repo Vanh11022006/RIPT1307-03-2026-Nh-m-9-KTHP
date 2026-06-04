@@ -33,7 +33,7 @@ export const App: React.FC = () => {
   // When currentUser is available, load candidate profile into store so Profile page
   // can render the saved data after reload.
   useEffect(() => {
-    if (currentUser && currentUser.id) {
+    if (currentUser && currentUser.id && currentUser.role === "candidate") {
       getProfile(currentUser.id).catch((e) => console.error(e));
     }
   }, [currentUser, getProfile]);

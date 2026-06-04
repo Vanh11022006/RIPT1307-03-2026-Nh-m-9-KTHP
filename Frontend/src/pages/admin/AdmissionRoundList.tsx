@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Tag, Select, Typography, Empty, Space, Button, Modal, Form, DatePicker, InputNumber, message } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { PageHeader } from "../../components/common/PageHeader";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useApplicationStore } from "../../stores/application.store";
 import { formatDate } from "../../utils/date";
@@ -24,27 +25,31 @@ const STATUS_COLORS: Record<AdmissionRoundStatus, string> = {
 };
 
 export const AdmissionRoundList: React.FC = () => {
-  const { admissionRounds, createAdmissionRound, updateAdmissionRound } = useAdmissionRoundStore();
-  const { applications } = useApplicationStore();
-  
+  const { admissionRounds, loading, createAdmissionRound, updateAdmissionRound, getAdmissionRounds } = useAdmissionRoundStore();
+  const { applications, loading: applicationsLoading, getApplications } = useApplicationStore();
+
   const [searchText, setSearchText] = useState("");
   const [yearFilter, setYearFilter] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<AdmissionRoundStatus | "all">("all");
-  
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRound, setEditingRound] = useState<any>(null);
   const [form] = Form.useForm();
 
   const safeAdmissionRounds = Array.isArray(admissionRounds) ? admissionRounds : [];
+  const safeApplications = Array.isArray(applications) ? applications : [];
+
+  useEffect(() => {
+    getAdmissionRounds();
+    getApplications();
+  }, [getAdmissionRounds, getApplications]);
 
   const availableYears = useMemo(() => {
-    const years = new Set(safeAdmissionRounds.map(ar => ar.year).filter(y => y !== undefined));
+    const years = new Set(safeAdmissionRounds.map((ar) => ar.year).filter((y) => y !== undefined));
     return Array.from(years).sort((a, b) => b - a);
   }, [safeAdmissionRounds]);
 
   const filteredRounds = useMemo(() => {
-    return safeAdmissionRounds.filter(round => {
-      // Filter by search text
+    return safeAdmissionRounds.filter((round) => {
       const text = searchText.trim().toLowerCase();
       let matchSearch = true;
       if (text) {
@@ -54,13 +59,11 @@ export const AdmissionRoundList: React.FC = () => {
         matchSearch = code.includes(text) || name.includes(text) || desc.includes(text);
       }
 
-      // Filter by year
       let matchYear = true;
       if (yearFilter !== null) {
         matchYear = round.year === yearFilter;
       }
 
-      // Filter by status
       let matchStatus = true;
       if (statusFilter !== "all") {
         matchStatus = round.status === statusFilter;
@@ -85,7 +88,8 @@ export const AdmissionRoundList: React.FC = () => {
       startDate: record.startDate ? dayjs(record.startDate) : null,
       endDate: record.endDate ? dayjs(record.endDate) : null,
       status: record.status,
-      description: record.description
+      description: record.description,
+      admissionMethods: record.admissionMethods ? record.admissionMethods.split(",") : []
     });
     setIsModalVisible(true);
   };
@@ -97,16 +101,16 @@ export const AdmissionRoundList: React.FC = () => {
   };
 
   const handleModalOk = () => {
-    form.validateFields().then(values => {
+    form.validateFields().then((values) => {
       const formattedCode = values.code.trim().toUpperCase();
-      
-      const isDuplicate = safeAdmissionRounds.some(ar => 
-        ar.code?.toUpperCase() === formattedCode && 
+
+      const isDuplicate = safeAdmissionRounds.some((ar) =>
+        ar.code?.toUpperCase() === formattedCode &&
         (!editingRound || ar.id !== editingRound.id)
       );
 
       if (isDuplicate) {
-        form.setFields([{ name: 'code', errors: ['Mã đợt xét tuyển này đã tồn tại!'] }]);
+        form.setFields([{ name: "code", errors: ["Mã đợt xét tuyển này đã tồn tại!"] }]);
         return;
       }
 
@@ -118,22 +122,25 @@ export const AdmissionRoundList: React.FC = () => {
         endDate: values.endDate.toISOString(),
         status: values.status,
         description: values.description?.trim(),
+        admissionMethods: values.admissionMethods ? values.admissionMethods.join(",") : "",
       };
 
       if (editingRound) {
-        updateAdmissionRound(editingRound.id, payload);
-        message.success("Cập nhật đợt xét tuyển thành công");
+        updateAdmissionRound(editingRound.id, payload).then(() => {
+          message.success("Cập nhật đợt xét tuyển thành công");
+          return useAdmissionRoundStore.getState().getAdmissionRounds();
+        });
       } else {
-        createAdmissionRound(payload);
-        message.success("Thêm đợt xét tuyển thành công");
+        createAdmissionRound(payload).then(() => {
+          message.success("Thêm đợt xét tuyển thành công");
+          return useAdmissionRoundStore.getState().getAdmissionRounds();
+        });
       }
 
       setIsModalVisible(false);
       form.resetFields();
       setEditingRound(null);
-    }).catch(info => {
-      console.log('Validate Failed:', info);
-    });
+    }).catch(() => {});
   };
 
   const columns = [
@@ -173,11 +180,7 @@ export const AdmissionRoundList: React.FC = () => {
       key: "status",
       render: (status: AdmissionRoundStatus) => {
         if (!status) return <Text type="secondary">Chưa cập nhật</Text>;
-        return (
-          <Tag color={STATUS_COLORS[status]}>
-            {STATUS_LABELS[status] || status}
-          </Tag>
-        );
+        return <Tag color={STATUS_COLORS[status]}>{STATUS_LABELS[status] || status}</Tag>;
       },
     },
     {
@@ -185,9 +188,31 @@ export const AdmissionRoundList: React.FC = () => {
       key: "applicationCount",
       align: "center" as const,
       render: (_: any, record: any) => {
-        const safeApps = Array.isArray(applications) ? applications : [];
-        const count = safeApps.filter(app => app.admissionRoundId === record.id).length;
+        const count = safeApplications.filter((app) => app.admissionRoundId === record.id).length;
         return <Text strong>{count}</Text>;
+      }
+    },
+    {
+      title: "Phương thức xét tuyển",
+      dataIndex: "admissionMethods",
+      key: "admissionMethods",
+      render: (methods: string) => {
+        if (!methods) return <Tag color="warning">Tất cả</Tag>;
+        const allMethods: Record<string, string> = {
+          THPT_SCORE: "THPT",
+          SCHOOL_TRANSCRIPT: "Học bạ",
+          COMPETENCY_ASSESSMENT: "ĐGNL",
+          THINKING_ASSESSMENT: "ĐG tư duy",
+          TALENT_ADMISSION: "Tài năng",
+          INTERVIEW: "Phỏng vấn/Xét tuyển thẳng",
+        };
+        return (
+          <Space size={[0, 4]} wrap style={{ maxWidth: 200 }}>
+            {methods.split(",").map(m => (
+              <Tag color="cyan" key={m}>{allMethods[m] || m}</Tag>
+            ))}
+          </Space>
+        );
       }
     },
     {
@@ -200,11 +225,7 @@ export const AdmissionRoundList: React.FC = () => {
       title: "Hành động",
       key: "action",
       render: (_: any, record: any) => (
-        <Button 
-          type="link" 
-          icon={<EditOutlined />} 
-          onClick={() => handleEdit(record)}
-        >
+        <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
           Sửa
         </Button>
       ),
@@ -214,7 +235,7 @@ export const AdmissionRoundList: React.FC = () => {
   return (
     <div>
       <PageHeader title="Quản lý đợt xét tuyển" />
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24, marginTop: -16 }}>
+      <Text type="secondary" style={{ display: "block", marginBottom: 24, marginTop: -16 }}>
         Danh sách các đợt xét tuyển trong hệ thống
       </Text>
 
@@ -238,7 +259,7 @@ export const AdmissionRoundList: React.FC = () => {
               onClear={() => setYearFilter(null)}
             >
               <Option value={null}>Tất cả năm</Option>
-              {availableYears.map(year => (
+              {availableYears.map((year) => (
                 <Option key={year} value={year}>{year}</Option>
               ))}
             </Select>
@@ -260,20 +281,23 @@ export const AdmissionRoundList: React.FC = () => {
       </Card>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredRounds}
-          rowKey={(record) => record.id || Math.random().toString()}
-          locale={{
-            emptyText: <Empty description="Không tìm thấy đợt xét tuyển phù hợp" />
-          }}
-          pagination={{
-            defaultPageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng số ${total} đợt`
-          }}
-          scroll={{ x: true }}
-        />
+        {loading && safeAdmissionRounds.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách đợt xét tuyển..." />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredRounds}
+            rowKey={(record) => record.id || Math.random().toString()}
+            locale={{ emptyText: <Empty description="Không tìm thấy đợt xét tuyển phù hợp" /> }}
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `Tổng số ${total} đợt`
+            }}
+            scroll={{ x: true }}
+            loading={loading || applicationsLoading}
+          />
+        )}
       </Card>
 
       <Modal
@@ -286,11 +310,10 @@ export const AdmissionRoundList: React.FC = () => {
         cancelText="Hủy"
         destroyOnClose
         width={600}
-
         closeIcon={<CloseOutlined style={{ color: "rgba(255,255,255,0.6)" }} />}
       >
         <Form form={form} layout="vertical">
-          <Space size="large" style={{ display: 'flex', width: '100%' }}>
+          <Space size="large" style={{ display: "flex", width: "100%" }}>
             <Form.Item
               name="code"
               label="Mã đợt"
@@ -298,7 +321,7 @@ export const AdmissionRoundList: React.FC = () => {
                 { required: true, message: "Vui lòng nhập mã đợt" },
                 { whitespace: true, message: "Mã đợt không được để trống" }
               ]}
-              style={{ width: '250px' }}
+              style={{ width: "250px" }}
             >
               <Input placeholder="Ví dụ: HB2026..." />
             </Form.Item>
@@ -309,9 +332,9 @@ export const AdmissionRoundList: React.FC = () => {
               rules={[
                 { required: true, message: "Vui lòng nhập năm" },
               ]}
-              style={{ width: '150px' }}
+              style={{ width: "150px" }}
             >
-              <InputNumber min={2020} max={2035} placeholder="2026" style={{ width: '100%' }} />
+              <InputNumber min={2020} max={2035} placeholder="2026" style={{ width: "100%" }} />
             </Form.Item>
           </Space>
 
@@ -326,13 +349,13 @@ export const AdmissionRoundList: React.FC = () => {
             <Input placeholder="Ví dụ: Đợt xét tuyển học bạ đợt 1 năm 2026..." />
           </Form.Item>
 
-          <Space size="large" style={{ display: 'flex', width: '100%' }}>
+          <Space size="large" style={{ display: "flex", width: "100%" }}>
             <Form.Item
               name="startDate"
               label="Ngày bắt đầu"
               rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu" }]}
             >
-              <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+              <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item
@@ -354,7 +377,7 @@ export const AdmissionRoundList: React.FC = () => {
                 }),
               ]}
             >
-              <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+              <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: "100%" }} />
             </Form.Item>
           </Space>
 
@@ -371,9 +394,21 @@ export const AdmissionRoundList: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="description"
-            label="Mô tả"
+            name="admissionMethods"
+            label="Các phương thức xét tuyển chấp nhận trong đợt"
+            rules={[{ required: true, message: "Vui lòng chọn ít nhất một phương thức" }]}
           >
+            <Select mode="multiple" placeholder="Chọn các phương thức xét tuyển" style={{ width: "100%" }}>
+              <Option value="THPT_SCORE">Điểm thi THPT Quốc gia</Option>
+              <Option value="SCHOOL_TRANSCRIPT">Xét học bạ THPT</Option>
+              <Option value="COMPETENCY_ASSESSMENT">Đánh giá năng lực</Option>
+              <Option value="THINKING_ASSESSMENT">Đánh giá tư duy</Option>
+              <Option value="TALENT_ADMISSION">Xét tuyển tài năng</Option>
+              <Option value="INTERVIEW">Phỏng vấn / Xét tuyển thẳng</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Mô tả về đợt xét tuyển (không bắt buộc)..." />
           </Form.Item>
         </Form>

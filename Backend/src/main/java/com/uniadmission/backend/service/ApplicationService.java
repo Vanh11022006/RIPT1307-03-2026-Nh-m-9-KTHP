@@ -1,6 +1,7 @@
 package com.uniadmission.backend.service;
 
 import com.uniadmission.backend.dto.request.ApplicationSubmitRequest;
+import com.uniadmission.backend.dto.response.statistics.ApplicationStatisticsResponse;
 import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
@@ -10,23 +11,40 @@ import java.util.Map;
 
 public interface ApplicationService {
 
-    Application submit(ApplicationSubmitRequest request);
+        Application submit(ApplicationSubmitRequest request);
 
-    List<Application> getApplicationsByCandidate(Long candidateId);
+        Application saveDraft(ApplicationSubmitRequest request);
 
-    void cancelApplication(Long applicationId);
+        Application updateDraft(Long id, ApplicationSubmitRequest request);
 
-    List<Application> getAllApplications();
+        Application submitDraft(Long id, ApplicationSubmitRequest request);
 
-    void updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
+        List<Application> getApplicationsByCandidate(Long candidateId);
 
-    void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
+        void cancelApplication(Long applicationId);
 
-    Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
+        List<Application> getAllApplications();
 
-    void deleteApplication(Long id);
+        Application updateApplicationStatus(Long id, ApplicationStatus status, String notes, Long adminId);
 
-    Page<Application> getApplicationsForAdmin(ApplicationStatus status, int page, int size);
+        void updateApplicationPriority(Long id, String priorityGroup, Double priorityScore, Long adminId);
 
-    Map<String, Long> getApplicationStatistics();
+        void bulkUpdateApplicationStatus(java.util.List<Long> ids, ApplicationStatus status, String notes,
+                        Long adminId);
+
+        String exportApplicationsCsv(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+
+        java.util.List<Application> getApplicationsForExport(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId);
+
+        byte[] exportApplicationsXlsx(ApplicationStatus status, Long universityId, Long majorId, Long admissionRoundId);
+
+        Application updateApplication(Long id, com.uniadmission.backend.dto.request.ApplicationSubmitRequest request);
+
+        void deleteApplication(Long id);
+
+        Page<Application> getApplicationsForAdmin(ApplicationStatus status, Long universityId, Long majorId,
+                        Long admissionRoundId, int page, int size);
+
+        ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
 }

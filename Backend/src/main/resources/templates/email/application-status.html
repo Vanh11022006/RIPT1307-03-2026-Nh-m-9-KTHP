@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cập nhật trạng thái hồ sơ</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:680px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+      <div style="background:linear-gradient(135deg,#2a6ebb,#38bdf8);padding:28px 32px;color:#ffffff;">
+        <div style="font-size:14px;opacity:.9;letter-spacing:.08em;text-transform:uppercase;">UniAdmission</div>
+        <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">Cập nhật trạng thái hồ sơ</h1>
+      </div>
+      <div style="padding:32px;line-height:1.6;">
+        <p style="margin-top:0;">Chào <strong th:text="${candidateName}">Thí sinh</strong>,</p>
+        <p>Hồ sơ xét tuyển của bạn đã thay đổi trạng thái thành: <strong th:text="${status}">PENDING</strong>.</p>
+        <p>Thời gian cập nhật: <span th:text="${updatedAt}">26/05/2026 10:00</span></p>
+        <p>Vui lòng <a th:href="${loginUrl}" href="/login" style="color:#2563eb;">đăng nhập</a> vào hệ thống để xem chi tiết và hướng dẫn tiếp theo.</p>
+        <p style="margin-bottom:0;color:#64748b;font-size:13px;">Trân trọng,<br />Phòng Tuyển Sinh — UniAdmission</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

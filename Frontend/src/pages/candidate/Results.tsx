@@ -4,6 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from "@
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useApplicationStore } from "../../stores/application.store";
@@ -20,6 +21,7 @@ export const Results: React.FC = () => {
   const { universities } = useUniversityStore();
   const { majors } = useMajorStore();
   const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const candidate = currentUser ? getCandidateByUserId(currentUser.id) : null;
 
@@ -32,15 +34,20 @@ export const Results: React.FC = () => {
         return;
       }
 
+      if (mounted) setLoading(true);
       const data = await getApplicationsByCandidateId(candidate.id);
       if (mounted) {
         setApplications(Array.isArray(data) ? data : []);
+        setLoading(false);
       }
     };
 
     loadApplications().catch((error) => {
       console.error("Failed to load results applications", error);
-      if (mounted) setApplications([]);
+      if (mounted) {
+        setApplications([]);
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -63,6 +70,17 @@ export const Results: React.FC = () => {
   };
 
   if (sortedApplications.length === 0) {
+    if (loading) {
+      return (
+        <div>
+          <PageHeader title="Kết quả xét tuyển" />
+          <Card>
+            <LoadingScreen tip="Đang tải kết quả xét tuyển..." />
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div>
         <PageHeader title="Kết quả xét tuyển" />

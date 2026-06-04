@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Tag, Space, Typography, Empty, Button, Modal, Form, Select, message, Tooltip } from "antd";
 import { SearchOutlined, PlusOutlined, EditOutlined, CloseOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/common/PageHeader";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
 import { useMajorStore } from "../../stores/major.store";
 
@@ -20,8 +21,8 @@ const SUBJECT_NAMES: Record<string, string> = {
 };
 
 export const SubjectGroupList: React.FC = () => {
-  const { subjectGroups, createSubjectGroup, updateSubjectGroup } = useSubjectGroupStore();
-  const { majors } = useMajorStore();
+  const { subjectGroups, loading, createSubjectGroup, updateSubjectGroup, getAllSubjectGroups } = useSubjectGroupStore();
+  const { majors, loading: majorsLoading, getMajors } = useMajorStore();
   const [searchText, setSearchText] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
@@ -29,6 +30,11 @@ export const SubjectGroupList: React.FC = () => {
 
   const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
   const safeMajors = Array.isArray(majors) ? majors : [];
+
+  useEffect(() => {
+    getAllSubjectGroups();
+    getMajors();
+  }, [getAllSubjectGroups, getMajors]);
 
   const getUsageInfo = (code: string) => {
     if (!code) return { count: 0, names: [] };
@@ -103,19 +109,19 @@ export const SubjectGroupList: React.FC = () => {
       };
 
       if (editingGroup) {
-        updateSubjectGroup(editingGroup.code, payload);
-        message.success("Cập nhật tổ hợp xét tuyển thành công");
+        updateSubjectGroup(editingGroup.id ?? editingGroup.code, payload)
+          .then(() => useSubjectGroupStore.getState().getAllSubjectGroups())
+          .then(() => message.success("Cập nhật tổ hợp xét tuyển thành công"));
       } else {
-        createSubjectGroup(payload);
-        message.success("Thêm tổ hợp xét tuyển thành công");
+        createSubjectGroup(payload)
+          .then(() => useSubjectGroupStore.getState().getAllSubjectGroups())
+          .then(() => message.success("Thêm tổ hợp xét tuyển thành công"));
       }
 
       setIsModalVisible(false);
       form.resetFields();
       setEditingGroup(null);
-    }).catch(info => {
-      console.log('Validate Failed:', info);
-    });
+    }).catch(() => {});
   };
 
   const columns = [
@@ -205,20 +211,25 @@ export const SubjectGroupList: React.FC = () => {
       </Card>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredGroups}
-          rowKey={(record) => record.code || Math.random().toString()}
-          locale={{
-            emptyText: <Empty description="Không tìm thấy tổ hợp xét tuyển phù hợp" />
-          }}
-          pagination={{
-            defaultPageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng số ${total} tổ hợp`
-          }}
-          scroll={{ x: true }}
-        />
+        {loading && safeSubjectGroups.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách tổ hợp xét tuyển..." />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredGroups}
+            rowKey={(record) => record.code || Math.random().toString()}
+            locale={{
+              emptyText: <Empty description="Không tìm thấy tổ hợp xét tuyển phù hợp" />
+            }}
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `Tổng số ${total} tổ hợp`
+            }}
+            scroll={{ x: true }}
+            loading={loading || majorsLoading}
+          />
+        )}
       </Card>
 
       <Modal

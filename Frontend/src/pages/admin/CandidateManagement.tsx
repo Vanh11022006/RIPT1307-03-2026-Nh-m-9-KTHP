@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Input, Select, Row, Col, Button, Drawer, Descriptions, Statistic, Space, Tag, Typography } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { ApplicationStatusTag } from "../../components/status/ApplicationStatusTag";
 import { useCandidateStore } from "../../stores/candidate.store";
 import { useApplicationStore } from "../../stores/application.store";
@@ -11,15 +12,28 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import type { Candidate } from "../../types/candidate.types";
 import { formatDate, formatDateTime } from "../../utils/date";
+import { loadCandidateManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
 export const CandidateManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { candidates } = useCandidateStore();
-  const { applications } = useApplicationStore();
+  const { candidates, loading, getCandidates } = useCandidateStore();
+  const { applications, loading: applicationsLoading, getApplications } = useApplicationStore();
   const { getUniversityById } = useUniversityStore();
   const { getMajorById } = useMajorStore();
+
+  // ⏱️ Optimization: Load all required data in parallel
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadCandidateManagementData();
+      } catch (error) {
+        console.error("Failed to load candidate management data:", error);
+      }
+    };
+    loadData();
+  }, [getCandidates, getApplications]);
 
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
   const safeApplications = Array.isArray(applications) ? applications : [];
@@ -268,12 +282,15 @@ export const CandidateManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredCandidates.length > 0 ? (
+        {loading && filteredCandidates.length === 0 ? (
+          <LoadingScreen tip="Đang tải danh sách thí sinh..." />
+        ) : filteredCandidates.length > 0 ? (
           <Table 
             columns={columns} 
             dataSource={filteredCandidates} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading || applicationsLoading}
           />
         ) : (
           <EmptyState description="Không tìm thấy thí sinh phù hợp" />

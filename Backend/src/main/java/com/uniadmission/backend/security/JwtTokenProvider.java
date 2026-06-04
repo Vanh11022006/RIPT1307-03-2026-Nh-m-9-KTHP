@@ -12,28 +12,34 @@ import java.util.Date;
 public class JwtTokenProvider {
     private final Key key = Keys.hmacShaKeyFor("DayLaKhoaBiMatCuaDuAnCuoiKiTHLTWRatDaiVaBaoMat123456789".getBytes());
 
-    private final long jwtExpirationInMs = 604800000L;
+    private final long accessTokenExpirationInMs = 60 * 60 * 1000L;
 
-    public String generateToken(Authentication authentication) {
+    private final long refreshTokenExpirationInMs = 7 * 24 * 60 * 60 * 1000L;
+
+    public String generateAccessToken(Authentication authentication) {
         String username = authentication.getName();
+        return generateAccessToken(username);
+    }
+
+    public String generateAccessToken(String username) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + accessTokenExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(new Date())
+                .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateToken(String username) {
+    public String generateRefreshToken(String username) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + refreshTokenExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(new Date())
+                .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

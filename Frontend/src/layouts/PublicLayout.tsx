@@ -18,10 +18,6 @@ export const PublicLayout: React.FC = () => {
   const isLanding = location.pathname === "/";
   const isDarkTheme = false; // Landing page uses a light theme now
 
-  if (isLogin || isRegister) {
-    return <Outlet />;
-  }
-
   // Add a class to body when on landing or auth pages to apply dark mode specifically
   useEffect(() => {
     if (isLanding) {

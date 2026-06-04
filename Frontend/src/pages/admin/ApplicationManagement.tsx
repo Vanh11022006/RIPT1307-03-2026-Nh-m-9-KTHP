@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Card, Table, Input, Select, Row, Col, Typography, Button } from "antd";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Card, Table, Input, Select, Row, Col, Typography, Button, Space, Modal, message, Form, Switch } from "antd";
 import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -11,20 +11,23 @@ import { useUniversityStore } from "../../stores/university.store";
 import { useMajorStore } from "../../stores/major.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useSubjectGroupStore } from "../../stores/subjectGroup.store";
+import { useAuthStore } from "../../stores/auth.store";
 import type { Application } from "../../types/application.types";
 import { formatDateTime } from "../../utils/date";
+import { loadApplicationManagementData } from "../../utils/dataLoader";
 
 const { Option } = Select;
 
 export const ApplicationManagement: React.FC = () => {
   const navigate = useNavigate();
   
-  const { applications } = useApplicationStore();
+  const { applications, loading, getApplications, bulkUpdateApplicationStatus, getAdminApplicationsExcel, bulkSendCustomEmail } = useApplicationStore();
   const { getCandidateById } = useCandidateStore();
   const { universities, getUniversityById } = useUniversityStore();
   const { majors, getMajorById } = useMajorStore();
   const { admissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
   const { subjectGroups } = useSubjectGroupStore();
+  const { currentUser } = useAuthStore();
 
   const safeApplications = Array.isArray(applications) ? applications : [];
   const safeUniversities = Array.isArray(universities) ? universities : [];
@@ -38,6 +41,47 @@ export const ApplicationManagement: React.FC = () => {
   const [universityFilter, setUniversityFilter] = useState<string>("all");
   const [majorFilter, setMajorFilter] = useState<string>("all");
   const [subjectGroupFilter, setSubjectGroupFilter] = useState<string>("all");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkEmailModalOpen, setBulkEmailModalOpen] = useState(false);
+  const [bulkEmailSubmitting, setBulkEmailSubmitting] = useState(false);
+  const [bulkEmailForm] = Form.useForm();
+  const hasLoadedInitialApplications = useRef(false);
+
+  const buildApplicationFilters = () => ({
+    status: statusFilter,
+    universityId: universityFilter,
+    majorId: majorFilter,
+    admissionRoundId: admissionRoundFilter,
+  });
+
+  // ⏱️ Optimization: Load all required data in parallel
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadApplicationManagementData();
+        await getApplications(buildApplicationFilters());
+        hasLoadedInitialApplications.current = true;
+      } catch (error) {
+        console.error("Failed to load application management data:", error);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Refetch applications when filters change
+  useEffect(() => {
+    if (!hasLoadedInitialApplications.current) {
+      return;
+    }
+
+    getApplications({
+      status: statusFilter,
+      universityId: universityFilter,
+      majorId: majorFilter,
+      admissionRoundId: admissionRoundFilter,
+    });
+  }, [getApplications, statusFilter, universityFilter, majorFilter, admissionRoundFilter]);
 
   const filteredMajors = useMemo(() => {
     if (universityFilter === "all") return safeMajors;
@@ -100,9 +144,132 @@ export const ApplicationManagement: React.FC = () => {
     getMajorById
   ]);
 
+  // Sort applications: draft first, then pending, approved, and rejected
+  const sortedApplications = useMemo(() => {
+    const order: Record<string, number> = { draft: 0, pending: 1, approved: 2, rejected: 3 };
+    return filteredApplications.slice().sort((a, b) => {
+      const oa = order[a.status] ?? 99;
+      const ob = order[b.status] ?? 99;
+      if (oa !== ob) return oa - ob;
+      const ta = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+      const tb = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+      return tb - ta;
+    });
+  }, [filteredApplications]);
+
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [statusFilter, admissionRoundFilter, universityFilter, majorFilter, subjectGroupFilter, searchText]);
+
   const handleUniversityChange = (value: string) => {
     setUniversityFilter(value);
     setMajorFilter("all"); // reset major when university changes
+  };
+
+  const clearSelection = () => {
+    setSelectedRowKeys([]);
+  };
+
+  const openBulkEmailModal = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Chọn ít nhất một hồ sơ để gửi email");
+      return;
+    }
+
+    bulkEmailForm.setFieldsValue({
+      subject: "Thông báo từ UniAdmission",
+      message: "",
+      html: false,
+    });
+    setBulkEmailModalOpen(true);
+  };
+
+  const closeBulkEmailModal = () => {
+    setBulkEmailModalOpen(false);
+    bulkEmailForm.resetFields();
+  };
+
+  const handleBulkEmailSubmit = async () => {
+    if (!currentUser) {
+      message.error("Không xác định được quản trị viên đang đăng nhập");
+      return;
+    }
+
+    try {
+      const values = await bulkEmailForm.validateFields();
+      const selectedIds = selectedRowKeys.map(String);
+
+      setBulkEmailSubmitting(true);
+      const result = await bulkSendCustomEmail(
+        selectedIds,
+        String(values.subject).trim(),
+        String(values.message).trim(),
+        Boolean(values.html),
+        String(currentUser.id)
+      );
+
+      message.success(`Đã gửi email đến ${result?.recipientCount ?? selectedIds.length} người nhận`);
+      closeBulkEmailModal();
+      clearSelection();
+    } catch (error) {
+      message.error("Không thể gửi email hàng loạt");
+    } finally {
+      setBulkEmailSubmitting(false);
+    }
+  };
+
+  const handleBulkStatusChange = (status: "APPROVED" | "REJECTED") => {
+    if (!currentUser) {
+      message.error("Không xác định được quản trị viên đang đăng nhập");
+      return;
+    }
+
+    const selectedIds = selectedRowKeys.map(String);
+    if (selectedIds.length === 0) {
+      message.warning("Chọn ít nhất một hồ sơ để thao tác hàng loạt");
+      return;
+    }
+
+    Modal.confirm({
+      title: status === "APPROVED" ? "Duyệt hồ sơ hàng loạt" : "Từ chối hồ sơ hàng loạt",
+      content: `Bạn chắc chắn muốn ${status === "APPROVED" ? "duyệt" : "từ chối"} ${selectedIds.length} hồ sơ đã chọn?`,
+      okText: status === "APPROVED" ? "Duyệt" : "Từ chối",
+      okButtonProps: { danger: status === "REJECTED" },
+      cancelText: "Hủy",
+      onOk: async () => {
+        setBulkLoading(true);
+        try {
+          await bulkUpdateApplicationStatus(selectedIds, status, currentUser.id);
+          message.success(`Đã ${status === "APPROVED" ? "duyệt" : "từ chối"} ${selectedIds.length} hồ sơ`);
+          clearSelection();
+        } catch (error) {
+          message.error("Không thể thực hiện thao tác hàng loạt");
+        } finally {
+          setBulkLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setBulkLoading(true);
+      const xlsx = await getAdminApplicationsExcel(buildApplicationFilters());
+      const blob = new Blob([xlsx], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `admin-applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success("Đã xuất Excel thành công");
+    } catch (error) {
+      message.error("Không thể xuất Excel");
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const columns = [
@@ -125,7 +292,10 @@ export const ApplicationManagement: React.FC = () => {
       title: "Thí sinh",
       dataIndex: "candidateId",
       key: "candidateId",
-      render: (id: string) => getCandidateById(id)?.fullName || "Không rõ thí sinh"
+      render: (_: string, record: Application) => {
+        const candidate = getCandidateById(record.candidateId);
+        return record.candidateName || candidate?.fullName || "Không rõ thí sinh";
+      }
     },
     {
       title: "Trường",
@@ -204,6 +374,7 @@ export const ApplicationManagement: React.FC = () => {
               onChange={value => setStatusFilter(value)}
             >
               <Option value="all">Tất cả trạng thái</Option>
+              <Option value="draft">Bản nháp</Option>
               <Option value="pending">Chờ duyệt</Option>
               <Option value="approved">Đã duyệt</Option>
               <Option value="rejected">Từ chối</Option>
@@ -275,17 +446,100 @@ export const ApplicationManagement: React.FC = () => {
       </Card>
 
       <Card>
-        {filteredApplications.length > 0 ? (
+        <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }} wrap>
+          <Typography.Text type="secondary">
+            {selectedRowKeys.length > 0
+              ? `Đã chọn ${selectedRowKeys.length} hồ sơ`
+              : "Chọn các hồ sơ để duyệt hoặc từ chối hàng loạt"}
+          </Typography.Text>
+          <Space wrap>
+            <Button onClick={handleExportExcel} loading={bulkLoading}>
+              Xuất Excel theo bộ lọc
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleBulkStatusChange("APPROVED")}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkLoading}
+            >
+              Duyệt hàng loạt
+            </Button>
+            <Button
+              danger
+              onClick={() => handleBulkStatusChange("REJECTED")}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkLoading}
+            >
+              Từ chối hàng loạt
+            </Button>
+            <Button
+              type="primary"
+              onClick={openBulkEmailModal}
+              disabled={selectedRowKeys.length === 0}
+              loading={bulkEmailSubmitting}
+            >
+              Gửi email hàng loạt
+            </Button>
+          </Space>
+        </Space>
+        {loading && filteredApplications.length === 0 ? (
+          <Table
+            columns={columns}
+            dataSource={[]}
+            rowKey="id"
+            scroll={{ x: true }}
+            loading={true}
+            pagination={false}
+          />
+        ) : filteredApplications.length > 0 ? (
           <Table 
             columns={columns} 
-            dataSource={filteredApplications} 
+            dataSource={sortedApplications} 
             rowKey="id" 
             scroll={{ x: true }}
+            loading={loading}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: (keys) => setSelectedRowKeys(keys),
+            }}
           />
         ) : (
           <EmptyState description="Không tìm thấy hồ sơ xét tuyển phù hợp" />
         )}
       </Card>
+
+      <Modal
+        title="Gửi email hàng loạt"
+        open={bulkEmailModalOpen}
+        onCancel={closeBulkEmailModal}
+        onOk={handleBulkEmailSubmit}
+        okText="Gửi email"
+        cancelText="Hủy"
+        confirmLoading={bulkEmailSubmitting}
+        destroyOnClose
+      >
+        <Form form={bulkEmailForm} layout="vertical">
+          <Form.Item
+            name="subject"
+            label="Tiêu đề email"
+            rules={[{ required: true, message: "Nhập tiêu đề email" }]}
+          >
+            <Input placeholder="Ví dụ: Thông báo từ UniAdmission" />
+          </Form.Item>
+
+          <Form.Item
+            name="message"
+            label="Nội dung"
+            rules={[{ required: true, message: "Nhập nội dung email" }]}
+          >
+            <Input.TextArea rows={8} placeholder="Nhập nội dung email cho các thí sinh đã chọn" />
+          </Form.Item>
+
+          <Form.Item name="html" label="Gửi dưới dạng HTML" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

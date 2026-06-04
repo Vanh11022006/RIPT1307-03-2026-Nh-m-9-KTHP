@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, message, Popconfirm } from "antd";
+import React, { useEffect, useRef, useState } from "react";
+import { Card, Descriptions, Table, Tag, Button, Space, Alert, Result, Typography, Row, Col, Divider, Modal, Form, Input, InputNumber, message, Popconfirm, List } from "antd";
 import { ArrowLeftOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -16,6 +16,7 @@ import { formatDate, formatDateTime } from "../../utils/date";
 import { formatFileSize } from "../../utils/file";
 import { getPriorityGroupLabel } from "../../constants/priorityGroups";
 import { getEvidenceCategoryLabel } from "../../constants/evidenceCategories";
+import { SUBJECT_NAMES } from "../../constants/admissionMethodConfig";
 import { Empty } from "antd";
 
 const { Title, Text } = Typography;
@@ -24,21 +25,35 @@ export const AdminApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication } = useApplicationStore();
-  const { getCandidateById } = useCandidateStore();
-  const { getUniversityById } = useUniversityStore();
-  const { getMajorById } = useMajorStore();
-  const { getAdmissionRoundById } = useAdmissionRoundStore();
+  const { getApplicationById, fetchApplicationById, approveApplication, rejectApplication, getApplicationReviewSummary, getApplicationReviewLogs, submitApplicationReviewScore } = useApplicationStore();
+  const { getCandidateById, getCandidates } = useCandidateStore();
+  const { getUniversityById, getUniversities } = useUniversityStore();
+  const { getMajorById, getMajors } = useMajorStore();
+  const { getAdmissionRoundById, getAdmissionRounds } = useAdmissionRoundStore();
   const { createNotificationLog } = useNotificationLogStore();
   const { currentUser } = useAuthStore();
 
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [reviewForm] = Form.useForm();
   const [form] = Form.useForm();
   const [application, setApplication] = useState(() => (id ? getApplicationById(id) : undefined));
   const [loading, setLoading] = useState<boolean>(!application);
+  const [reviewSummary, setReviewSummary] = useState<any>(null);
+  const [reviewLogs, setReviewLogs] = useState<any[]>([]);
+  const [reviewLogsLoading, setReviewLogsLoading] = useState(false);
+  const [reviewLogsLoaded, setReviewLogsLoaded] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     let mounted = true;
+    mountedRef.current = true;
+
+    getCandidates();
+    getUniversities();
+    getMajors();
+    getAdmissionRounds();
 
     const loadApplication = async () => {
       if (!id) {
@@ -53,8 +68,20 @@ export const AdminApplicationDetail: React.FC = () => {
       if (cachedApplication) {
         if (mounted) {
           setApplication(cachedApplication);
+          // show cached immediately, then attempt to refresh in background
           setLoading(false);
         }
+
+        // Refresh from server to ensure full details (evidence, related refs) are present
+        try {
+          const refreshed = await fetchApplicationById(id);
+          if (mounted && refreshed) {
+            setApplication(refreshed);
+          }
+        } catch (err) {
+          console.error("Failed to refresh application detail", err);
+        }
+
         return;
       }
 
@@ -70,6 +97,21 @@ export const AdminApplicationDetail: React.FC = () => {
       }
     };
 
+    const loadReviewSummary = async () => {
+      if (!id) return;
+      setReviewLoading(true);
+      try {
+        const summary = await getApplicationReviewSummary(id, 3);
+        if (mounted) {
+          setReviewSummary(summary);
+        }
+      } finally {
+        if (mounted) {
+          setReviewLoading(false);
+        }
+      }
+    };
+
     loadApplication().catch((error) => {
       console.error("Failed to load application detail", error);
       if (mounted) {
@@ -77,10 +119,15 @@ export const AdminApplicationDetail: React.FC = () => {
       }
     });
 
+    loadReviewSummary().catch((error) => {
+      console.error("Failed to load review summary", error);
+    });
+
     return () => {
       mounted = false;
+      mountedRef.current = false;
     };
-  }, [id, getApplicationById, fetchApplicationById]);
+  }, [id, getApplicationById, fetchApplicationById, getApplicationReviewSummary, getCandidates, getUniversities, getMajors, getAdmissionRounds]);
 
   if (!id) return null;
 
@@ -104,6 +151,16 @@ export const AdminApplicationDetail: React.FC = () => {
   }
 
   const candidate = getCandidateById(application.candidateId);
+  const candidateName = application.candidateName || candidate?.fullName || "Không rõ thí sinh";
+  const candidateEmail = application.candidateEmail || candidate?.email || "Chưa cập nhật";
+  const candidatePhone = application.candidatePhone || candidate?.phone || "Chưa cập nhật";
+  const candidateDateOfBirth = application.candidateDateOfBirth || candidate?.dateOfBirth || "";
+  const candidateGender = application.candidateGender || candidate?.gender || "";
+  const candidateCitizenId = application.candidateCitizenId || candidate?.citizenId || "";
+  const candidateAddress = application.candidateAddress || candidate?.address || "";
+  const candidateCity = application.candidateCity || candidate?.city || "";
+  const candidateHighSchool = application.candidateHighSchool || candidate?.highSchool || "";
+  const candidateGraduationYear = application.candidateGraduationYear || candidate?.graduationYear || undefined;
   const university = getUniversityById(application.universityId);
   const major = getMajorById(application.majorId);
   const admissionRound = application.admissionRoundId ? getAdmissionRoundById(application.admissionRoundId) : undefined;
@@ -120,14 +177,43 @@ export const AdminApplicationDetail: React.FC = () => {
     score
   }));
 
+  const renderScoreValue = (key: string, val: any) => {
+    if (val === undefined || val === null) return "-";
+    if (key === "gnlType") {
+      return val === "hcm" ? "ĐHQG TP.HCM" : "ĐHQG Hà Nội";
+    }
+    if (key === "hsgAward") {
+      return val === true || val === "true" || val === 1 ? "Có giải" : "Không";
+    }
+    if (key === "hsgLevel") {
+      return val === "national" ? "Cấp Quốc gia" : val === "provincial" ? "Cấp Tỉnh/Thành phố" : val;
+    }
+    if (key === "directAdmission") {
+      return val === "pass" ? "ĐẠT (Xét tuyển thẳng)" : val === "fail" ? "KHÔNG ĐẠT" : val;
+    }
+    if (typeof val === "number") {
+      return val.toFixed(2);
+    }
+    const num = Number(val);
+    if (!isNaN(num)) {
+      return num.toFixed(2);
+    }
+    return String(val);
+  };
+
   const scoreColumns = [
-    { title: "Môn thi", dataIndex: "subject", key: "subject" },
+    { 
+      title: "Môn thi / Trường điểm", 
+      dataIndex: "subject", 
+      key: "subject",
+      render: (subject: string) => SUBJECT_NAMES[subject] || subject
+    },
     {
-      title: "Điểm",
+      title: "Điểm / Giá trị",
       dataIndex: "score",
       key: "score",
       align: "center" as const,
-      render: (val: number) => <Text strong>{val.toFixed(2)}</Text>
+      render: (val: any, record: any) => <Text strong>{renderScoreValue(record.subject, val)}</Text>
     }
   ];
 
@@ -184,12 +270,25 @@ export const AdminApplicationDetail: React.FC = () => {
     },
   ];
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    approveApplication(application.id, currentUser.id);
+    try {
+      const updated = await approveApplication(application.id, currentUser.id);
+      if (updated) {
+        // if backend didn't populate reviewedAt/reviewedBy, set them locally for immediate UI feedback
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Approve failed', e);
+    }
 
     try {
       if (candidate) {
@@ -212,14 +311,27 @@ export const AdminApplicationDetail: React.FC = () => {
     }
 
     message.success("Duyệt hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
-  const handleRejectSubmit = (values: { reason: string }) => {
+  const handleRejectSubmit = async (values: { reason: string }) => {
     if (!currentUser) {
       message.error("Không xác định được quản trị viên đang đăng nhập");
       return;
     }
-    rejectApplication(application.id, currentUser.id, values.reason);
+    try {
+      const updated = await rejectApplication(application.id, currentUser.id, values.reason);
+      if (updated) {
+        if (!updated.reviewedAt || !updated.reviewedBy) {
+          const patched = { ...updated, reviewedAt: new Date().toISOString(), reviewedBy: currentUser.fullName ?? String(currentUser.id) };
+          setApplication(patched);
+        } else {
+          setApplication(updated);
+        }
+      }
+    } catch (e) {
+      console.error('Reject failed', e);
+    }
 
     try {
       if (candidate) {
@@ -244,6 +356,7 @@ export const AdminApplicationDetail: React.FC = () => {
     setIsRejectModalOpen(false);
     form.resetFields();
     message.success("Từ chối hồ sơ thành công");
+    navigate("/admin/applications");
   };
 
   const renderStatusAlert = () => {
@@ -260,9 +373,98 @@ export const AdminApplicationDetail: React.FC = () => {
   };
 
   const priorityGroup = application.priorityGroup ?? "none";
-  const priorityScore = application.priorityScore ?? 0;
-  const examTotalScore = application.totalScore ?? 0;
-  const finalAdmissionScore = application.finalScore ?? (examTotalScore + priorityScore);
+  const priorityScore = Number(application.priorityScore ?? 0);
+  const examTotalScore = Number(application.totalScore ?? 0);
+  const finalAdmissionScore = Number(application.finalScore ?? (examTotalScore + priorityScore));
+  const reviewAverage = reviewSummary?.averageReviewScore ?? application.reviewScoreAverage;
+  const reviewCount = reviewSummary?.reviewCount ?? application.reviewCount;
+  const reviewedBy = reviewSummary?.reviewedBy ?? application.reviewedBy;
+  const reviewedAt = reviewSummary?.reviewedAt ?? application.reviewedAt;
+  const visibleReviewLogs = reviewLogs.slice(0, 3);
+
+  const truncate = (text: string | undefined, length = 120) => {
+    if (!text) return undefined;
+    return text.length > length ? `${text.substring(0, length).trim()}…` : text;
+  };
+
+  const getReviewActionLabel = (item?: any) => {
+    if (!item) return "Hành động: Không rõ";
+
+    const action = String(item.actionType ?? "").toUpperCase();
+    switch (action) {
+      case "REVIEW_ASSIGNMENT":
+        return `Đã phân công reviewer${item.assignedReviewerName ? `: ${item.assignedReviewerName}` : ""}`;
+      case "REVIEW_SCORE":
+        return item.reviewScore != null
+          ? `Gửi điểm review: ${Number(item.reviewScore).toFixed(2)}`
+          : "Gửi điểm review";
+      case "STATUS_UPDATE":
+        return item.newStatus ? `Cập nhật trạng thái: ${item.newStatus}` : "Cập nhật trạng thái";
+      case "PRIORITY_UPDATE":
+        return item.newStatus ? `Cập nhật ưu tiên: ${item.newStatus}` : "Cập nhật ưu tiên";
+      default:
+        // Fallbacks: prefer a short notes preview, then raw actionType, otherwise show id
+        const notePreview = truncate(item.notes);
+        if (notePreview) return `Ghi chú: ${notePreview}`;
+        if (item.actionType) return `Hành động: ${item.actionType}`;
+        if (item.id) return `Hành động không rõ (bản ghi #${item.id})`;
+        return `Hành động: Không rõ`;
+    }
+  };
+
+  const handleReviewSubmit = async (values: { reviewScore: number; notes?: string }) => {
+    if (!currentUser) {
+      message.error("Không xác định được người đang đăng nhập");
+      return;
+    }
+
+    setReviewSubmitting(true);
+    try {
+      const summary = await submitApplicationReviewScore(application.id, {
+        reviewerId: currentUser.id,
+        reviewScore: values.reviewScore,
+        notes: values.notes,
+      }, 3);
+
+      if (summary) {
+        setReviewSummary(summary);
+        setReviewLogs([]);
+        setReviewLogsLoaded(false);
+      }
+
+      const refreshed = await fetchApplicationById(application.id);
+      if (refreshed) {
+        setApplication(refreshed);
+      }
+
+      message.success("Gửi điểm review thành công");
+      reviewForm.resetFields();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Gửi review thất bại";
+      message.error(errorMessage);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const loadReviewLogs = async () => {
+    if (!id || reviewLogsLoading || reviewLogsLoaded) {
+      return;
+    }
+
+    setReviewLogsLoading(true);
+    try {
+      const logs = await getApplicationReviewLogs(id);
+      if (mountedRef.current) {
+        setReviewLogs(Array.isArray(logs) ? logs : []);
+        setReviewLogsLoaded(true);
+      }
+    } finally {
+      if (mountedRef.current) {
+        setReviewLogsLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="admin-application-detail">
@@ -293,18 +495,18 @@ export const AdminApplicationDetail: React.FC = () => {
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card title="Thông tin thí sinh" style={{ marginBottom: 24 }}>
-            {candidate ? (
+            {candidate || candidateName ? (
               <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
-                <Descriptions.Item label="Họ tên" span={2}><strong>{candidate.fullName || "Chưa cập nhật"}</strong></Descriptions.Item>
-                <Descriptions.Item label="Ngày sinh">{candidate.dateOfBirth ? formatDate(candidate.dateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Giới tính">{candidate.gender ? genderMap[candidate.gender] : "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="CCCD">{candidate.citizenId || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Số điện thoại">{candidate.phone || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Email" span={2}>{candidate.email || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ" span={2}>{candidate.address || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Thành phố">{candidate.city || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Trường THPT">{candidate.highSchool || "Chưa cập nhật"}</Descriptions.Item>
-                <Descriptions.Item label="Năm tốt nghiệp">{candidate.graduationYear || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Họ tên" span={2}><strong>{candidateName}</strong></Descriptions.Item>
+                <Descriptions.Item label="Ngày sinh">{candidateDateOfBirth ? formatDate(candidateDateOfBirth) : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Giới tính">{candidateGender ? genderMap[candidateGender] : "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="CCCD">{candidateCitizenId || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">{candidatePhone}</Descriptions.Item>
+                <Descriptions.Item label="Email" span={2}>{candidateEmail}</Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ" span={2}>{candidateAddress || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Thành phố">{candidateCity || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Trường THPT">{candidateHighSchool || "Chưa cập nhật"}</Descriptions.Item>
+                <Descriptions.Item label="Năm tốt nghiệp">{candidateGraduationYear || "Chưa cập nhật"}</Descriptions.Item>
               </Descriptions>
             ) : (
               <EmptyState description="Không rõ thí sinh" />
@@ -325,6 +527,18 @@ export const AdminApplicationDetail: React.FC = () => {
               <Descriptions.Item label="Tổ hợp xét tuyển">
                 <Tag color="blue">{application.subjectGroupCode || "Chưa cập nhật"}</Tag>
               </Descriptions.Item>
+              {application.admissionMethod && (
+                <Descriptions.Item label="Phương thức xét tuyển">
+                  {{
+                    THPT_SCORE: "Điểm thi THPT Quốc gia",
+                    SCHOOL_TRANSCRIPT: "Xét học bạ THPT",
+                    COMPETENCY_ASSESSMENT: "Đánh giá năng lực",
+                    THINKING_ASSESSMENT: "Đánh giá tư duy",
+                    TALENT_ADMISSION: "Xét tuyển tài năng",
+                    INTERVIEW: "Phỏng vấn / Xét tuyển thẳng",
+                  }[application.admissionMethod] ?? application.admissionMethod}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Điểm sàn ngành">
                 {major?.minScore !== undefined ? <Text strong>{major.minScore}</Text> : "Chưa cập nhật"}
               </Descriptions.Item>
@@ -362,6 +576,12 @@ export const AdminApplicationDetail: React.FC = () => {
               <Descriptions.Item label="Người xử lý">
                 {application.reviewedBy || "Chưa cập nhật"}
               </Descriptions.Item>
+              <Descriptions.Item label="Điểm review trung bình">
+                {reviewAverage != null ? Number(reviewAverage).toFixed(2) : "Chưa cập nhật"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số lượt review">
+                {reviewCount != null ? reviewCount : "Chưa cập nhật"}
+              </Descriptions.Item>
             </Descriptions>
             <Divider style={{ margin: "12px 0" }} />
             <div style={{ marginBottom: 16 }}>
@@ -390,6 +610,100 @@ export const AdminApplicationDetail: React.FC = () => {
               <Text strong style={{ display: "block", marginBottom: 8, color: "rgba(255,255,255,0.65)" }}>Ghi chú admin:</Text>
               <Text style={{ color: "rgba(255,255,255,0.92)" }}>{application.adminNote || "Không có ghi chú"}</Text>
             </div>
+          </Card>
+
+          <Card title="Submit review" style={{ marginBottom: 24 }}>
+            <Form
+              form={reviewForm}
+              layout="vertical"
+              onFinish={handleReviewSubmit}
+              disabled={reviewSubmitting}
+            >
+              <Form.Item
+                name="reviewScore"
+                label="Điểm review"
+                rules={[
+                  { required: true, message: "Vui lòng nhập điểm review" },
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  style={{ width: "100%" }}
+                  placeholder="Nhập điểm từ 0 đến 10"
+                />
+              </Form.Item>
+              <Form.Item name="notes" label="Ghi chú review">
+                <Input.TextArea rows={4} placeholder="Nhập ghi chú cho lần review này" />
+              </Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={reviewSubmitting}>
+                  Gửi review
+                </Button>
+                <Button onClick={() => reviewForm.resetFields()} disabled={reviewSubmitting}>
+                  Xóa form
+                </Button>
+              </Space>
+            </Form>
+          </Card>
+
+          <Card title="Danh sách reviewer" style={{ marginBottom: 24 }} loading={reviewLoading}>
+            <List
+              dataSource={reviewSummary?.assignedReviewers ?? []}
+              locale={{ emptyText: "Chưa có reviewer được gán" }}
+              renderItem={(item: any) => (
+                <List.Item>
+                  <List.Item.Meta
+                    title={item.fullName || "Chưa cập nhật"}
+                    description={item.email || "Chưa cập nhật"}
+                  />
+                </List.Item>
+              )}
+            />
+            <Divider />
+            <Descriptions column={1} size="small">
+              <Descriptions.Item label="Người review gần nhất">
+                {reviewedBy || "Chưa cập nhật"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Thời điểm review gần nhất">
+                {reviewedAt ? formatDateTime(reviewedAt) : "Chưa cập nhật"}
+              </Descriptions.Item>
+            </Descriptions>
+            {reviewCount != null && reviewCount > 0 && (
+              <Alert
+                type="success"
+                showIcon
+                message="Đã review hồ sơ này"
+                description={`Có ${reviewCount} lượt review${reviewedBy ? `, người review gần nhất: ${reviewedBy}` : ""}.`}
+                style={{ marginTop: 12 }}
+              />
+            )}
+            <Divider />
+            <Space style={{ marginBottom: 12 }}>
+              <Button onClick={loadReviewLogs} loading={reviewLogsLoading}>
+                Tải lịch sử review
+              </Button>
+              {reviewLogsLoaded && reviewLogs.length > 0 && (
+                <Text type="secondary">Đã tải {reviewLogs.length} bản ghi</Text>
+              )}
+            </Space>
+            {reviewLogsLoaded && (
+              <List
+                size="small"
+                locale={{ emptyText: "Chưa có lịch sử review" }}
+                dataSource={visibleReviewLogs}
+                renderItem={(item: any) => (
+                  <List.Item>
+                    <Text>
+                      {getReviewActionLabel(item)}
+                      {item.reviewerName ? ` · ${item.reviewerName}` : ""}
+                      {item.createdAt ? ` · ${formatDateTime(item.createdAt)}` : ""}
+                    </Text>
+                  </List.Item>
+                )}
+              />
+            )}
           </Card>
 
           <Card title="Điểm xét tuyển">

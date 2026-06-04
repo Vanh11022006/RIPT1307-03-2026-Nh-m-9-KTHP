@@ -1,26 +1,25 @@
-import type {  ApplicationScores  } from "../types/application.types";
+import type { ApplicationScores } from "../types/application.types";
+import { calculateScoreByMethod } from "../constants/admissionMethodConfig";
 
-export const calculateTotalScore = (scores: ApplicationScores): number => {
-  console.log("🔍 calculateTotalScore input:", scores);
-  
-  if (!scores || typeof scores !== "object") {
-    console.log("❌ Scores is not an object");
-    return 0;
+/**
+ * Tính tổng điểm môn học (subjectScore) theo phương thức xét tuyển.
+ * Không cộng điểm ưu tiên – dùng để lưu vào `totalScore`.
+ */
+export const calculateTotalScore = (
+  scores: ApplicationScores,
+  method?: string
+): number => {
+  if (!scores || typeof scores !== "object") return 0;
+  if (!method) {
+    // Fallback: cộng tất cả giá trị số
+    let total = 0;
+    Object.values(scores).forEach((value) => {
+      if (value !== undefined && value !== null && value !== "" && !isNaN(Number(value))) {
+        total += Number(value);
+      }
+    });
+    return Number(total.toFixed(2));
   }
-  
-  let total = 0;
-  
-  // Use Object.entries to iterate all properties
-  Object.entries(scores).forEach(([key, value]) => {
-    console.log(`  Checking ${key}: ${value} (type: ${typeof value})`);
-    if (value !== undefined && value !== null && value !== "" && !isNaN(Number(value))) {
-      const numValue = Number(value);
-      total += numValue;
-      console.log(`    ✓ Added ${numValue}, total now: ${total}`);
-    }
-  });
-
-  const result = Number(total.toFixed(2));
-  console.log("📊 Final total score:", result);
-  return result;
+  const result = calculateScoreByMethod(method, scores, 0);
+  return result.subjectScore;
 };

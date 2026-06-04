@@ -6,7 +6,11 @@ import java.util.List;
 public interface NotificationLogService {
     NotificationLog createNotification(Long userId, String title, String message);
 
+    NotificationLog createNotification(Long userId, String title, String message, String applicationId);
+
     List<NotificationLog> getUserNotifications(Long userId);
+
+    List<NotificationLog> getAllNotifications();
 
     List<NotificationLog> getUnreadNotifications(Long userId);
 

@@ -36,7 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+            System.out.println("[DEBUG] JwtAuthenticationFilter: extracted jwt='"
+                    + (jwt != null ? jwt.substring(0, Math.min(10, jwt.length())) + "..." : "null") + "' from request");
+            if (!StringUtils.hasText(jwt)) {
+                System.out.println("[DEBUG] JwtAuthenticationFilter: no token provided");
+            } else if (tokenProvider.validateToken(jwt)) {
+                System.out.println("[DEBUG] JwtAuthenticationFilter: token valid");
                 String email = tokenProvider.getUsernameFromJWT(jwt);
 
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
@@ -46,6 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\":\"Invalid or expired token\"}");
+                return;
             }
         } catch (Exception ex) {
             logger.error("Không thể thiết lập xác thực người dùng trong context", ex);
@@ -59,6 +69,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+        // Fallback: allow token via query parameter for EventSource (SSE) connections
+        // Exclude /api/auth/verify-email endpoint from treating query parameter 'token' as JWT
+        if (!request.getRequestURI().contains("/api/auth/verify-email")) {
+            String tokenParam = request.getParameter("token");
+            if (StringUtils.hasText(tokenParam)) {
+                return tokenParam;
+            }
+        }
+        String accessTokenParam = request.getParameter("access_token");
+        if (StringUtils.hasText(accessTokenParam))
+            return accessTokenParam;
         return null;
     }
 }

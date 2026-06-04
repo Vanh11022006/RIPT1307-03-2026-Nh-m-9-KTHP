@@ -9,6 +9,7 @@ import { RoleBasedRoute } from "../components/layout/RoleBasedRoute";
 // Public Pages
 import { LandingPage } from "../pages/public/LandingPage";
 import { AuthPage } from "../pages/public/AuthPage";
+import { VerifyEmailPage } from "../pages/public/VerifyEmailPage";
 
 // Candidate Pages
 import { CandidateDashboard } from "../pages/candidate/Dashboard";
@@ -31,6 +32,7 @@ import { CandidateManagement } from "../pages/admin/CandidateManagement";
 import { ApplicationManagement } from "../pages/admin/ApplicationManagement";
 import { AdminApplicationDetail } from "../pages/admin/ApplicationDetail";
 import { NotificationLogList as AdminNotificationList } from "../pages/admin/NotificationLogList";
+import { UserRoleManagement } from "../pages/admin/UserRoleManagement";
 
 // Error Pages
 import { ForbiddenPage } from "../pages/errors/ForbiddenPage";
@@ -44,6 +46,9 @@ export const router = createBrowserRouter([
       { index: true, element: <LandingPage /> },
       { path: "login", element: <AuthPage /> },
       { path: "register", element: <AuthPage /> },
+      { path: "forgot-password", element: <AuthPage /> },
+      { path: "reset-password", element: <AuthPage /> },
+      { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "universities", element: <UniversityList /> },
       { path: "universities/:id", element: <UniversityDetail /> },
     ],
@@ -86,6 +91,7 @@ export const router = createBrowserRouter([
           { path: "applications", element: <ApplicationManagement /> },
           { path: "applications/:id", element: <AdminApplicationDetail /> },
           { path: "notifications", element: <AdminNotificationList /> },
+          { path: "users", element: <UserRoleManagement /> },
         ],
       },
     ],

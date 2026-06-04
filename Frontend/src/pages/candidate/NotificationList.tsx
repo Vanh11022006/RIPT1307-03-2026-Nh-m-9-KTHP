@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Card, List, Tag, Button, Drawer, Typography, Space, Badge, Empty, message, Popconfirm } from "antd";
-import { BellOutlined, CloseCircleOutlined, DeleteOutlined } from "@ant-design/icons";
+import { BellOutlined, CloseCircleOutlined, DeleteOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useNotificationLogStore } from "../../stores/notificationLog.store";
+import { LoadingScreen } from "../../components/common/LoadingScreen";
 import { useAuthStore } from "../../stores/auth.store";
 import type { NotificationLog } from "../../types/notification.types";
 
@@ -9,28 +10,41 @@ const { Title, Text, Paragraph } = Typography;
 
 export const NotificationList: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId } = useNotificationLogStore();
-  const [myLogs, setMyLogs] = useState<NotificationLog[]>([]);
+  const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId, markAllNotificationsAsRead } = useNotificationLogStore();
+  const notificationLogs = useNotificationLogStore((state) => state.notificationLogs);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const myLogs = React.useMemo(() => {
+    const logs = Array.isArray(notificationLogs) ? notificationLogs : [];
+    return logs
+      .filter((log) => String(log.recipientUserId) === String(currentUser?.id))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [notificationLogs, currentUser?.id]);
 
   useEffect(() => {
     let mounted = true;
 
     const loadNotifications = async () => {
       if (!currentUser?.id) {
-        if (mounted) setMyLogs([]);
+        if (mounted) {
+          setLoading(false);
+        }
         return;
       }
 
-      const logs = await getNotificationLogsByUserId(String(currentUser.id));
-      if (mounted) {
-        setMyLogs(Array.isArray(logs) ? logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
+      setLoading(true);
+      try {
+        await getNotificationLogsByUserId(String(currentUser.id));
+      } catch (err) {
+        console.error("Failed to load candidate notifications", err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadNotifications().catch((error) => {
-      console.error("Failed to load candidate notifications", error);
-      if (mounted) setMyLogs([]);
-    });
+    loadNotifications();
 
     return () => {
       mounted = false;
@@ -71,7 +85,6 @@ export const NotificationList: React.FC = () => {
   const handleViewDetail = (log: NotificationLog) => {
     if (!log.isRead) {
       markNotificationAsRead(log.id);
-      setMyLogs((current) => current.map((l) => (l.id === log.id ? { ...l, isRead: true } : l)));
       setSelectedLog({ ...log, isRead: true });
     } else {
       setSelectedLog(log);
@@ -83,7 +96,6 @@ export const NotificationList: React.FC = () => {
   const handleDelete = async (logId: string) => {
     try {
       await deleteNotification(logId);
-      setMyLogs((current) => current.filter((log) => log.id !== logId));
       if (selectedLog?.id === logId) {
         setSelectedLog(null);
         setDetailVisible(false);
@@ -99,7 +111,6 @@ export const NotificationList: React.FC = () => {
 
     try {
       await deleteNotificationsByUserId(String(currentUser.id));
-      setMyLogs([]);
       setSelectedLog(null);
       setDetailVisible(false);
       message.success("Đã xóa tất cả thông báo");
@@ -110,6 +121,7 @@ export const NotificationList: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 40 }}>
+      
       <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>Thông báo của tôi</Title>
         <Text type="secondary">Theo dõi các cập nhật liên quan đến hồ sơ xét tuyển của bạn</Text>
@@ -117,6 +129,30 @@ export const NotificationList: React.FC = () => {
 
       {myLogs.length > 0 && (
         <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            type="default"
+            icon={<CheckCircleOutlined />}
+            style={{ marginRight: 8, border: '1px solid #10B981', color: '#10B981', borderRadius: 6 }}
+            onClick={async () => {
+              const unread = myLogs.filter(l => !l.isRead);
+              if (unread.length === 0) {
+                message.info('Không có thông báo chưa đọc');
+                return;
+              }
+
+              if (!currentUser?.id) return;
+
+              try {
+                await markAllNotificationsAsRead(String(currentUser.id));
+                message.success('Đã đọc tất cả');
+              } catch (error) {
+                console.error(error);
+                message.error('Không thể đánh dấu tất cả là đã đọc');
+              }
+            }}
+          >
+            Đọc tất cả
+          </Button>
           <Popconfirm
             title="Bạn có chắc muốn xóa tất cả thông báo không?"
             description="Hành động này không thể hoàn tác."
@@ -137,7 +173,9 @@ export const NotificationList: React.FC = () => {
       )}
 
       <Card bordered={false}>
-        {myLogs.length === 0 ? (
+        {loading ? (
+          <LoadingScreen tip="Đang tải thông báo..." />
+        ) : myLogs.length === 0 ? (
           <Empty description="Bạn chưa có thông báo nào" />
         ) : (
           <List

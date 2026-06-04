@@ -4,6 +4,7 @@ import javax.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,13 +21,12 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
-    // Đảm bảo tên cột trong database là full_name
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    // THÊM TRƯỜNG NÀY VÀO ĐỂ KHÔNG BỊ LỖI SQL
     private String phone;
 
     @Column(nullable = false)
@@ -34,6 +34,23 @@ public class User {
 
     @Column(nullable = false)
     private String status;
+
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
+    @JsonIgnore
+    @Column(name = "email_verification_token", unique = true)
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_expires")
+    private LocalDateTime emailVerificationExpires;
+
+    @JsonIgnore
+    @Column(name = "reset_password_token", unique = true)
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_expires")
+    private LocalDateTime resetPasswordExpires;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

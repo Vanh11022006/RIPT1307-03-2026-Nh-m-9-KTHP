@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Typography, message, Divider } from "antd";
+import { Form, Input, Button, Typography, message, Divider, Checkbox } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
 import { useAuthStore } from "../../stores/auth.store";
@@ -13,9 +13,9 @@ export const LoginPage: React.FC = () => {
 
   const onFinish = async (values: any) => {
     setLoading(true);
-    const { email, password } = values;
+    const { email, password, remember } = values;
     
-    const result = await login(email, password);
+    const result = await login(email, password, remember);
     setLoading(false);
     
     if (result.success) {
@@ -42,7 +42,7 @@ export const LoginPage: React.FC = () => {
         <Text style={{ color: "rgba(255,255,255,0.6)" }}>Đăng nhập để tiếp tục hành trình của bạn</Text>
       </div>
 
-      <Form layout="vertical" onFinish={onFinish} className="dark-form" requiredMark={false}>
+      <Form layout="vertical" onFinish={onFinish} className="dark-form" requiredMark={false} initialValues={{ remember: false }}>
         <Form.Item 
           label="Email" 
           name="email" 
@@ -60,8 +60,11 @@ export const LoginPage: React.FC = () => {
           <Input.Password className="glass-input" size="large" placeholder="Nhập mật khẩu" />
         </Form.Item>
 
-        <div style={{ textAlign: "right", marginBottom: 24 }}>
-          <a style={{ color: "var(--neon-cyan)" }}>Quên mật khẩu?</a>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <Form.Item name="remember" valuePropName="checked" noStyle>
+            <Checkbox style={{ color: "rgba(255,255,255,0.8)" }}>Ghi nhớ đăng nhập</Checkbox>
+          </Form.Item>
+          <Link to="/forgot-password" style={{ color: "var(--neon-cyan)" }}>Quên mật khẩu?</Link>
         </div>
 
         <Form.Item style={{ marginBottom: 16 }}>
