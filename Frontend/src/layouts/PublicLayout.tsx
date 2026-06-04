@@ -13,6 +13,8 @@ export const PublicLayout: React.FC = () => {
 
   const isLogin = location.pathname === "/login";
   const isRegister = location.pathname === "/register";
+  const isForgotPassword = location.pathname === "/forgot-password";
+  const isResetPassword = location.pathname === "/reset-password";
   const isLanding = location.pathname === "/";
   const isDarkTheme = false; // Landing page uses a light theme now
 
@@ -42,8 +44,6 @@ export const PublicLayout: React.FC = () => {
     };
   }, [isLanding, isDarkTheme]);
 
-<<<<<<< Updated upstream
-=======
   if (isLogin || isRegister || isForgotPassword || isResetPassword) {
     return <Outlet />;
   }
@@ -51,8 +51,6 @@ export const PublicLayout: React.FC = () => {
   if (isLanding) {
     return <Outlet />;
   }
-
->>>>>>> Stashed changes
   const layoutStyle = isDarkTheme 
     ? { minHeight: "100vh", background: "transparent", position: "relative" as const, overflowX: "hidden" as const }
     : { minHeight: "100vh", background: "transparent" };
