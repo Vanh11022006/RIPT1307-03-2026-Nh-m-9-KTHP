@@ -10,9 +10,16 @@ const { Title, Text, Paragraph } = Typography;
 
 export const NotificationList: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId } = useNotificationLogStore();
-  const [myLogs, setMyLogs] = useState<NotificationLog[]>([]);
+  const { getNotificationLogsByUserId, markNotificationAsRead, deleteNotification, deleteNotificationsByUserId, markAllNotificationsAsRead } = useNotificationLogStore();
+  const notificationLogs = useNotificationLogStore((state) => state.notificationLogs);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const myLogs = React.useMemo(() => {
+    const logs = Array.isArray(notificationLogs) ? notificationLogs : [];
+    return logs
+      .filter((log) => String(log.recipientUserId) === String(currentUser?.id))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [notificationLogs, currentUser?.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -20,27 +27,24 @@ export const NotificationList: React.FC = () => {
     const loadNotifications = async () => {
       if (!currentUser?.id) {
         if (mounted) {
-          setMyLogs([]);
           setLoading(false);
         }
         return;
       }
 
       setLoading(true);
-      const logs = await getNotificationLogsByUserId(String(currentUser.id));
-      if (mounted) {
-        setMyLogs(Array.isArray(logs) ? logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
-        setLoading(false);
+      try {
+        await getNotificationLogsByUserId(String(currentUser.id));
+      } catch (err) {
+        console.error("Failed to load candidate notifications", err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadNotifications().catch((error) => {
-      console.error("Failed to load candidate notifications", error);
-      if (mounted) {
-        setMyLogs([]);
-        setLoading(false);
-      }
-    });
+    loadNotifications();
 
     return () => {
       mounted = false;
@@ -81,7 +85,6 @@ export const NotificationList: React.FC = () => {
   const handleViewDetail = (log: NotificationLog) => {
     if (!log.isRead) {
       markNotificationAsRead(log.id);
-      setMyLogs((current) => current.map((l) => (l.id === log.id ? { ...l, isRead: true } : l)));
       setSelectedLog({ ...log, isRead: true });
     } else {
       setSelectedLog(log);
@@ -93,7 +96,6 @@ export const NotificationList: React.FC = () => {
   const handleDelete = async (logId: string) => {
     try {
       await deleteNotification(logId);
-      setMyLogs((current) => current.filter((log) => log.id !== logId));
       if (selectedLog?.id === logId) {
         setSelectedLog(null);
         setDetailVisible(false);
@@ -109,7 +111,6 @@ export const NotificationList: React.FC = () => {
 
     try {
       await deleteNotificationsByUserId(String(currentUser.id));
-      setMyLogs([]);
       setSelectedLog(null);
       setDetailVisible(false);
       message.success("Đã xóa tất cả thông báo");
@@ -139,9 +140,10 @@ export const NotificationList: React.FC = () => {
                 return;
               }
 
+              if (!currentUser?.id) return;
+
               try {
-                await Promise.all(unread.map(l => markNotificationAsRead(l.id)));
-                setMyLogs((current) => current.map((l) => ({ ...l, isRead: true })));
+                await markAllNotificationsAsRead(String(currentUser.id));
                 message.success('Đã đọc tất cả');
               } catch (error) {
                 console.error(error);

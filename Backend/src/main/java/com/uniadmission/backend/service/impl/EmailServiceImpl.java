@@ -20,6 +20,8 @@ import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import javax.mail.internet.MimeMessage;
 import org.springframework.stereotype.Service;
+import com.uniadmission.backend.repository.UserRepository;
+import com.uniadmission.backend.service.NotificationLogService;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,8 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+    private final UserRepository userRepository;
+    private final NotificationLogService notificationService;
 
     @Value("${spring.mail.username}")
     private String fromAddress;
@@ -39,6 +43,9 @@ public class EmailServiceImpl implements EmailService {
     @Async
     public void sendApplicationSubmittedEmail(String to, String candidateName, String applicationCode,
             String universityName, String majorName) {
+        logEmailAsNotification(to, "[UniAdmission] Xác nhận đã nộp hồ sơ xét tuyển", 
+                "Chào " + candidateName + ",\n\nCảm ơn bạn đã nộp hồ sơ xét tuyển vào \"" + universityName + "\" - ngành \"" + majorName + "\".\nMã hồ sơ: " + applicationCode);
+
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -95,6 +102,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendEmailVerificationEmail(String to, String candidateName, String verificationUrl) {
+        logEmailAsNotification(to, "Xác minh email tài khoản UniAdmission", 
+                "Chào " + candidateName + ",\n\nCảm ơn bạn đã đăng ký tài khoản UniAdmission. Vui lòng mở link sau để xác minh email và kích hoạt tài khoản:\n" + verificationUrl);
+
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -304,6 +314,9 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendPasswordResetEmail(String to, String resetCode) {
+        logEmailAsNotification(to, "Khôi phục mật khẩu tài khoản UniAdmission", 
+                "Xin chào,\n\nChúng tôi đã nhận được yêu cầu khôi phục mật khẩu cho tài khoản của bạn.\nMã xác thực của bạn là: " + resetCode + "\n\nLink khôi phục nhanh:\n" + buildFrontendUrl("/reset-password?code=" + resetCode));
+
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -342,6 +355,18 @@ public class EmailServiceImpl implements EmailService {
             } catch (Exception e) {
                 log.error("Gửi email khôi phục mật khẩu fallback thất bại: {}", e.getMessage());
             }
+        }
+    }
+
+    private void logEmailAsNotification(String email, String title, String message) {
+        try {
+            if (email != null && !email.trim().isEmpty()) {
+                userRepository.findByEmail(email).ifPresent(user -> {
+                    notificationService.createNotification(user.getId(), title, message);
+                });
+            }
+        } catch (Exception e) {
+            log.warn("Failed to create simulated notification log for email to={}: {}", email, e.getMessage());
         }
     }
 }
