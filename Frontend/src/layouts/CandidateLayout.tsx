@@ -124,8 +124,7 @@ export const CandidateLayout: React.FC = () => {
       <div 
         className="flex flex-col min-h-screen transition-all duration-300 max-w-full"
         style={{ 
-          marginLeft: collapsed ? "80px" : "264px",
-          width: collapsed ? "calc(100% - 80px)" : "calc(100% - 264px)"
+          marginLeft: collapsed ? "80px" : "264px"
         }}
       >
         {/* TopNavBar */}

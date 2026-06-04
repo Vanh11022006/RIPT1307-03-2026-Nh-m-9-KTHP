@@ -1,15 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Card, Statistic, Row, Col, Table, Typography, Button, Progress, Tag, Select, Space, Avatar } from "antd";
-import { 
-  TeamOutlined, 
-  BankOutlined, 
-  BookOutlined, 
-  FileTextOutlined,
-  ReloadOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  RightOutlined
-} from "@ant-design/icons";
+import { Select } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../../components/common/EmptyState";
 import { LoadingScreen } from "../../components/common/LoadingScreen";
@@ -20,11 +11,11 @@ import { useMajorStore } from "../../stores/major.store";
 import { useApplicationStore } from "../../stores/application.store";
 import { useAdmissionRoundStore } from "../../stores/admissionRound.store";
 import { useAuthStore } from "../../stores/auth.store";
+import { useTheme } from "../../contexts/ThemeContext";
 import { formatDate } from "../../utils/date";
 import { loadAdminDashboardData } from "../../utils/dataLoader";
 import type { Application } from "../../types/application.types";
 
-const { Title, Text } = Typography;
 const { Option } = Select;
 
 type AdminApplicationBreakdownRow = {
@@ -103,12 +94,53 @@ const buildBreakdownRows = (
   });
 };
 
+// Custom pagination helper
+const Pagination: React.FC<{
+  current: number;
+  total: number;
+  pageSize: number;
+  onChange: (page: number) => void;
+}> = ({ current, total, pageSize, onChange }) => {
+  const totalPages = Math.ceil(total / pageSize);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex justify-center items-center gap-2 mt-4">
+      <button
+        disabled={current === 1}
+        onClick={() => onChange(current - 1)}
+        className="px-3 py-1 rounded-md border border-black/[0.08] text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed bg-transparent transition-all"
+      >
+        Trước
+      </button>
+      <span className="text-xs text-[#44474E] font-medium">
+        Trang {current} / {totalPages}
+      </span>
+      <button
+        disabled={current === totalPages}
+        onClick={() => onChange(current + 1)}
+        className="px-3 py-1 rounded-md border border-black/[0.08] text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed bg-transparent transition-all"
+      >
+        Sau
+      </button>
+    </div>
+  );
+};
+
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuthStore();
+  const { isDarkMode } = useTheme();
   
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [adminApplicationStats, setAdminApplicationStats] = useState<AdminApplicationStatistics | null>(null);
+
+  // Pagination states for breakdowns
+  const [uniPage, setUniPage] = useState(1);
+  const [majorPage, setMajorPage] = useState(1);
+  const [roundPage, setRoundPage] = useState(1);
+
+  const pageSize = 4;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -121,8 +153,6 @@ export const AdminDashboard: React.FC = () => {
   const { applications, loading: applicationsLoading, getApplications, getAdminApplicationStatistics } = useApplicationStore();
   const { admissionRounds, loading: admissionRoundsLoading, getAdmissionRounds, getAdmissionRoundById } = useAdmissionRoundStore();
 
-  // Fetch all data in parallel using Promise.all for faster load times
-  // ⏱️ Optimization: Instead of sequential calls (~1500ms), load in parallel (~300-400ms)
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -137,6 +167,7 @@ export const AdminDashboard: React.FC = () => {
   const [selectedAdmissionRoundId, setSelectedAdmissionRoundId] = useState<string>("all");
   const [selectedUniversityId, setSelectedUniversityId] = useState<string>("all");
   const [selectedMajorId, setSelectedMajorId] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +182,10 @@ export const AdminDashboard: React.FC = () => {
 
         if (!cancelled) {
           setAdminApplicationStats(nextStats);
+          // Reset pagination when filter changes
+          setUniPage(1);
+          setMajorPage(1);
+          setRoundPage(1);
         }
       } catch (error) {
         if (!cancelled) {
@@ -174,18 +209,24 @@ export const AdminDashboard: React.FC = () => {
 
   const loading = candidatesLoading || universitiesLoading || majorsLoading || applicationsLoading || admissionRoundsLoading;
 
-  if (loading && safeCandidates.length === 0 && safeUniversities.length === 0 && safeMajors.length === 0 && safeApplications.length === 0 && safeAdmissionRounds.length === 0) {
-    return <LoadingScreen fullScreen tip="Đang tải bảng điều khiển..." />;
-  }
-
   const filteredApplications = useMemo(() => {
     return safeApplications.filter(app => {
       const matchRound = selectedAdmissionRoundId === "all" || app.admissionRoundId === selectedAdmissionRoundId;
       const matchUni = selectedUniversityId === "all" || app.universityId === selectedUniversityId;
       const matchMajor = selectedMajorId === "all" || app.majorId === selectedMajorId;
-      return matchRound && matchUni && matchMajor;
+      
+      let matchSearch = true;
+      if (searchQuery.trim()) {
+        const candidate = getCandidateById(app.candidateId);
+        const candidateName = candidate?.fullName?.toLowerCase() || "";
+        const appCode = app.applicationCode?.toLowerCase() || "";
+        const query = searchQuery.toLowerCase();
+        matchSearch = candidateName.includes(query) || appCode.includes(query);
+      }
+
+      return matchRound && matchUni && matchMajor && matchSearch;
     });
-  }, [safeApplications, selectedAdmissionRoundId, selectedUniversityId, selectedMajorId]);
+  }, [safeApplications, selectedAdmissionRoundId, selectedUniversityId, selectedMajorId, searchQuery, getCandidateById]);
 
   const localStats = useMemo(() => {
     return {
@@ -271,239 +312,434 @@ export const AdminDashboard: React.FC = () => {
     });
   }, [adminApplicationStats, filteredApplications, getAdmissionRoundById]);
 
-  const columns = [
-    {
-      title: "Mã hồ sơ",
-      dataIndex: "applicationCode",
-      key: "applicationCode",
-      render: (text: string) => <Text strong>{text}</Text>
-    },
-    {
-      title: "Thí sinh",
-      dataIndex: "candidateId",
-      key: "candidateId",
-      render: (id: string) => {
-        const candidate = getCandidateById(id);
-        return candidate ? <Space><Avatar size="small" src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate.fullName}`} /> {candidate.fullName}</Space> : "Không rõ thí sinh";
-      }
-    },
-    {
-      title: "Trường",
-      dataIndex: "universityId",
-      key: "universityId",
-      render: (id: string) => {
-        const university = getUniversityById(id);
-        return university ? university.name : "Không rõ trường";
-      }
-    },
-    {
-      title: "Ngành",
-      dataIndex: "majorId",
-      key: "majorId",
-      render: (id: string) => {
-        const major = getMajorById(id);
-        return major ? major.name : "Không rõ ngành";
-      }
-    },
-    {
-      title: "Tổng điểm",
-      dataIndex: "totalScore",
-      key: "totalScore",
-      align: "center" as const,
-      render: (score: number, record: any) => {
-        const final = record?.finalScore ?? (Number(score ?? 0) + Number(record?.priorityScore ?? 0));
-        return final !== undefined ? <Text strong style={{ color: "var(--admin-accent)" }}>{(final ?? 0).toFixed(2)}</Text> : "-";
-      }
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      align: "center" as const,
-      render: (status: any) => <ApplicationStatusTag status={status} />
-    },
-    {
-      title: "Ngày nộp",
-      dataIndex: "submittedAt",
-      key: "submittedAt",
-      render: (date: string) => <Text type="secondary">{formatDate(date)}</Text>
-    },
-    {
-      title: "",
-      key: "action",
-      render: (_: any, record: any) => (
-        <Button type="text" style={{ color: "var(--admin-accent)" }} onClick={() => navigate(`/admin/applications/${record.id}`)}>
-          Chi tiết <RightOutlined />
-        </Button>
-      )
-    }
-  ];
+  const paginatedUnis = useMemo(() => {
+    return universityBreakdown.slice((uniPage - 1) * pageSize, uniPage * pageSize);
+  }, [universityBreakdown, uniPage]);
 
-  const commonStatColumns = [
-    { title: "Tổng", dataIndex: "total", key: "total", align: "center" as const, render: (val: number) => <Text strong>{val}</Text> },
-    { title: "Chờ duyệt", dataIndex: "pending", key: "pending", align: "center" as const, render: (val: number) => <Tag color="warning" bordered={false}>{val}</Tag> },
-    { title: "Đã duyệt", dataIndex: "approved", key: "approved", align: "center" as const, render: (val: number) => <Tag color="success" bordered={false}>{val}</Tag> },
-    { title: "Từ chối", dataIndex: "rejected", key: "rejected", align: "center" as const, render: (val: number) => <Tag color="error" bordered={false}>{val}</Tag> },
-    { title: "Đã hủy", dataIndex: "cancelled", key: "cancelled", align: "center" as const, render: (val: number) => <Tag color="purple" bordered={false}>{val}</Tag> },
-  ];
+  const paginatedMajors = useMemo(() => {
+    return majorBreakdown.slice((majorPage - 1) * pageSize, majorPage * pageSize);
+  }, [majorBreakdown, majorPage]);
 
-  const breakdownColumns = [
-    {
-      title: "Tên",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: AdminApplicationBreakdownRow) => (
-        <div>
-          <Text strong>{text}</Text>
-          {record.code ? <div><Text type="secondary" style={{ fontSize: 12 }}>{record.code}</Text></div> : null}
-        </div>
-      ),
-    },
-    ...commonStatColumns,
-    {
-      title: "Tỷ lệ",
-      key: "ratio",
-      align: "center" as const,
-      render: (_: unknown, record: AdminApplicationBreakdownRow) => (
-        <Tag color="processing" bordered={false} style={{ borderRadius: 12 }}>
-          {stats.total > 0 ? `${((record.total / stats.total) * 100).toFixed(1)}%` : "0%"}
-        </Tag>
-      ),
-    },
-  ];
+  const paginatedRounds = useMemo(() => {
+    return admissionRoundBreakdown.slice((roundPage - 1) * pageSize, roundPage * pageSize);
+  }, [admissionRoundBreakdown, roundPage]);
 
-  const renderBreakdownCard = (
-    title: string,
-    description: string,
-    dataSource: AdminApplicationBreakdownRow[]
-  ) => (
-    <Card
-      className="saas-card"
-      title={
-        <div>
-          <Title level={5} style={{ margin: 0 }}>{title}</Title>
-          <Text type="secondary" style={{ fontSize: 13 }}>{description}</Text>
-        </div>
-      }
-      extra={<Tag color="processing" bordered={false} style={{ borderRadius: 12 }}>{dataSource.length} nhóm</Tag>}
-      bordered={false}
-      style={{ height: '100%' }}
-    >
-      {dataSource.length > 0 ? (
-        <Table
-          columns={breakdownColumns}
-          dataSource={dataSource.map((item) => ({ ...item, key: item.id }))}
-          pagination={{ pageSize: 4, position: ["bottomCenter"] }}
-          size="middle"
-          scroll={{ x: true }}
-        />
-      ) : (
-        <EmptyState description="Không có dữ liệu breakdown phù hợp" />
-      )}
-    </Card>
-  );
+  if (loading && safeCandidates.length === 0 && safeUniversities.length === 0 && safeMajors.length === 0 && safeApplications.length === 0 && safeAdmissionRounds.length === 0) {
+    return <LoadingScreen fullScreen tip="Đang tải bảng điều khiển..." />;
+  }
+
+  const cardBgClass = isDarkMode ? "bg-slate-900 border-white/[0.08] text-slate-200" : "bg-white border-black/[0.08] text-slate-800";
 
   return (
-    <div style={{ paddingBottom: 40 }} className="animate-fade-up">
-      {/* Hero Banner Section */}
-      <div style={{ 
-        background: "linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)",
-        borderRadius: "24px", 
-        padding: "40px",
-        marginBottom: "32px",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-      }}>
-        {/* Background glow effects */}
-        <div style={{ position: "absolute", top: "-50px", right: "10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(56,189,248,0.2) 0%, rgba(0,0,0,0) 70%)", borderRadius: "50%", filter: "blur(40px)" }}></div>
-        <div style={{ position: "absolute", bottom: "-100px", right: "25%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(124,58,237,0.2) 0%, rgba(0,0,0,0) 70%)", borderRadius: "50%", filter: "blur(60px)" }}></div>
-        
-        <Row justify="space-between" align="middle" style={{ position: "relative", zIndex: 1 }}>
-          <Col xs={24} md={16}>
-            <Title level={2} style={{ color: "#F8FAFC", margin: "0 0 16px 0", fontWeight: 700 }}>
-              Chào mừng trở lại, {currentUser?.fullName}! 👋
-            </Title>
-            <Text style={{ color: "#94A3B8", fontSize: "16px", display: "block", marginBottom: 24, maxWidth: 600 }}>
-              Theo dõi và quản lý toàn bộ hệ thống xét tuyển. Bạn có <strong style={{ color: "#38BDF8" }}>{stats.pending}</strong> hồ sơ đang chờ phê duyệt hôm nay.
-            </Text>
-            
-            <Space size="middle" wrap>
-              <Button 
-                type="primary"
-                size="large"
-                style={{ 
-                  background: "linear-gradient(90deg, #2563EB, #06B6D4)", 
-                  border: "none",
-                  borderRadius: 12,
-                  fontWeight: 600,
-                  boxShadow: "0 4px 14px 0 rgba(6, 182, 212, 0.39)"
-                }}
+    <div className="space-y-12 relative pb-10">
+      {/* Atmospheric Glows */}
+      <div className="glow-bg -top-20 -left-20 pointer-events-none"></div>
+      <div className="glow-bg top-1/2 -right-20 opacity-50 pointer-events-none"></div>
+
+      {/* Welcome Section */}
+      <section className={`relative overflow-hidden rounded-lg p-12 shadow-sm border ${cardBgClass}`}>
+        <div className="relative z-10 flex flex-col xl:flex-row justify-between xl:items-center gap-6">
+          <div className="space-y-3">
+            <h2 className={`text-3xl md:text-4xl font-extrabold m-0 ${isDarkMode ? 'text-white' : 'text-[#1A1C1E]'}`}>
+              Chào mừng trở lại, <span className="text-[#00616D]">{currentUser?.fullName || "System Admin"}! 👋</span>
+            </h2>
+            <p className="text-base text-[#44474E] max-w-xl m-0 leading-relaxed">
+              Theo dõi và quản lý toàn bộ hệ thống xét tuyển. Bạn có <strong className="text-[#00616D]">{stats.pending}</strong> hồ sơ đang chờ phê duyệt hôm nay.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-3">
+              <button 
                 onClick={() => navigate("/admin/applications")}
+                className="bg-[#00616D] text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:shadow-lg active:scale-95 transition-all border-0 cursor-pointer text-sm"
               >
                 Xử lý hồ sơ ngay
-              </Button>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }}></div>
-                <Text style={{ color: "#E2E8F0" }}>Hệ thống ổn định</Text>
+              </button>
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#00616D]/5 border border-[#00616D]/10 rounded-full text-sm font-semibold text-[#00616D]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse"></span>
+                Hệ thống ổn định
               </div>
-            </Space>
-          </Col>
-          <Col xs={24} md={8} style={{ textAlign: "right" }}>
-            <div style={{ background: "rgba(255,255,255,0.03)", padding: "20px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)", display: "inline-block", backdropFilter: "blur(10px)" }}>
-              <Title level={4} style={{ color: "#F8FAFC", margin: 0, fontWeight: 700 }}>
-                {currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-              </Title>
-              <Text style={{ color: "#94A3B8" }}>
-                {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </Text>
             </div>
-          </Col>
-        </Row>
-      </div>
+          </div>
+          <div className="bg-[#00616D]/5 p-6 rounded-xl border border-[#00616D]/10 shrink-0 text-right">
+            <h4 className="text-2xl font-extrabold text-[#00616D] m-0">
+              {currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+            </h4>
+            <p className="text-xs text-[#44474E] font-bold uppercase tracking-wider m-0 mt-2">
+              {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+        </div>
+        {/* Decorative element */}
+        <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00616D]/5 blur-[100px] rounded-full pointer-events-none"></div>
+      </section>
 
-      {/* FILTER SECTION */}
-      <div className="saas-filter-card" style={{ marginBottom: 32 }}>
-          <Row gutter={[24, 24]} align="bottom">
-            <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8 }}><Text type="secondary" strong>Lọc theo Đợt xét tuyển</Text></div>
-            <Select 
-              size="large"
-              style={{ width: '100%' }} 
-              value={selectedAdmissionRoundId}
-              onChange={setSelectedAdmissionRoundId}
-              dropdownStyle={{ borderRadius: 12 }}
-            >
-              <Option value="all">Tất cả đợt xét tuyển</Option>
-              {safeAdmissionRounds.map(round => (
-                <Option key={round.id} value={round.id}>
-                  {round.code} - {round.name}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-            <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8 }}><Text type="secondary" strong>Lọc theo Trường đại học</Text></div>
-            <Select 
-              size="large"
-              style={{ width: '100%' }} 
-              value={selectedUniversityId}
-              onChange={setSelectedUniversityId}
-              dropdownStyle={{ borderRadius: 12 }}
-            >
-              <Option value="all">Tất cả trường</Option>
-              {safeUniversities.map(uni => (
-                <Option key={uni.id} value={uni.id}>
-                  {uni.name}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div style={{ marginBottom: 8 }}><Text type="secondary" strong>Lọc theo Ngành</Text></div>
+      {/* Stats Cards (Row of 4) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-6">
+        {/* Card 1: Tổng thí sinh */}
+        <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#00E3FD]/10 flex items-center justify-center text-[#00616D] shrink-0">
+              <span className="material-symbols-outlined text-3xl">groups</span>
+            </div>
+            <div>
+              <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Tổng thí sinh</p>
+              <p className={`text-2xl font-bold m-0 mt-1 ${isDarkMode ? 'text-white' : 'text-[#1A1C1E]'}`}>{safeCandidates.length}</p>
+            </div>
+          </div>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold text-emerald-600 bg-emerald-50 shrink-0 flex items-center gap-0.5">
+            <span className="material-symbols-outlined text-xs">arrow_upward</span>12%
+          </span>
+        </div>
+        
+        {/* Card 2: Tổng trường ĐH */}
+        <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
+              <span className="material-symbols-outlined text-3xl">school</span>
+            </div>
+            <div>
+              <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Tổng trường ĐH</p>
+              <p className={`text-2xl font-bold m-0 mt-1 ${isDarkMode ? 'text-white' : 'text-[#1A1C1E]'}`}>{safeUniversities.length}</p>
+            </div>
+          </div>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold text-emerald-600 bg-emerald-50 shrink-0 flex items-center gap-0.5">
+            <span className="material-symbols-outlined text-xs">arrow_upward</span>8%
+          </span>
+        </div>
+
+        {/* Card 3: Ngành đào tạo */}
+        <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
+              <span className="material-symbols-outlined text-3xl">book</span>
+            </div>
+            <div>
+              <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Ngành đào tạo</p>
+              <p className={`text-2xl font-bold m-0 mt-1 ${isDarkMode ? 'text-white' : 'text-[#1A1C1E]'}`}>{safeMajors.length}</p>
+            </div>
+          </div>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold text-rose-600 bg-rose-50 shrink-0 flex items-center gap-0.5">
+            <span className="material-symbols-outlined text-xs">arrow_downward</span>2%
+          </span>
+        </div>
+
+        {/* Card 4: Tổng hồ sơ */}
+        <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
+              <span className="material-symbols-outlined text-3xl">description</span>
+            </div>
+            <div>
+              <p className="text-[#44474E] text-xs font-bold uppercase tracking-wider m-0">Tổng hồ sơ</p>
+              <p className={`text-2xl font-bold m-0 mt-1 ${isDarkMode ? 'text-white' : 'text-[#1A1C1E]'}`}>{stats.total}</p>
+            </div>
+          </div>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold text-emerald-600 bg-emerald-50 shrink-0 flex items-center gap-0.5">
+            <span className="material-symbols-outlined text-xs">arrow_upward</span>24%
+          </span>
+        </div>
+      </section>
+
+      {/* Bento Grid */}
+      <section className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-12 gap-8">
+        {/* Card 1: Trạng thái xét duyệt (Left 4 cols / xl 1 col) */}
+        <div className={`xl:col-span-1 2xl:col-span-4 p-6 rounded-lg border shadow-sm flex flex-col justify-between ${cardBgClass}`}>
+          <h3 className="font-bold text-[#1A1C1E] text-base m-0 mb-4">Trạng thái xét duyệt</h3>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center text-xs text-[#44474E] mb-1 font-semibold uppercase">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#00E3FD]"></span>Chờ duyệt</span>
+                <span className="font-bold">{stats.pending} ({percentPending.toFixed(1)}%)</span>
+              </div>
+              <div className="w-full h-2 bg-[#F1F4F5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#00E3FD]" style={{ width: `${percentPending}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center text-xs text-[#44474E] mb-1 font-semibold uppercase">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10B981]"></span>Đã duyệt</span>
+                <span className="font-bold">{stats.approved} ({percentApproved.toFixed(1)}%)</span>
+              </div>
+              <div className="w-full h-2 bg-[#F1F4F5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#10B981]" style={{ width: `${percentApproved}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center text-xs text-[#44474E] mb-1 font-semibold uppercase">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>Từ chối</span>
+                <span className="font-bold">{stats.rejected} ({percentRejected.toFixed(1)}%)</span>
+              </div>
+              <div className="w-full h-2 bg-[#F1F4F5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#EF4444]" style={{ width: `${percentRejected}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center text-xs text-[#44474E] mb-1 font-semibold uppercase">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#A855F7]"></span>Đã hủy</span>
+                <span className="font-bold">{stats.cancelled} ({percentCancelled.toFixed(1)}%)</span>
+              </div>
+              <div className="w-full h-2 bg-[#F1F4F5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#A855F7]" style={{ width: `${percentCancelled}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Breakdown Row Summaries (Middle 4 cols / xl 1 col) */}
+        <div className={`xl:col-span-1 2xl:col-span-4 p-6 rounded-lg border shadow-sm flex flex-col justify-between gap-4 ${cardBgClass}`}>
+          <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-blue-600 font-bold uppercase tracking-wider">Trường</span>
+              <h4 className="text-2xl font-bold text-blue-900 m-0 mt-1">{universityBreakdown.length}</h4>
+            </div>
+            <span className="text-[10px] text-blue-700 font-bold bg-blue-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider">ĐANG CÓ HỒ SƠ</span>
+          </div>
+
+          <div className="p-4 rounded-lg bg-emerald-50/50 border border-emerald-100 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Ngành</span>
+              <h4 className="text-2xl font-bold text-emerald-900 m-0 mt-1">{majorBreakdown.length}</h4>
+            </div>
+            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider">ĐANG ĐÀO TẠO</span>
+          </div>
+
+          <div className="p-4 rounded-lg bg-purple-50/50 border border-purple-100 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-purple-600 font-bold uppercase tracking-wider">Đợt</span>
+              <h4 className="text-2xl font-bold text-purple-900 m-0 mt-1">{admissionRoundBreakdown.length}</h4>
+            </div>
+            <span className="text-[10px] text-purple-700 font-bold bg-purple-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider">ĐANG XÉT TUYỂN</span>
+          </div>
+        </div>
+
+        {/* Card 3: Brand Promo Banner (Right 4 cols / xl 2 cols) */}
+        <div className="xl:col-span-2 2xl:col-span-4 p-6 rounded-lg border shadow-sm bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00E3FD]/10 blur-2xl rounded-full"></div>
+          <div>
+            <span className="text-xs text-[#00E3FD] font-bold uppercase tracking-widest flex items-center gap-1.5 mb-2">
+              <span className="material-symbols-outlined text-xs">auto_awesome</span>QUẢN LÝ HIỆU QUẢ
+            </span>
+            <h4 className="text-lg font-bold text-white m-0">Hệ thống tự động xét duyệt</h4>
+            <p className="text-xs text-slate-400 mt-2 leading-relaxed m-0">
+              Hệ thống xử lý hồ sơ tự động giúp xét duyệt nhanh chóng và chính xác cho hàng nghìn nguyện vọng mỗi năm.
+            </p>
+          </div>
+          <div className="flex justify-end mt-4">
+            <span className="material-symbols-outlined text-3xl text-[#00E3FD]">insights</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Breakdown Tables Section */}
+      <section className="grid grid-cols-1 2xl:grid-cols-2 gap-8">
+        {/* Table 1: Breakdown theo trường */}
+        <div className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="font-bold text-[#1A1C1E] text-base m-0">Breakdown theo trường</h3>
+              <p className="text-xs text-[#44474E] m-0 mt-0.5">Số hồ sơ và trạng thái theo từng trường đại học</p>
+            </div>
+            <span className="px-2.5 py-0.5 bg-[#00616D]/10 text-[#00616D] text-xs font-bold rounded-full">
+              {universityBreakdown.length} nhóm
+            </span>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-black/[0.08] text-[10px] font-bold text-[#44474E] uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Tên trường</th>
+                  <th className="py-2.5 px-3 text-center">Tổng</th>
+                  <th className="py-2.5 px-3 text-center">Đã duyệt</th>
+                  <th className="py-2.5 px-3 text-center">Tỷ lệ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/[0.04] text-xs">
+                {paginatedUnis.length > 0 ? (
+                  paginatedUnis.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 font-semibold text-[#1A1C1E]">
+                        {item.name}
+                        {item.code && <div className="text-[10px] text-[#44474E] font-medium mt-0.5">{item.code}</div>}
+                      </td>
+                      <td className="py-3 px-3 text-center font-bold">{item.total}</td>
+                      <td className="py-3 px-3 text-center"><span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full">{item.approved}</span></td>
+                      <td className="py-3 px-3 text-center font-bold text-[#00616D]">
+                        {stats.total > 0 ? `${((item.total / stats.total) * 100).toFixed(1)}%` : "0%"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-slate-400">Không có dữ liệu</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            current={uniPage}
+            total={universityBreakdown.length}
+            pageSize={pageSize}
+            onChange={setUniPage}
+          />
+        </div>
+
+        {/* Table 2: Breakdown theo ngành */}
+        <div className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="font-bold text-[#1A1C1E] text-base m-0">Breakdown theo ngành</h3>
+              <p className="text-xs text-[#44474E] m-0 mt-0.5">Số hồ sơ và trạng thái theo từng ngành đào tạo</p>
+            </div>
+            <span className="px-2.5 py-0.5 bg-[#00616D]/10 text-[#00616D] text-xs font-bold rounded-full">
+              {majorBreakdown.length} nhóm
+            </span>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-black/[0.08] text-[10px] font-bold text-[#44474E] uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Tên ngành</th>
+                  <th className="py-2.5 px-3 text-center">Tổng</th>
+                  <th className="py-2.5 px-3 text-center">Chờ duyệt</th>
+                  <th className="py-2.5 px-3 text-center">Tỷ lệ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/[0.04] text-xs">
+                {paginatedMajors.length > 0 ? (
+                  paginatedMajors.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 font-semibold text-[#1A1C1E]">
+                        {item.name}
+                        {item.code && <div className="text-[10px] text-[#44474E] font-medium mt-0.5">{item.code}</div>}
+                      </td>
+                      <td className="py-3 px-3 text-center font-bold">{item.total}</td>
+                      <td className="py-3 px-3 text-center"><span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full">{item.pending}</span></td>
+                      <td className="py-3 px-3 text-center font-bold text-[#00616D]">
+                        {stats.total > 0 ? `${((item.total / stats.total) * 100).toFixed(1)}%` : "0%"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-slate-400">Không có dữ liệu</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            current={majorPage}
+            total={majorBreakdown.length}
+            pageSize={pageSize}
+            onChange={setMajorPage}
+          />
+        </div>
+      </section>
+
+      {/* Table 3: Breakdown theo đợt (Wide table) */}
+      <section className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="font-bold text-[#1A1C1E] text-base m-0">Breakdown theo đợt</h3>
+            <p className="text-xs text-[#44474E] m-0 mt-0.5">Số hồ sơ và trạng thái theo từng đợt xét tuyển tuyển sinh</p>
+          </div>
+          <span className="px-2.5 py-0.5 bg-[#00616D]/10 text-[#00616D] text-xs font-bold rounded-full">
+            {admissionRoundBreakdown.length} nhóm
+          </span>
+        </div>
+
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-black/[0.08] text-[10px] font-bold text-[#44474E] uppercase tracking-wider">
+                <th className="py-2.5 px-3">Tên đợt</th>
+                <th className="py-2.5 px-3 text-center">Tổng</th>
+                <th className="py-2.5 px-3 text-center">Chờ duyệt</th>
+                <th className="py-2.5 px-3 text-center">Đã duyệt</th>
+                <th className="py-2.5 px-3 text-center">Từ chối</th>
+                <th className="py-2.5 px-3 text-center">Đã hủy</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/[0.04] text-xs">
+              {paginatedRounds.length > 0 ? (
+                paginatedRounds.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-3 font-semibold text-[#1A1C1E]">
+                      {item.name}
+                      {item.code && <div className="text-[10px] text-[#44474E] font-medium mt-0.5">{item.code}</div>}
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold">{item.total}</td>
+                    <td className="py-3 px-3 text-center"><span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-0.5 rounded-full">{item.pending}</span></td>
+                    <td className="py-3 px-3 text-center"><span className="text-green-600 font-bold bg-green-50 px-2.5 py-0.5 rounded-full">{item.approved}</span></td>
+                    <td className="py-3 px-3 text-center"><span className="text-rose-600 font-bold bg-rose-50 px-2.5 py-0.5 rounded-full">{item.rejected}</span></td>
+                    <td className="py-3 px-3 text-center"><span className="text-purple-600 font-bold bg-purple-50 px-2.5 py-0.5 rounded-full">{item.cancelled}</span></td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-4 text-center text-slate-400">Không có dữ liệu</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <Pagination
+          current={roundPage}
+          total={admissionRoundBreakdown.length}
+          pageSize={pageSize}
+          onChange={setRoundPage}
+        />
+      </section>
+
+      {/* Latest Applications Table with Integrated Filters */}
+      <section className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-6 pb-6 border-b border-black/[0.04]">
+          <div>
+            <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Danh sách hồ sơ gần đây</h3>
+            <p className="text-xs text-[#44474E] m-0 mt-0.5">Danh sách các hồ sơ đăng ký ứng tuyển mới nộp gần đây nhất</p>
+          </div>
+          
+          {/* Integrated Filter Options */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Đợt xét tuyển</span>
+              <Select 
+                style={{ width: 180 }} 
+                value={selectedAdmissionRoundId}
+                onChange={setSelectedAdmissionRoundId}
+                dropdownStyle={{ borderRadius: 12 }}
+              >
+                <Option value="all">Tất cả đợt</Option>
+                {safeAdmissionRounds.map(round => (
+                  <Option key={round.id} value={round.id}>{round.code}</Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Trường đại học</span>
+              <Select 
+                style={{ width: 200 }} 
+                value={selectedUniversityId}
+                onChange={setSelectedUniversityId}
+                dropdownStyle={{ borderRadius: 12 }}
+              >
+                <Option value="all">Tất cả trường</Option>
+                {safeUniversities.map(uni => (
+                  <Option key={uni.id} value={uni.id}>{uni.name}</Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Ngành đào tạo</span>
               <Select
-                size="large"
-                style={{ width: '100%' }}
+                style={{ width: 180 }}
                 value={selectedMajorId}
                 onChange={setSelectedMajorId}
                 dropdownStyle={{ borderRadius: 12 }}
@@ -516,178 +752,109 @@ export const AdminDashboard: React.FC = () => {
                   <Option key={m.id} value={m.id}>{m.name}</Option>
                 ))}
               </Select>
-            </Col>
-          <Col xs={24} sm={24} md={6}>
-            <Button 
-              size="large"
-              block
-              icon={<ReloadOutlined />} 
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Tìm kiếm nhanh</span>
+              <div className="relative w-48">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                <input 
+                  className="w-full bg-[#F1F4F5] border-transparent rounded-full py-1.5 pl-8 pr-4 text-slate-800 placeholder:text-slate-400 text-xs focus:ring-2 focus:ring-[#00616D] focus:bg-white transition-all outline-none" 
+                  placeholder="Nhập tên, mã..." 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button 
               onClick={() => {
-                  setSelectedAdmissionRoundId("all");
-                  setSelectedUniversityId("all");
-                  setSelectedMajorId("all");
+                setSelectedAdmissionRoundId("all");
+                setSelectedUniversityId("all");
+                setSelectedMajorId("all");
+                setSearchQuery("");
               }}
-              style={{ borderRadius: 8, fontWeight: 500 }}
+              className="mt-4 bg-[#F1F4F5] text-slate-700 font-bold px-4 py-2 rounded-full border-0 cursor-pointer hover:bg-slate-200 transition-all flex items-center gap-1.5 text-xs h-[34px]"
             >
-              Đặt lại bộ lọc
-            </Button>
-          </Col>
-        </Row>
-      </div>
+              <ReloadOutlined style={{ fontSize: 10 }} />
+              Reset
+            </button>
+          </div>
+        </div>
 
-      {/* STATISTIC CARDS */}
-      <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: "rgba(56, 189, 248, 0.15)", padding: 12, borderRadius: 16 }}>
-                <TeamOutlined style={{ fontSize: 24, color: "#38BDF8" }} />
-              </div>
-              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 12%</Tag>
-            </div>
-            <Statistic 
-              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng thí sinh</Text>}
-              value={safeCandidates.length} 
-              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
-            />
-          </Card>
-        </Col>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-black/[0.08] text-xs font-bold text-[#44474E] uppercase tracking-wider bg-slate-50/50">
+                <th className="py-3 px-4">Mã hồ sơ</th>
+                <th className="py-3 px-4">Thí sinh</th>
+                <th className="py-3 px-4">Trường / Ngành</th>
+                <th className="py-3 px-4 text-center">Tổng điểm</th>
+                <th className="py-3 px-4 text-center">Trạng thái</th>
+                <th className="py-3 px-4">Ngày nộp</th>
+                <th className="py-3 px-4"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/[0.04] text-xs">
+              {latestApplications.length > 0 ? (
+                latestApplications.map((app) => {
+                  const candidate = getCandidateById(app.candidateId);
+                  const university = getUniversityById(app.universityId);
+                  const major = getMajorById(app.majorId);
+                  const finalScore = app.finalScore ?? (Number(app.totalScore ?? 0) + Number(app.priorityScore ?? 0));
 
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: "rgba(139, 92, 246, 0.15)", padding: 12, borderRadius: 16 }}>
-                <BankOutlined style={{ fontSize: 24, color: "#8B5CF6" }} />
-              </div>
-              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 8%</Tag>
-            </div>
-            <Statistic 
-              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng trường ĐH</Text>}
-              value={safeUniversities.length} 
-              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: "rgba(16, 185, 129, 0.15)", padding: 12, borderRadius: 16 }}>
-                <BookOutlined style={{ fontSize: 24, color: "#10B981" }} />
-              </div>
-              <Tag color="error" bordered={false} style={{ borderRadius: 12 }}><ArrowDownOutlined /> 2%</Tag>
-            </div>
-            <Statistic 
-              title={<Text type="secondary" style={{ fontSize: 14 }}>Ngành đào tạo</Text>}
-              value={safeMajors.length} 
-              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="saas-card" bordered={false} bodyStyle={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: "rgba(245, 158, 11, 0.15)", padding: 12, borderRadius: 16 }}>
-                <FileTextOutlined style={{ fontSize: 24, color: "#F59E0B" }} />
-              </div>
-              <Tag color="success" bordered={false} style={{ borderRadius: 12 }}><ArrowUpOutlined /> 24%</Tag>
-            </div>
-            <Statistic 
-              title={<Text type="secondary" style={{ fontSize: 14 }}>Tổng hồ sơ</Text>}
-              value={stats.total} 
-              valueStyle={{ fontWeight: 700, fontSize: "2rem", marginTop: 4 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* DETAILED STATS */}
-      <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-        <Col xs={24} lg={8}>
-          <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Trạng thái xét duyệt</Title>} bordered={false} style={{ height: '100%' }}>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#38BDF8" }}></div><Text type="secondary">Chờ duyệt</Text></Space>
-                <Text strong>{stats.pending} ({percentPending.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentPending} strokeColor="#38BDF8" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
-            </div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#10B981" }}></div><Text type="secondary">Đã duyệt</Text></Space>
-                <Text strong>{stats.approved} ({percentApproved.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentApproved} strokeColor="#10B981" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#EF4444" }}></div><Text type="secondary">Từ chối</Text></Space>
-                <Text strong>{stats.rejected} ({percentRejected.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentRejected} strokeColor="#EF4444" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
-            </div>
-            <div style={{ marginTop: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Space><div style={{ width: 8, height: 8, borderRadius: '50%', background: "#A855F7" }}></div><Text type="secondary">Đã hủy</Text></Space>
-                <Text strong>{stats.cancelled} ({percentCancelled.toFixed(1)}%)</Text>
-              </div>
-              <Progress percent={percentCancelled} strokeColor="#A855F7" showInfo={false} trailColor="var(--admin-hover)" strokeWidth={8} />
-            </div>
-          </Card>
-        </Col>
-        
-        <Col xs={24} lg={16}>
-          <Card className="saas-card" bordered={false} style={{ height: '100%' }}>
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={8}>
-                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(56, 189, 248, 0.04))", border: "1px solid rgba(37, 99, 235, 0.12)" }}>
-                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Trường</Text>
-                  <Title level={3} style={{ margin: 0 }}>{universityBreakdown.length}</Title>
-                  <Text type="secondary">nhóm đang có hồ sơ</Text>
-                </div>
-              </Col>
-              <Col xs={24} sm={8}>
-                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.04))", border: "1px solid rgba(16, 185, 129, 0.12)" }}>
-                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Ngành</Text>
-                  <Title level={3} style={{ margin: 0 }}>{majorBreakdown.length}</Title>
-                  <Text type="secondary">nhóm đang có hồ sơ</Text>
-                </div>
-              </Col>
-              <Col xs={24} sm={8}>
-                <div style={{ padding: 20, borderRadius: 18, background: "linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(244, 114, 182, 0.04))", border: "1px solid rgba(168, 85, 247, 0.12)" }}>
-                  <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>Đợt</Text>
-                  <Title level={3} style={{ margin: 0 }}>{admissionRoundBreakdown.length}</Title>
-                  <Text type="secondary">nhóm đang có hồ sơ</Text>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* BREAKDOWN TABLES */}
-      <div style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 24 }}>
-        {renderBreakdownCard("Breakdown theo trường", "Số hồ sơ và trạng thái theo từng trường", universityBreakdown)}
-        {renderBreakdownCard("Breakdown theo ngành", "Số hồ sơ và trạng thái theo từng ngành", majorBreakdown)}
-        {renderBreakdownCard("Breakdown theo đợt", "Số hồ sơ và trạng thái theo từng đợt xét tuyển", admissionRoundBreakdown)}
-      </div>
-
-      {/* LATEST APPLICATIONS */}
-      <Card className="saas-card" title={<Title level={5} style={{ margin: 0 }}>Hồ sơ mới nộp gần đây</Title>} bordered={false}>
-        {latestApplications.length > 0 ? (
-          <Table 
-            columns={columns} 
-            dataSource={latestApplications} 
-            rowKey="id"
-            pagination={false}
-            size="middle"
-            scroll={{ x: true }}
-          />
-        ) : (
-          <EmptyState description="Chưa có hồ sơ nào" />
-        )}
-      </Card>
+                  return (
+                    <tr key={app.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-4 px-4 font-bold text-[#1A1C1E]">
+                        {app.applicationCode}
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <img 
+                            className="w-6 h-6 rounded-full border border-black/[0.08]" 
+                            alt={candidate?.fullName} 
+                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate?.fullName || 'TS'}`}
+                          />
+                          {candidate?.fullName || "Không rõ thí sinh"}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-slate-600 font-medium leading-relaxed">
+                        <div>{university?.name || "Không rõ trường"}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{major?.name || "Không rõ ngành"}</div>
+                      </td>
+                      <td className="py-4 px-4 text-center font-bold text-[#00616D]">
+                        {finalScore !== undefined ? finalScore.toFixed(2) : "-"}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <ApplicationStatusTag status={app.status} />
+                      </td>
+                      <td className="py-4 px-4 text-slate-500 font-medium">
+                        {formatDate(app.submittedAt)}
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <button 
+                          onClick={() => navigate(`/admin/applications/${app.id}`)}
+                          className="bg-transparent border-0 text-[#00616D] font-bold text-xs hover:underline cursor-pointer flex items-center gap-0.5 justify-end"
+                        >
+                          Chi tiết
+                          <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center">
+                    <EmptyState description="Chưa có hồ sơ nào phù hợp" />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 };
