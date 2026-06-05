@@ -5,7 +5,7 @@ import axiosClient from "../api/axiosClient";
 const normalizeUniversity = (university: any): University => {
   const status = String(university?.status ?? "").toLowerCase() === "inactive" ? "inactive" : "active";
 
-    // try to infer city if missing using common patterns or a lookup table
+    // Cố gắng suy luận thành phố từ mã hoặc tên trường nếu bị thiếu thông tin
     const lookupByCode: Record<string, string> = {
       'HUST': 'Hà Nội',
       'HNUT': 'Hà Nội',

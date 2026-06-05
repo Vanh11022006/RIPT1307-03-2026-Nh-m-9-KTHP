@@ -36,13 +36,13 @@ export const useSubjectGroupStore = create<SubjectGroupState>((set) => ({
             : typeof group?.subjects === "string" && group.subjects.trim()
               ? (() => {
                   const raw = group.subjects.trim();
-                  // try parse JSON array first (e.g. "[\"math\",\"physics\"]")
+                  // Thử phân tích mảng dưới dạng JSON trước (ví dụ: "[\"math\",\"physics\"]")
                   if (raw.startsWith("[") && raw.endsWith("]")) {
                     try {
                       const parsed = JSON.parse(raw);
                       if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
                     } catch (e) {
-                      // fall back to split
+                      // Dự phòng: tách chuỗi theo các ký tự phân tách
                     }
                   }
                   return raw.split(/[;,\n]/).map((item: string) => item.trim()).filter(Boolean);

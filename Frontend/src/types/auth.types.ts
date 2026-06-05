@@ -4,7 +4,7 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  password?: string; // Optional because we don't always need to expose it
+  password?: string; // Tùy chọn vì không phải lúc nào cũng cần để lộ mật khẩu
   phone: string;
   role: UserRole;
   avatar?: string;

@@ -131,7 +131,7 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuthStore();
   const { isDarkMode } = useTheme();
-  
+
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [adminApplicationStats, setAdminApplicationStats] = useState<AdminApplicationStatistics | null>(null);
 
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC = () => {
       const matchRound = selectedAdmissionRoundId === "all" || app.admissionRoundId === selectedAdmissionRoundId;
       const matchUni = selectedUniversityId === "all" || app.universityId === selectedUniversityId;
       const matchMajor = selectedMajorId === "all" || app.majorId === selectedMajorId;
-      
+
       let matchSearch = true;
       if (searchQuery.trim()) {
         const candidate = getCandidateById(app.candidateId);
@@ -332,11 +332,11 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-12 relative pb-10">
-      {/* Atmospheric Glows */}
+      
       <div className="glow-bg -top-20 -left-20 pointer-events-none"></div>
       <div className="glow-bg top-1/2 -right-20 opacity-50 pointer-events-none"></div>
 
-      {/* Welcome Section */}
+      
       <section className={`relative overflow-hidden rounded-lg p-12 shadow-sm border ${cardBgClass}`}>
         <div className="relative z-10 flex flex-col xl:flex-row justify-between xl:items-center gap-6">
           <div className="space-y-3">
@@ -347,7 +347,7 @@ export const AdminDashboard: React.FC = () => {
               Theo dõi và quản lý toàn bộ hệ thống xét tuyển. Bạn có <strong className="text-[#00616D]">{stats.pending}</strong> hồ sơ đang chờ phê duyệt hôm nay.
             </p>
             <div className="flex flex-wrap gap-4 pt-3">
-              <button 
+              <button
                 onClick={() => navigate("/admin/applications")}
                 className="bg-[#00616D] text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:shadow-lg active:scale-95 transition-all border-0 cursor-pointer text-sm"
               >
@@ -368,13 +368,13 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
         </div>
-        {/* Decorative element */}
+        
         <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00616D]/5 blur-[100px] rounded-full pointer-events-none"></div>
       </section>
 
-      {/* Stats Cards (Row of 4) */}
+      
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-6">
-        {/* Card 1: Tổng thí sinh */}
+        
         <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#00E3FD]/10 flex items-center justify-center text-[#00616D] shrink-0">
@@ -389,8 +389,8 @@ export const AdminDashboard: React.FC = () => {
             <span className="material-symbols-outlined text-xs">arrow_upward</span>12%
           </span>
         </div>
+
         
-        {/* Card 2: Tổng trường ĐH */}
         <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
@@ -406,7 +406,7 @@ export const AdminDashboard: React.FC = () => {
           </span>
         </div>
 
-        {/* Card 3: Ngành đào tạo */}
+        
         <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
@@ -422,7 +422,7 @@ export const AdminDashboard: React.FC = () => {
           </span>
         </div>
 
-        {/* Card 4: Tổng hồ sơ */}
+        
         <div className={`p-6 rounded-lg flex items-center justify-between border glass-card-hover ${cardBgClass}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
@@ -439,9 +439,9 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Bento Grid */}
+      
       <section className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-12 gap-8">
-        {/* Card 1: Trạng thái xét duyệt (Left 4 cols / xl 1 col) */}
+        
         <div className={`xl:col-span-1 2xl:col-span-4 p-6 rounded-lg border shadow-sm flex flex-col justify-between ${cardBgClass}`}>
           <h3 className="font-bold text-[#1A1C1E] text-base m-0 mb-4">Trạng thái xét duyệt</h3>
           <div className="space-y-4">
@@ -487,7 +487,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 2: Breakdown Row Summaries (Middle 4 cols / xl 1 col) */}
+        
         <div className={`xl:col-span-1 2xl:col-span-4 p-6 rounded-lg border shadow-sm flex flex-col justify-between gap-4 ${cardBgClass}`}>
           <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
             <div>
@@ -514,7 +514,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: Brand Promo Banner (Right 4 cols / xl 2 cols) */}
+        
         <div className="xl:col-span-2 2xl:col-span-4 p-6 rounded-lg border shadow-sm bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] text-white flex flex-col justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#00E3FD]/10 blur-2xl rounded-full"></div>
           <div>
@@ -532,9 +532,9 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Breakdown Tables Section */}
+      
       <section className="grid grid-cols-1 2xl:grid-cols-2 gap-8">
-        {/* Table 1: Breakdown theo trường */}
+        
         <div className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -587,7 +587,7 @@ export const AdminDashboard: React.FC = () => {
           />
         </div>
 
-        {/* Table 2: Breakdown theo ngành */}
+        
         <div className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -641,7 +641,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Table 3: Breakdown theo đợt (Wide table) */}
+      
       <section className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -696,20 +696,20 @@ export const AdminDashboard: React.FC = () => {
         />
       </section>
 
-      {/* Latest Applications Table with Integrated Filters */}
+      
       <section className={`p-6 rounded-lg border shadow-sm ${cardBgClass}`}>
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-6 pb-6 border-b border-black/[0.04]">
           <div>
             <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Danh sách hồ sơ gần đây</h3>
             <p className="text-xs text-[#44474E] m-0 mt-0.5">Danh sách các hồ sơ đăng ký ứng tuyển mới nộp gần đây nhất</p>
           </div>
+
           
-          {/* Integrated Filter Options */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex flex-col">
               <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Đợt xét tuyển</span>
-              <Select 
-                style={{ width: 180 }} 
+              <Select
+                style={{ width: 180 }}
                 value={selectedAdmissionRoundId}
                 onChange={setSelectedAdmissionRoundId}
                 dropdownStyle={{ borderRadius: 12 }}
@@ -723,8 +723,8 @@ export const AdminDashboard: React.FC = () => {
 
             <div className="flex flex-col">
               <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Trường đại học</span>
-              <Select 
-                style={{ width: 200 }} 
+              <Select
+                style={{ width: 200 }}
                 value={selectedUniversityId}
                 onChange={setSelectedUniversityId}
                 dropdownStyle={{ borderRadius: 12 }}
@@ -758,9 +758,9 @@ export const AdminDashboard: React.FC = () => {
               <span className="text-[10px] text-[#44474E] uppercase font-bold mb-1">Tìm kiếm nhanh</span>
               <div className="relative w-48">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                <input 
-                  className="w-full bg-[#F1F4F5] border-transparent rounded-full py-1.5 pl-8 pr-4 text-slate-800 placeholder:text-slate-400 text-xs focus:ring-2 focus:ring-[#00616D] focus:bg-white transition-all outline-none" 
-                  placeholder="Nhập tên, mã..." 
+                <input
+                  className="w-full bg-[#F1F4F5] border-transparent rounded-full py-1.5 pl-8 pr-4 text-slate-800 placeholder:text-slate-400 text-xs focus:ring-2 focus:ring-[#00616D] focus:bg-white transition-all outline-none"
+                  placeholder="Nhập tên, mã..."
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -768,7 +768,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 setSelectedAdmissionRoundId("all");
                 setSelectedUniversityId("all");
@@ -811,9 +811,9 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="py-4 px-4 font-semibold text-slate-700">
                         <div className="flex items-center gap-2">
-                          <img 
-                            className="w-6 h-6 rounded-full border border-black/[0.08]" 
-                            alt={candidate?.fullName} 
+                          <img
+                            className="w-6 h-6 rounded-full border border-black/[0.08]"
+                            alt={candidate?.fullName}
                             src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate?.fullName || 'TS'}`}
                           />
                           {candidate?.fullName || "Không rõ thí sinh"}
@@ -833,7 +833,7 @@ export const AdminDashboard: React.FC = () => {
                         {formatDate(app.submittedAt)}
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <button 
+                        <button
                           onClick={() => navigate(`/admin/applications/${app.id}`)}
                           className="bg-transparent border-0 text-[#00616D] font-bold text-xs hover:underline cursor-pointer flex items-center gap-0.5 justify-end"
                         >

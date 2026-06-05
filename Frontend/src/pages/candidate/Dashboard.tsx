@@ -85,21 +85,21 @@ export const CandidateDashboard: React.FC = () => {
 
   return (
     <div className="space-y-12 relative">
-      {/* Atmospheric Glows */}
+      
       <div className="glow-bg -top-20 -left-20 pointer-events-none"></div>
       <div className="glow-bg top-1/2 -right-20 opacity-50 pointer-events-none"></div>
 
       {!candidate && (
-        <Alert 
-          message="Chưa cập nhật thông tin cá nhân" 
-          description="Vui lòng cập nhật thông tin cá nhân của bạn trong phần Thông tin cá nhân trước khi nộp hồ sơ." 
-          type="warning" 
-          showIcon 
+        <Alert
+          message="Chưa cập nhật thông tin cá nhân"
+          description="Vui lòng cập nhật thông tin cá nhân của bạn trong phần Thông tin cá nhân trước khi nộp hồ sơ."
+          type="warning"
+          showIcon
           style={{ marginBottom: 24, borderRadius: 8 }}
         />
       )}
 
-      {/* Welcome Section */}
+      
       <section className="relative overflow-hidden rounded-lg p-12 bg-white border border-black/[0.08] shadow-sm">
         <div className="relative z-10 flex flex-col xl:flex-row justify-between xl:items-end gap-6">
           <div className="space-y-3">
@@ -110,14 +110,14 @@ export const CandidateDashboard: React.FC = () => {
               Hồ sơ của bạn hiện đạt 85% độ hoàn thiện. Bạn còn {stats.pending} ứng tuyển đang chờ xử lý và 2 hạn chót sắp tới trong tuần này.
             </p>
             <div className="flex flex-wrap gap-4 pt-3">
-              <button 
+              <button
                 onClick={() => navigate("/candidate/apply")}
                 className="bg-[#00616D] text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:shadow-lg active:scale-95 transition-all border-0 cursor-pointer text-sm"
               >
                 <span className="material-symbols-outlined text-sm">send</span>
                 Nộp hồ sơ ngay
               </button>
-              <button 
+              <button
                 onClick={() => navigate("/candidate/applications")}
                 className="bg-[#F1F4F5] text-[#1A1C1E] font-bold px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white hover:shadow-sm border border-transparent hover:border-black/[0.08] active:scale-95 transition-all border-0 cursor-pointer text-sm"
               >
@@ -134,13 +134,13 @@ export const CandidateDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* Decorative element */}
+        
         <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00616D]/5 blur-[100px] rounded-full pointer-events-none"></div>
       </section>
 
-      {/* Stats Cards (Row of 4) */}
+      
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Card 1: Tổng hồ sơ */}
+        
         <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08]">
           <div className="w-12 h-12 rounded-xl bg-[#00616D]/10 flex items-center justify-center text-[#00616D] shrink-0">
             <span className="material-symbols-outlined text-3xl">all_inbox</span>
@@ -150,8 +150,8 @@ export const CandidateDashboard: React.FC = () => {
             <p className="text-2xl font-bold text-[#1A1C1E] m-0 mt-1">{String(stats.total).padStart(2, '0')}</p>
           </div>
         </div>
+
         
-        {/* Card 2: Đang chờ */}
         <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-[#00E3FD]">
           <div className="w-12 h-12 rounded-xl bg-[#00E3FD]/10 flex items-center justify-center text-[#00616D] shrink-0">
             <span className="material-symbols-outlined text-3xl">pending_actions</span>
@@ -162,7 +162,7 @@ export const CandidateDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: Đã duyệt */}
+        
         <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-green-500">
           <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600 shrink-0">
             <span className="material-symbols-outlined text-3xl">verified</span>
@@ -173,7 +173,7 @@ export const CandidateDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Từ chối */}
+        
         <div className="bg-white p-6 rounded-lg flex items-center gap-4 glass-card-hover border border-black/[0.08] border-b-2 border-b-[#BA1A1A]">
           <div className="w-12 h-12 rounded-xl bg-[#BA1A1A]/10 flex items-center justify-center text-[#BA1A1A] shrink-0">
             <span className="material-symbols-outlined text-3xl">cancel</span>
@@ -185,13 +185,13 @@ export const CandidateDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Bento Grid */}
+      
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Quick Actions (Left 4 cols) */}
+        
         <div className="xl:col-span-4 space-y-6">
           <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Thao tác nhanh</h3>
           <div className="space-y-3">
-            <button 
+            <button
               onClick={() => navigate("/candidate/apply")}
               className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
             >
@@ -204,7 +204,7 @@ export const CandidateDashboard: React.FC = () => {
               </div>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate("/candidate/applications")}
               className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
             >
@@ -217,7 +217,7 @@ export const CandidateDashboard: React.FC = () => {
               </div>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate("/candidate/profile")}
               className="w-full bg-white border border-black/[0.08] p-6 rounded-lg flex items-center gap-4 glass-card-hover text-left group cursor-pointer border-0"
             >
@@ -231,7 +231,7 @@ export const CandidateDashboard: React.FC = () => {
             </button>
           </div>
 
-          {/* AI Suggestions Card */}
+          
           <div className="p-6 rounded-lg bg-[#00616D]/5 border border-[#00616D]/10">
             <p className="font-bold text-[#00616D] flex items-center gap-2 m-0 text-sm">
               <span className="material-symbols-outlined text-base">auto_awesome</span>
@@ -243,13 +243,13 @@ export const CandidateDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Applications (Right 8 cols) */}
+        
         <div className="xl:col-span-8 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 pr-10">
             <h3 className="font-bold text-[#1A1C1E] text-xl m-0">Trạng thái hồ sơ gần đây</h3>
-            <a 
+            <a
               onClick={() => navigate("/candidate/applications")}
-              className="text-[#00616D] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer"
+              className="text-[#00616D] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap shrink-0"
             >
               Xem tất cả
               <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
@@ -265,7 +265,7 @@ export const CandidateDashboard: React.FC = () => {
                   const univName = getUniversityName(app.universityId);
                   const majorName = getMajorName(app.majorId);
                   const roundName = getRoundName(app.admissionRoundId);
-                  
+
                   // Fallback images matching mockup
                   let imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh";
                   let imageAlt = "Bách Khoa Hanoi";
@@ -276,13 +276,13 @@ export const CandidateDashboard: React.FC = () => {
                     imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvV9YZffv4RNtTr2B5sC_J_n6MIwWBj4atOKZ2fPziOz9JSfVO4_Tpkr2jEWiuCRJQwubLAP8fp5QVyY9LphGEekhm8XWk0TcNyyE0FpHF78phFXPMIaEYTpxS5GqJHlcPRARv92TRwqmtAl7irWY8X6IDEmxapoix7MaOGWwQuMocNKCNRZiE8VBUQ0Z97unTRZaLAguto3H27Tl9fpHW4mh9nsocET48juVkcUm0-2_16DtXx";
                     imageAlt = "Đại học Quốc gia TP.HCM";
                   }
-                  
+
                   // Status configurations
                   let statusText = "Đang xử lý";
                   let statusClass = "bg-[#00616D]/5 text-[#00616D]";
                   let progressPercent = 60;
                   let progressBarColor = "bg-[#00616D]";
-                  
+
                   if (app.status === "approved") {
                     statusText = "Đã trúng tuyển";
                     statusClass = "bg-green-100 text-green-700";
@@ -294,17 +294,17 @@ export const CandidateDashboard: React.FC = () => {
                     progressPercent = 100;
                     progressBarColor = "bg-rose-500";
                   }
-                  
+
                   return (
-                    <div 
+                    <div
                       key={app.id}
                       onClick={() => navigate(`/candidate/applications/${app.id}`)}
                       className="bg-white border border-black/[0.08] p-3 rounded-lg flex flex-col md:flex-row gap-6 hover:border-[#00E3FD]/50 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,227,253,0.08)] transition-all duration-300 group cursor-pointer"
                     >
                       <div className="w-full md:w-48 h-32 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          alt={imageAlt} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        <img
+                          alt={imageAlt}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           src={imageUrl}
                         />
                       </div>
@@ -318,7 +318,7 @@ export const CandidateDashboard: React.FC = () => {
                             {statusText}
                           </span>
                         </div>
-                        
+
                         <div className="mt-4 flex flex-wrap items-center gap-6">
                           <div className="flex flex-col">
                             <span className="text-[10px] text-[#44474E] uppercase font-semibold">Ngày nộp</span>
@@ -346,7 +346,7 @@ export const CandidateDashboard: React.FC = () => {
               <div className="bg-white border border-black/[0.08] p-8 rounded-lg text-center">
                 <span className="material-symbols-outlined text-slate-300 text-4xl">folder_off</span>
                 <p className="text-[#44474E] text-sm mt-2 m-0">Bạn chưa có hồ sơ ứng tuyển nào</p>
-                <button 
+                <button
                   onClick={() => navigate("/candidate/apply")}
                   className="mt-4 bg-[#00616D] text-white font-bold px-6 py-2 rounded-full border-0 cursor-pointer hover:shadow-md transition-all text-xs"
                 >

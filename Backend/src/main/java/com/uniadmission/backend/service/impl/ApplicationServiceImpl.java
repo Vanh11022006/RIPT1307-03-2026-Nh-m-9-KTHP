@@ -122,7 +122,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         LOGGER.warn("Failed to serialize scores", e);
                 }
 
-                // Recalculate totalScore server-side if not provided or zero
+                // Tính toán lại tổng điểm ở phía máy chủ nếu chưa được cung cấp hoặc bằng 0
                 try {
                         Double clientTotal = request.getTotalScore();
                         if (clientTotal == null || clientTotal == 0.0) {
@@ -157,7 +157,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                         if (scoresObj instanceof Map) {
                                 scores = (Map<String, Object>) scoresObj;
                         } else {
-                                // Parse JSON string if needed
                                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                                 scores = mapper.readValue(scoresObj.toString(), Map.class);
                         }
@@ -455,7 +454,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
                 applyStatusUpdate(application, status, notes, adminId);
-                // return refreshed application
                 return applicationRepository.findById(id).orElse(application);
         }
 
@@ -838,14 +836,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         private void applyStatusUpdate(Application application, ApplicationStatus status, String notes, Long adminId) {
                 String oldStatus = application.getStatus() != null ? application.getStatus().name() : "PENDING";
                 application.setStatus(status);
-                // set reviewedBy/reviewedAt when admin performs status update
+                // Ghi nhận người duyệt và thời gian duyệt khi admin cập nhật trạng thái
                 try {
                         if (adminId != null) {
                                 userRepository.findById(adminId)
                                                 .ifPresent(u -> application.setReviewedBy(u.getFullName()));
                         }
                 } catch (Exception ex) {
-                        // ignore if user lookup fails
                 }
                 application.setReviewedAt(java.time.LocalDateTime.now());
                 application.setAdminNote(notes);

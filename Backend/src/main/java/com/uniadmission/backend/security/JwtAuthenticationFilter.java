@@ -69,8 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        // Fallback: allow token via query parameter for EventSource (SSE) connections
-        // Exclude /api/auth/verify-email endpoint from treating query parameter 'token' as JWT
+        // Dự phòng: cho phép lấy token qua tham số truy vấn (query parameter) cho các kết nối EventSource (SSE)
+        // Loại trừ endpoint /api/auth/verify-email để tránh nhận nhầm tham số 'token' xác thực email là JWT
         if (!request.getRequestURI().contains("/api/auth/verify-email")) {
             String tokenParam = request.getParameter("token");
             if (StringUtils.hasText(tokenParam)) {

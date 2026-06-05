@@ -20,7 +20,7 @@ export const useNotificationStream = () => {
       console.error("Failed to bootstrap notification stream data", error);
     });
 
-    // Try to attach JWT as query param because EventSource cannot set headers
+    // Cố gắng đính kèm JWT dưới dạng tham số truy vấn (query param) vì EventSource không thể thiết lập header tùy chỉnh
     const storedToken = sessionStorage.getItem("access_token") ?? localStorage.getItem("access_token");
     const tokenQuery = storedToken ? `?token=${encodeURIComponent(storedToken)}` : "";
     const eventSource = new EventSource(`${baseUrl}/notifications/stream/${currentUser.id}${tokenQuery}`);

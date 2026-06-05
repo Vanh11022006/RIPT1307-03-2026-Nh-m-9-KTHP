@@ -29,9 +29,8 @@ public class CandidateServiceImpl implements CandidateService {
             return candidateOpt.get();
         }
 
-        // Auto-create a blank Candidate profile for users that don't have one yet
-        // (e.g. users created directly in DB or before the register flow added
-        // candidate creation)
+        // Tự động tạo một hồ sơ Thí sinh trống cho người dùng chưa có
+        // (ví dụ: người dùng được tạo trực tiếp trong DB hoặc trước khi quy trình đăng ký có thêm bước tạo thí sinh)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
 

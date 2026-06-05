@@ -28,7 +28,6 @@ const saveCachedApplications = (applications: Application[]) => {
   try {
     localStorage.setItem(APPLICATIONS_CACHE_KEY, JSON.stringify(applications));
   } catch (error) {
-    // ignore cache write failures
   }
 };
 
@@ -166,7 +165,7 @@ const normalizeApplicationRecord = (application: any): Application => ({
       ? String(application.admissionRound.id)
       : undefined,
   priorityGroup: application?.priorityGroup ?? undefined,
-  // keep `totalScore` as the raw exam total, and expose `finalScore` as exam + priority
+  // Giữ totalScore là tổng điểm thi gốc, và hiển thị finalScore bằng điểm thi + điểm ưu tiên
   priorityScore: Number(application?.priorityScore ?? 0),
   reviewScoreAverage: application?.reviewScoreAverage != null ? Number(application.reviewScoreAverage) : undefined,
   reviewCount: application?.reviewCount != null ? Number(application.reviewCount) : undefined,
@@ -420,7 +419,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const application = normalizeSingleApplication(response);
 
       if (application) {
-        // Replace cached entry with the fresh server response to ensure detail view shows full data
+        // Thay thế mục đã lưu trong cache bằng phản hồi mới từ server để đảm bảo chế độ xem chi tiết hiển thị đầy đủ dữ liệu
         set((state) => {
           const existingIndex = state.applications.findIndex((item) => item.id === application.id);
           if (existingIndex >= 0) {
@@ -524,7 +523,6 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   cancelApplication: async (id: string) => {
     try {
       await axiosClient.put(`/applications/${id}/cancel`);
-      // update local state: remove the cancelled application from list
       set((state) => {
         const nextApplications = state.applications.filter(a => a.id !== id);
         saveCachedApplications(nextApplications);
@@ -715,8 +713,8 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         responseType: "text",
       });
 
-      // axiosClient interceptor unwraps `response.data` and returns the data directly.
-      // For CSV we expect a string body, so use the returned value itself.
+      // Interceptor của axiosClient tự động mở gói `response.data` và trả về dữ liệu trực tiếp.
+      // Đối với định dạng CSV, chúng ta mong đợi một chuỗi văn bản, nên sử dụng trực tiếp giá trị đó.
       return typeof response === "string" ? response : String(response ?? "");
     } catch (error) {
       console.error("Failed to export admin applications CSV:", error);

@@ -55,7 +55,7 @@ export const MajorManagement: React.FC = () => {
         const lowerSearch = searchText.toLowerCase().trim();
         const code = (m.code || "").toLowerCase();
         const name = (m.name || "").toLowerCase();
-        
+
         if (!code.includes(lowerSearch) && !name.includes(lowerSearch)) {
           return false;
         }
@@ -86,7 +86,7 @@ export const MajorManagement: React.FC = () => {
 
   const handleModalSubmit = async (values: any) => {
     const now = new Date().toISOString();
-    
+
     // Safety for subjectGroupCodes
     const finalSubjectGroupCodes = Array.isArray(values.subjectGroupCodes) ? values.subjectGroupCodes : [];
 
@@ -226,11 +226,11 @@ export const MajorManagement: React.FC = () => {
 
   return (
     <div>
-      <PageHeader 
-        title="Quản lý ngành học" 
-        breadcrumbs={[{ title: "Danh sách và tra cứu các ngành học trong hệ thống" }]} 
+      <PageHeader
+        title="Quản lý ngành học"
+        breadcrumbs={[{ title: "Danh sách và tra cứu các ngành học trong hệ thống" }]}
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} style={{ marginRight: 30, marginTop: 30 }}>
             Thêm ngành
           </Button>
         }
@@ -253,7 +253,7 @@ export const MajorManagement: React.FC = () => {
               value={universityFilter}
               onChange={value => setUniversityFilter(value)}
               showSearch
-              filterOption={(input, option) => 
+              filterOption={(input, option) =>
                 (option?.children as unknown as string).toLowerCase().includes(input.toLowerCase())
               }
             >
@@ -281,10 +281,10 @@ export const MajorManagement: React.FC = () => {
         {loading && filteredMajors.length === 0 ? (
           <LoadingScreen tip="Đang tải danh sách ngành học..." />
         ) : filteredMajors.length > 0 ? (
-          <Table 
-            columns={columns} 
-            dataSource={filteredMajors} 
-            rowKey="id" 
+          <Table
+            columns={columns}
+            dataSource={filteredMajors}
+            rowKey="id"
             scroll={{ x: true }}
             loading={loading}
           />
@@ -319,7 +319,7 @@ export const MajorManagement: React.FC = () => {
                 <Select
                   showSearch
                   placeholder="Chọn trường đại học"
-                  filterOption={(input, option) => 
+                  filterOption={(input, option) =>
                     (option?.children as unknown as string).toLowerCase().includes(input.toLowerCase())
                   }
                   notFoundContent="Không có trường đại học nào đang hoạt động"
@@ -344,13 +344,13 @@ export const MajorManagement: React.FC = () => {
                       if (!value) return Promise.resolve();
                       const uniId = getFieldValue("universityId");
                       if (!uniId) return Promise.resolve(); // cannot validate without uniId
-                      
-                      const isDuplicate = safeMajors.some(m => 
+
+                      const isDuplicate = safeMajors.some(m =>
                         m.universityId === uniId &&
                         m.code.trim().toLowerCase() === value.trim().toLowerCase() &&
                         m.id !== editingId
                       );
-                      
+
                       if (isDuplicate) return Promise.reject(new Error("Mã ngành này đã tồn tại trong trường đã chọn"));
                       return Promise.resolve();
                     }
@@ -428,9 +428,9 @@ export const MajorManagement: React.FC = () => {
                   { type: "number", min: 0, message: "Học phí không được âm" }
                 ]}
               >
-                <InputNumber 
-                  style={{ width: "100%" }} 
-                  placeholder="Nhập học phí mỗi năm" 
+                <InputNumber
+                  style={{ width: "100%" }}
+                  placeholder="Nhập học phí mỗi năm"
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value?.replace(/\$\s?|(,*)/g, '') as unknown as number}
                 />

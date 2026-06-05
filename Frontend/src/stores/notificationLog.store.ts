@@ -95,9 +95,9 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   notificationLogs: [],
   loading: false,
 
-  // Load initial notifications from localStorage if available
-  // This provides a fallback persistence when backend doesn't store notifications
-  // safely during development.
+  // Tải các thông báo ban đầu từ localStorage nếu có sẵn
+  // Điều này cung cấp cơ chế lưu trữ dự phòng khi backend không lưu trữ thông báo
+  // một cách an toàn trong quá trình phát triển.
   ...(function() {
     try {
       const raw = localStorage.getItem('notificationLogs');
@@ -108,7 +108,6 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
         }
       }
     } catch (e) {
-      // ignore
     }
     return {};
   })(),
@@ -116,12 +115,11 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   getNotificationLogs: async () => {
     set({ loading: true });
     try {
-      const url = "/notifications"; // admin: fetch all notifications
+      const url = "/notifications";
       let response;
       try {
         response = await axiosClient.get(url);
       } catch (err) {
-        // fallback: try fetching for current user
         const currentUser = useAuthStore.getState().currentUser;
         const fallbackUrl = `/notifications/user/${currentUser?.id ?? 0}`;
         // eslint-disable-next-line no-console

@@ -29,10 +29,6 @@ export const loadAdminDashboardData = async () => {
   }
 };
 
-/**
- * Load university management page data
- * Gồm: Universities, Majors, Admission Rounds, Subject Groups
- */
 export const loadUniversityManagementData = async () => {
   const startTime = performance.now();
   
@@ -54,10 +50,6 @@ export const loadUniversityManagementData = async () => {
   }
 };
 
-/**
- * Load major management page data
- * Gồm: Universities, Majors, Subject Groups, Admission Rounds
- */
 export const loadMajorManagementData = async () => {
   const startTime = performance.now();
   
@@ -79,15 +71,10 @@ export const loadMajorManagementData = async () => {
   }
 };
 
-/**
- * Load application management page data
- * Gồm: Applications, Universities, Majors, Candidates, Admission Rounds
- */
 export const loadApplicationManagementData = async (): Promise<void> => {
   const startTime = performance.now();
   
   try {
-    // Load reference data first so lookups (university/major/candidate) are available
     await Promise.all([
       useUniversityStore.getState().getUniversities(),
       useMajorStore.getState().getMajors(),
@@ -98,17 +85,13 @@ export const loadApplicationManagementData = async (): Promise<void> => {
     const endTime = performance.now();
     if (import.meta.env.DEV) console.log(`✅ [dataLoader] Application Management reference data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
-    // Applications are intentionally NOT fetched here to avoid race conditions.
+    // Danh sách hồ sơ cố tình không được fetch ở đây để tránh tranh chấp dữ liệu (race conditions).
   } catch (error) {
     console.error('❌ [dataLoader] Failed to load application management data:', error);
     throw error;
   }
 };
 
-/**
- * Load candidate management page data
- * Gồm: Candidates, Applications, Universities, Admission Rounds
- */
 export const loadCandidateManagementData = async () => {
   const startTime = performance.now();
   
@@ -130,28 +113,21 @@ export const loadCandidateManagementData = async () => {
   }
 };
 
-/**
- * Load candidate dashboard data
- * Gồm: Universities, Majors, Admission Rounds, Applications cho candidate
- */
 export const loadCandidateDashboardData = async () => {
   const startTime = performance.now();
   const currentUser = useAuthStore.getState().currentUser;
   
   try {
-    // Load universities, majors, admission rounds in parallel
     await Promise.all([
       useUniversityStore.getState().getUniversities(),
       useMajorStore.getState().getMajors(),
       useAdmissionRoundStore.getState().getAdmissionRounds(),
     ]);
 
-    // Load candidate's applications if user exists
     if (currentUser?.id) {
       await useApplicationStore.getState().getApplicationsByCandidateId(String(currentUser.id));
     }
 
-    // Get data from store state after all promises complete
     const universities = useUniversityStore.getState().universities;
     const majors = useMajorStore.getState().majors;
     const admissionRounds = useAdmissionRoundStore.getState().admissionRounds;
@@ -167,15 +143,10 @@ export const loadCandidateDashboardData = async () => {
   }
 };
 
-/**
- * Load candidate university list page data
- * Gồm: Universities chỉ (vì đây là list page)
- */
 export const loadUniversityListData = async () => {
   const startTime = performance.now();
   
   try {
-    // For university list, chỉ cần universities
     const universities = await useUniversityStore.getState().getUniversities();
 
     const endTime = performance.now();
@@ -188,10 +159,6 @@ export const loadUniversityListData = async () => {
   }
 };
 
-/**
- * Load candidate my applications page
- * Gồm: Applications + Universities + Majors để hiển thị thông tin đầy đủ
- */
 export const loadMyApplicationsData = async () => {
   const startTime = performance.now();
   const currentUser = useAuthStore.getState().currentUser;
@@ -200,21 +167,18 @@ export const loadMyApplicationsData = async () => {
     let applications: any[] = [];
 
     if (currentUser?.id) {
-      // Load applications for this candidate and universities/majors in parallel
       await Promise.all([
         useApplicationStore.getState().getApplicationsByCandidateId(String(currentUser.id)),
         useUniversityStore.getState().getUniversities(),
         useMajorStore.getState().getMajors(),
       ]);
     } else {
-      // Still load universities and majors even if no user
       await Promise.all([
         useUniversityStore.getState().getUniversities(),
         useMajorStore.getState().getMajors(),
       ]);
     }
 
-    // Get data from store state after all promises complete
     applications = useApplicationStore.getState().applications;
     const universities = useUniversityStore.getState().universities;
     const majors = useMajorStore.getState().majors;
@@ -229,10 +193,6 @@ export const loadMyApplicationsData = async () => {
   }
 };
 
-/**
- * Load notification list page
- * Gồm: Notifications + Current User data
- */
 export const loadNotificationData = async () => {
   const startTime = performance.now();
   const currentUser = useAuthStore.getState().currentUser;
@@ -254,10 +214,6 @@ export const loadNotificationData = async () => {
   }
 };
 
-/**
- * Generic parallel loader for multiple async functions
- * Sử dụng khi cần load dữ liệu tùy chỉnh
- */
 export const loadDataInParallel = async <T extends Record<string, () => Promise<any>>>(
   loaders: T
 ): Promise<{ [K in keyof T]: Awaited<ReturnType<T[K]>> }> => {

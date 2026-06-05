@@ -128,18 +128,18 @@ export const MyApplications: React.FC = () => {
       if (statusFilter !== "all" && app.status !== statusFilter) {
         return false;
       }
-      
+
       if (searchText) {
         const lowerSearch = searchText.toLowerCase();
         const uniName = getUniversityName(app.universityId).toLowerCase();
         const majorName = getMajorName(app.majorId).toLowerCase();
         const codeMatch = app.applicationCode.toLowerCase().includes(lowerSearch);
-        
+
         if (!codeMatch && !uniName.includes(lowerSearch) && !majorName.includes(lowerSearch)) {
           return false;
         }
       }
-      
+
       return true;
     });
   }, [applications, searchText, statusFilter]);
@@ -219,7 +219,7 @@ export const MyApplications: React.FC = () => {
               <>
                 <Button type="link" onClick={() => {
                   setEditingApp(record);
-                      setSelectedSubjectGroup(record.subjectGroupCode);
+                  setSelectedSubjectGroup(record.subjectGroupCode);
                   const initialPriorityGroup = record.priorityGroup ?? 'none';
                   const initialPriorityScore = getPriorityScore(initialPriorityGroup);
 
@@ -432,15 +432,15 @@ export const MyApplications: React.FC = () => {
 
   return (
     <div>
-      <PageHeader 
-        title="Hồ sơ của tôi" 
+      <PageHeader
+        title="Hồ sơ của tôi"
         extra={
-          <Button type="primary" onClick={() => navigate("/candidate/apply")}>
+          <Button type="primary" onClick={() => navigate("/candidate/apply")} style={{ marginRight: 30, marginTop: 30 }}>
             Nộp hồ sơ mới
           </Button>
         }
       />
-      
+
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={16}>
@@ -599,7 +599,7 @@ export const MyApplications: React.FC = () => {
                     ))
                   ) : (
                     // default to three inputs if no subject group selected
-                    [1,2,3].map(i => (
+                    [1, 2, 3].map(i => (
                       <Col xs={24} sm={8} key={i}>
                         <Form.Item name={`info${i}`} label={i === 1 ? "Toán" : i === 2 ? "Ngữ Văn" : "Tiếng Anh"}>
                           <InputNumber
@@ -666,8 +666,8 @@ export const MyApplications: React.FC = () => {
             </Modal>
           </>
         ) : (
-          <EmptyState 
-            description="Bạn chưa nộp hồ sơ nào" 
+          <EmptyState
+            description="Bạn chưa nộp hồ sơ nào"
             actionText="Nộp hồ sơ ngay"
             onAction={() => navigate("/candidate/apply")}
           />

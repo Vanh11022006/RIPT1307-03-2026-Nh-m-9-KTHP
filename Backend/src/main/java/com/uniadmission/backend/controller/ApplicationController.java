@@ -160,7 +160,6 @@ public class ApplicationController {
                     adminId = Long.valueOf(adminIdStr);
                 }
             } catch (Exception e) {
-                // keep default 1L
             }
         }
 
@@ -203,8 +202,7 @@ public class ApplicationController {
 
         String csv = applicationService.exportApplicationsCsv(parsedStatus, universityId, majorId, admissionRoundId);
 
-        // Prepend UTF-8 BOM so Microsoft Excel on Windows detects UTF-8 encoding
-        // correctly
+        // Thêm UTF-8 BOM để Microsoft Excel trên Windows nhận dạng đúng bảng mã UTF-8
         final String UTF8_BOM = "\uFEFF";
         String csvWithBom = UTF8_BOM + (csv != null ? csv : "");
 
@@ -253,7 +251,6 @@ public class ApplicationController {
             try {
                 priorityScore = Double.valueOf(priorityScoreObj.toString());
             } catch (Exception e) {
-                // ignore
             }
         }
 
@@ -268,7 +265,6 @@ public class ApplicationController {
                     adminId = Long.valueOf(adminIdStr);
                 }
             } catch (Exception e) {
-                // keep default 1L
             }
         }
 
@@ -355,7 +351,6 @@ public class ApplicationController {
             }
         } catch (Exception e) {
             log.warn("Failed to parse scores JSON for application id={}: {}", application.getId(), e.getMessage());
-            // keep parsedScores as empty map
         }
 
         java.util.List<java.util.Map<String, Object>> evidence = new java.util.ArrayList<>();
