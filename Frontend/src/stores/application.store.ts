@@ -400,9 +400,14 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const response = await axiosClient.get(`/applications/candidate/${candidateId}`);
       const fetchedApplications = normalizeApplicationArray(response);
       const localApplications = get().applications;
-      return fetchedApplications
+      const nextApplications = fetchedApplications
         .map((item) => mergeApplicationRecords(localApplications.find((existing) => existing.id === item.id), item))
         .filter((item): item is Application => Boolean(item));
+
+      set({ applications: nextApplications });
+      saveCachedApplications(nextApplications);
+
+      return nextApplications;
     } catch (error) {
       console.error("Failed to fetch applications by candidate:", error);
       return [];
