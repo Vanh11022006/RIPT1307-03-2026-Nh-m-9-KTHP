@@ -70,7 +70,7 @@ public class AdmissionRoundServiceImpl implements AdmissionRoundService {
         round.setCode(normalizedCode);
         round.setName(details.getName());
         round.setYear(details.getYear());
-        // Use string setter to allow resilient parsing of various incoming formats
+        // Sử dụng setter chuỗi để phân tích linh hoạt các định dạng ngày khác nhau từ client gửi lên
         try {
             round.setStartDate(details.getStartDate().toString());
         } catch (Exception ex) {

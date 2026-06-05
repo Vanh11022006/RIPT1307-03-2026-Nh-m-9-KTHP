@@ -85,7 +85,7 @@ const clearAuthStorage = () => {
   clearStorageKey(REMEMBER_KEY);
 };
 
-// Read persisted auth only in the browser so the store is safe in tests/build tooling.
+// Chỉ đọc dữ liệu xác thực đã lưu trên môi trường trình duyệt để đảm bảo an toàn cho các công cụ kiểm thử/xây dựng
 const _initialUser = readStoredUser();
 const _initialToken = readStoredToken();
 export const useAuthStore = create<AuthState>((set) => ({
@@ -141,7 +141,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           fullName,
           phone,
         },
-        { timeout: 30000 } // registration may trigger email sending; allow up to 30s
+        { timeout: 30000 } // Quá trình đăng ký có thể kích hoạt gửi email xác thực; cho phép thời gian chờ tối đa 30 giây
       );
       const payload = response?.data ?? response;
       if (payload) {

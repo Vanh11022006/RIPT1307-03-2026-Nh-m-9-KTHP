@@ -49,12 +49,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and() // enable CORS with configuration from corsConfigurationSource()
+                .cors().and()
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                // allow preflight requests
+
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/api/auth/**", "/api/universities/**", "/api/majors/**",
                         "/api/subject-groups/**", "/api/admission-rounds/**")
@@ -79,9 +79,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // During local development allow frontend origins. Use wildcard to simplify
-        // local testing.
-        // For production, restrict to specific trusted origins.
+        // Trong quá trình phát triển cục bộ, cho phép tất cả các nguồn gốc (origins) từ frontend. Sử dụng wildcard để đơn giản hóa.
+        // Khi lên môi trường sản xuất (production), nên giới hạn lại ở các nguồn cụ thể được tin cậy.
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",

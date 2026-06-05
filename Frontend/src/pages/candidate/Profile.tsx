@@ -68,11 +68,6 @@ export const Profile: React.FC = () => {
       {loading && <LoadingScreen tip="Đang tải thông tin cá nhân..." />}
       <PageHeader
         title="Thông tin cá nhân"
-        extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/candidate/dashboard")}>
-            Quay lại danh sách
-          </Button>
-        }
       />
       <Card>
         <Form

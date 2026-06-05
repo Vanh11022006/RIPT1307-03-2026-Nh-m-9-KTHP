@@ -113,7 +113,6 @@ export const ApplicationForm: React.FC = () => {
     const major = availableMajors.find(m => m.id === selectedMajorId);
     if (!major) return [];
 
-    // Fallback if missing
     const codes = Array.isArray(major.subjectGroupCodes) ? major.subjectGroupCodes : [];
     const safeSubjectGroups = Array.isArray(subjectGroups) ? subjectGroups : [];
     if (codes.length === 0) {
@@ -156,7 +155,6 @@ export const ApplicationForm: React.FC = () => {
   }, [currentUser?.id, getAdmissionRounds, getMajors, getProfile]);
 
   useEffect(() => {
-    // If editing an existing pending application, prefill form
     let mounted = true;
     const loadForEdit = async () => {
       if (!editId) return;
@@ -202,7 +200,7 @@ export const ApplicationForm: React.FC = () => {
     const pScore = getPriorityScore(pGroup);
 
     if (currentMethod && scores) {
-      // Auto-compute certificateConvertedScore for TALENT_ADMISSION
+      // Tự động tính điểm quy đổi chứng chỉ cho xét tuyển tài năng
       if (currentMethod === "TALENT_ADMISSION" && scores.certificateType && scores.certificateRawScore != null) {
         scores.certificateConvertedScore = convertCertificateScore(scores.certificateType, scores.certificateRawScore);
       }
@@ -271,7 +269,6 @@ export const ApplicationForm: React.FC = () => {
       setSelectedEvidenceCategory(changedValues.evidenceCategory);
     }
 
-    // Recalculate score on any change
     recalcScore(allValues);
   };
 
@@ -287,7 +284,7 @@ export const ApplicationForm: React.FC = () => {
 
   const buildSubmissionPayload = (values: any, requireSubjectGroup: boolean) => {
     const method = values.admissionMethod;
-    // Only THPT_SCORE and SCHOOL_TRANSCRIPT require a subject group
+    // Chỉ có phương thức xét điểm THPT và Xét học bạ mới yêu cầu tổ hợp môn
     const needsSubjectGroup = requireSubjectGroup &&
       (method === "THPT_SCORE" || method === "SCHOOL_TRANSCRIPT");
 
@@ -310,9 +307,8 @@ export const ApplicationForm: React.FC = () => {
       uploadedAt: new Date().toISOString()
     }));
 
-    // Determine the correct scores to send
     const scores = values.scores ?? {};
-    // Auto-fill certificateConvertedScore if TALENT_ADMISSION
+    // Tự động điền điểm quy đổi chứng chỉ nếu xét tuyển tài năng
     if (method === "TALENT_ADMISSION" && scores.certificateType && scores.certificateRawScore != null) {
       scores.certificateConvertedScore = convertCertificateScore(scores.certificateType, scores.certificateRawScore);
     }
@@ -403,7 +399,7 @@ export const ApplicationForm: React.FC = () => {
   const onFinish = async (values: any) => {
     if (!candidate || !currentUser) return;
 
-    // Check duplicate
+    // Kiểm tra hồ sơ trùng lặp
     const isDuplicate = applications.some(
       app => app.candidateId === candidate.id &&
         app.universityId === values.universityId &&
@@ -651,13 +647,13 @@ export const ApplicationForm: React.FC = () => {
               )}
             </Row>
 
-            {/* ── Section 3: Nhập điểm theo phương thức ── */}
+            
             {selectedAdmissionMethod && (
               <>
                 <Divider />
                 <h3>3. Nhập điểm xét tuyển</h3>
 
-                {/* ── THPT / HỌC BẠ: nhập điểm 3 môn từ tổ hợp ── */}
+                
                 {(selectedAdmissionMethod === "THPT_SCORE" || selectedAdmissionMethod === "SCHOOL_TRANSCRIPT") && (
                   <>
                     <Alert
@@ -689,7 +685,7 @@ export const ApplicationForm: React.FC = () => {
                   </>
                 )}
 
-                {/* ── ĐGNL: chọn loại + nhập điểm ── */}
+                
                 {selectedAdmissionMethod === "COMPETENCY_ASSESSMENT" && (
                   <>
                     <Alert
@@ -729,7 +725,7 @@ export const ApplicationForm: React.FC = () => {
                   </>
                 )}
 
-                {/* ── ĐGTD: nhập điểm thô 0–100, hiện quy đổi ── */}
+                
                 {selectedAdmissionMethod === "THINKING_ASSESSMENT" && (
                   <>
                     <Alert
@@ -762,7 +758,7 @@ export const ApplicationForm: React.FC = () => {
                   </>
                 )}
 
-                {/* ── TALENT ADMISSION: chứng chỉ + học bạ + HSG ── */}
+                
                 {selectedAdmissionMethod === "TALENT_ADMISSION" && (
                   <>
                     <Alert
@@ -863,7 +859,7 @@ export const ApplicationForm: React.FC = () => {
                   </>
                 )}
 
-                {/* ── INTERVIEW / XÉT THẲNG ── */}
+                
                 {selectedAdmissionMethod === "INTERVIEW" && (
                   <>
                     <Alert
@@ -930,7 +926,7 @@ export const ApplicationForm: React.FC = () => {
                   </>
                 )}
 
-                {/* ── Bảng tổng kết điểm ── */}
+                
                 {scoreCalcResult && !isDirectAdmission && (
                   <>
                     <Alert
@@ -1009,7 +1005,7 @@ export const ApplicationForm: React.FC = () => {
                 multiple
                 fileList={fileList}
                 onChange={handleUploadChange}
-                beforeUpload={() => false} // Prevent real upload
+                beforeUpload={() => false} // Ngăn chặn tự động upload thực tế khi chưa bấm nút gửi
                 accept="image/png, image/jpeg, application/pdf"
               >
                 <Button icon={<UploadOutlined />}>Chọn file</Button>

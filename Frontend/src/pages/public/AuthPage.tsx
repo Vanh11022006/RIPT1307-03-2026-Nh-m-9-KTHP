@@ -308,7 +308,7 @@ export const AuthPage: React.FC = () => {
   if (isRegister) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        {/* TopNavBar */}
+        
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
           <div 
             onClick={() => navigate("/")}
@@ -328,7 +328,7 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          {/* Left Side: Cinematic Background (Lightened) */}
+          
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
               <img 
@@ -340,7 +340,7 @@ export const AuthPage: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
             </div>
             
-            {/* Content Overlay */}
+            
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
@@ -352,7 +352,7 @@ export const AuthPage: React.FC = () => {
                   Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
                 </p>
                 
-                {/* Success Indicators (Floating Cards) */}
+                
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -376,23 +376,23 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Background Atmosphere */}
+            
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          {/* Right Side: Registration Form */}
+          
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
             <div className="w-full max-w-md">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                {/* Glow effect inside card */}
+                
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Tạo tài khoản mới</h2>
                   <p className="text-slate-500 text-sm mb-8">Bắt đầu hành trình chinh phục ước mơ học thuật của bạn.</p>
                   
                   <form className="space-y-4" onSubmit={handleRegisterSubmit}>
-                    {/* Full Name */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Họ và tên</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'fullName' ? 'scale-[1.01]' : ''}`}>
@@ -409,7 +409,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Phone */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'phone' ? 'scale-[1.01]' : ''}`}>
@@ -426,7 +426,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Email */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
@@ -443,7 +443,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Password */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
@@ -460,7 +460,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Confirm Password */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Xác nhận mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'confirmPassword' ? 'scale-[1.01]' : ''}`}>
@@ -477,7 +477,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* CTA Button */}
+                    
                     <button 
                       type="submit" 
                       disabled={loadingRegister}
@@ -495,7 +495,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Footer Links */}
+              
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
@@ -507,7 +507,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        {/* Floating Atmosphere Elements */}
+        
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -517,7 +517,7 @@ export const AuthPage: React.FC = () => {
   if (isLogin) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        {/* TopNavBar */}
+        
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
           <div 
             onClick={() => navigate("/")}
@@ -537,7 +537,7 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          {/* Left Side: Cinematic Background (Lightened) */}
+          
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
               <img 
@@ -549,7 +549,7 @@ export const AuthPage: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
             </div>
             
-            {/* Content Overlay */}
+            
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
@@ -561,7 +561,7 @@ export const AuthPage: React.FC = () => {
                   Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
                 </p>
                 
-                {/* Success Indicators (Floating Cards) */}
+                
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -585,23 +585,23 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Background Atmosphere */}
+            
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          {/* Right Side: Login Form */}
+          
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
             <div className="w-full max-w-md">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                {/* Glow effect inside card */}
+                
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Chào mừng trở lại</h2>
                   <p className="text-slate-500 text-sm mb-8">Vui lòng đăng nhập để tiếp tục hành trình của bạn.</p>
                   
                   <form className="space-y-6" onSubmit={handleLoginSubmit}>
-                    {/* Email/Phone */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email hoặc Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
@@ -618,7 +618,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Password */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
@@ -642,7 +642,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Options */}
+                    
                     <div className="flex items-center justify-between px-1">
                       <label className="flex items-center gap-2 cursor-pointer group select-none">
                         <input 
@@ -658,7 +658,7 @@ export const AuthPage: React.FC = () => {
                       </Link>
                     </div>
 
-                    {/* CTA Button */}
+                    
                     <button 
                       type="submit" 
                       disabled={loadingLogin}
@@ -676,7 +676,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Footer Links */}
+              
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
@@ -688,7 +688,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        {/* Floating Atmosphere Elements */}
+        
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -698,7 +698,7 @@ export const AuthPage: React.FC = () => {
   if (isForgotPassword) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        {/* TopNavBar */}
+        
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
           <div 
             onClick={() => navigate("/")}
@@ -718,7 +718,7 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          {/* Left Side: Cinematic Background (Lightened) */}
+          
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
               <img 
@@ -730,7 +730,7 @@ export const AuthPage: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
             </div>
             
-            {/* Content Overlay */}
+            
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
@@ -742,7 +742,7 @@ export const AuthPage: React.FC = () => {
                   Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
                 </p>
                 
-                {/* Success Indicators (Floating Cards) */}
+                
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -766,23 +766,23 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Background Atmosphere */}
+            
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          {/* Right Side: Forgot Password Form */}
+          
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
             <div className="w-full max-w-md">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                {/* Glow effect inside card */}
+                
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Quên mật khẩu</h2>
                   <p className="text-slate-500 text-sm mb-8">Nhập email đã đăng ký để chúng tôi gửi mã khôi phục mật khẩu 4 chữ số.</p>
                   
                   <form className="space-y-6" onSubmit={handleForgotPasswordSubmit}>
-                    {/* Email */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
@@ -799,7 +799,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* CTA Button */}
+                    
                     <button 
                       type="submit" 
                       disabled={loadingForgot}
@@ -816,7 +816,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Footer Links */}
+              
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
@@ -828,7 +828,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        {/* Floating Atmosphere Elements */}
+        
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -838,7 +838,7 @@ export const AuthPage: React.FC = () => {
   if (isResetPassword) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        {/* TopNavBar */}
+        
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
           <div 
             onClick={() => navigate("/")}
@@ -858,7 +858,7 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          {/* Left Side: Cinematic Background (Lightened) */}
+          
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
               <img 
@@ -870,7 +870,7 @@ export const AuthPage: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
             </div>
             
-            {/* Content Overlay */}
+            
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
@@ -882,7 +882,7 @@ export const AuthPage: React.FC = () => {
                   Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
                 </p>
                 
-                {/* Success Indicators (Floating Cards) */}
+                
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -906,23 +906,23 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Background Atmosphere */}
+            
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          {/* Right Side: Reset Password Form */}
+          
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
             <div className="w-full max-w-md">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                {/* Glow effect inside card */}
+                
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Đặt lại mật khẩu</h2>
                   <p className="text-slate-500 text-sm mb-8">Nhập email, mã khôi phục 4 chữ số và mật khẩu mới để hoàn tất đặt lại mật khẩu.</p>
                   
                   <form className="space-y-4" onSubmit={handleResetPasswordSubmit}>
-                    {/* Email */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
@@ -939,7 +939,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Reset Code */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mã khôi phục</label>
                       <div className="grid grid-cols-4 gap-4">
@@ -962,7 +962,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* New Password */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu mới</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'newPassword' ? 'scale-[1.01]' : ''}`}>
@@ -986,7 +986,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Confirm Password */}
+                    
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Xác nhận mật khẩu mới</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'confirmPassword' ? 'scale-[1.01]' : ''}`}>
@@ -1010,7 +1010,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* CTA Button */}
+                    
                     <button 
                       type="submit" 
                       disabled={loadingReset}
@@ -1027,7 +1027,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Footer Links */}
+              
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
@@ -1039,7 +1039,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        {/* Floating Atmosphere Elements */}
+        
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>

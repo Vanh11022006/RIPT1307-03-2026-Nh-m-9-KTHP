@@ -22,7 +22,7 @@ public class FileServiceImpl implements FileService {
     @Value("${upload.path}")
     private String uploadPath;
 
-    @Value("${upload.max-size-bytes:10485760}") // default 10MB
+    @Value("${upload.max-size-bytes:10485760}") // Mặc định là 10MB
     private long maxFileSize;
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = new HashSet<>(Arrays.asList(
@@ -57,7 +57,7 @@ public class FileServiceImpl implements FileService {
                 throw new RuntimeException("Invalid file type. Only PDF, PNG, JPG are allowed");
             }
 
-            // sanitize filename
+            // Làm sạch tên tệp để tránh lỗi hệ thống hoặc lỗ hổng bảo mật
             String finalName = (cleanedPath != null && !cleanedPath.isEmpty()) ? cleanedPath : originalFileName;
             finalName = finalName.replaceAll("[^a-zA-Z0-9._-]", "_");
             String fileName = UUID.randomUUID().toString() + "_" + finalName;

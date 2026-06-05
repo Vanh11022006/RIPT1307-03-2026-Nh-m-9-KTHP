@@ -40,7 +40,6 @@ public class NotificationLogServiceImpl implements NotificationLogService {
                 log.setRecipientEmail(user.getEmail());
             });
         } catch (Exception ex) {
-            // ignore user lookup failures
         }
 
         NotificationLog saved = repository.save(log);
@@ -93,7 +92,6 @@ public class NotificationLogServiceImpl implements NotificationLogService {
                         }
                     });
                 } catch (Exception ex) {
-                    // ignore lookup failures
                 }
 
                 if (log.getRecipientName() != null || log.getRecipientEmail() != null) {

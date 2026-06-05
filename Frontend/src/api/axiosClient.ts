@@ -87,14 +87,13 @@ axiosClient.interceptors.response.use(
     // Xử lý các mã lỗi HTTP phổ biến
     const statusCode = error.response?.status;
     const originalRequest = error.config;
-    // Handle token refresh with single in-flight refresh and queueing
+    // Xử lý làm mới token (refresh token) với chỉ một tiến trình yêu cầu làm mới đồng thời
     if (statusCode === 401 && originalRequest) {
       const refreshToken = getRefreshToken();
       if (!originalRequest._retry && refreshToken) {
-        // mark that this request is waiting for refresh
         originalRequest._retry = true;
 
-        // use a shared refresh promise so concurrent 401s wait for same refresh
+        // sử dụng một promise làm mới dùng chung để các lỗi 401 đồng thời cùng đợi kết quả làm mới đó
         if (!refreshPromise) {
           refreshPromise = axios
             .post(`${axiosClient.defaults.baseURL}/auth/refresh-token`, { refreshToken })
@@ -121,19 +120,17 @@ axiosClient.interceptors.response.use(
               throw refreshError;
             })
             .finally(() => {
-              // clear the shared promise after completion
               setTimeout(() => { refreshPromise = null; }, 0);
             });
         }
 
-        // wait for refresh to finish then retry original request
         return refreshPromise!.then((newAccessToken: string) => {
           originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
           return axiosClient(originalRequest);
         }).catch((e) => Promise.reject(e));
       }
-      // if no refresh token or already retried, fall-through to handling below
+
     }
 
     switch (statusCode) {

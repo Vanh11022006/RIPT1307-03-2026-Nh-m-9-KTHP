@@ -44,18 +44,18 @@ export const UniversityManagement: React.FC = () => {
     return safeUniversities.filter((u) => {
       if (statusFilter !== "all" && u.status !== statusFilter) return false;
       if (cityFilter !== "all" && u.city !== cityFilter) return false;
-      
+
       if (searchText.trim()) {
         const lowerSearch = searchText.toLowerCase().trim();
         const code = (u.code || "").toLowerCase();
         const name = (u.name || "").toLowerCase();
         const shortName = (u.shortName || "").toLowerCase();
         const city = (u.city || "").toLowerCase();
-        
-        if (!code.includes(lowerSearch) && 
-            !name.includes(lowerSearch) && 
-            !shortName.includes(lowerSearch) && 
-            !city.includes(lowerSearch)) {
+
+        if (!code.includes(lowerSearch) &&
+          !name.includes(lowerSearch) &&
+          !shortName.includes(lowerSearch) &&
+          !city.includes(lowerSearch)) {
           return false;
         }
       }
@@ -189,11 +189,11 @@ export const UniversityManagement: React.FC = () => {
 
   return (
     <div>
-      <PageHeader 
-        title="Quản lý trường đại học" 
-        breadcrumbs={[{ title: "Danh sách và tra cứu các trường đại học trong hệ thống" }]} 
+      <PageHeader
+        title="Quản lý trường đại học"
+        breadcrumbs={[{ title: "Danh sách và tra cứu các trường đại học trong hệ thống" }]}
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} style={{ marginRight: 30, marginTop: 30 }}>
             Thêm trường
           </Button>
         }
@@ -241,10 +241,10 @@ export const UniversityManagement: React.FC = () => {
         {loading && filteredUniversities.length === 0 ? (
           <LoadingScreen tip="Đang tải danh sách trường đại học..." />
         ) : filteredUniversities.length > 0 ? (
-          <Table 
-            columns={columns} 
-            dataSource={filteredUniversities} 
-            rowKey="id" 
+          <Table
+            columns={columns}
+            dataSource={filteredUniversities}
+            rowKey="id"
             scroll={{ x: true }}
             loading={loading}
           />
@@ -279,8 +279,8 @@ export const UniversityManagement: React.FC = () => {
                   {
                     validator: (_, value) => {
                       if (!value) return Promise.resolve();
-                      const isDuplicate = safeUniversities.some(u => 
-                        u.code.trim().toLowerCase() === value.trim().toLowerCase() && 
+                      const isDuplicate = safeUniversities.some(u =>
+                        u.code.trim().toLowerCase() === value.trim().toLowerCase() &&
                         u.id !== editingId
                       );
                       if (isDuplicate) return Promise.reject(new Error("Mã trường này đã tồn tại"));

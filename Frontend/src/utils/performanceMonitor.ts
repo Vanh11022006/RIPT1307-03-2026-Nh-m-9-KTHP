@@ -1,6 +1,6 @@
 /**
- * Performance Testing Helper - Monitor and log data loading performance
- * Giúp track thời gian load dữ liệu và so sánh tuần tự vs song song
+ * Công cụ hỗ trợ đo lường hiệu năng - Giám sát và ghi nhận hiệu năng tải dữ liệu
+ * Giúp theo dõi thời gian tải dữ liệu và so sánh giữa tuần tự vs song song
  */
 
 interface PerformanceMetric {
@@ -14,7 +14,7 @@ interface PerformanceMetric {
 const performanceMetrics: PerformanceMetric[] = [];
 
 /**
- * Log performance metric to browser console and storage
+ * Ghi nhận số liệu hiệu năng vào console của trình duyệt và bộ lưu trữ (localStorage)
  */
 export const logPerformanceMetric = (
   pageName: string,
@@ -32,7 +32,7 @@ export const logPerformanceMetric = (
 
   performanceMetrics.push(metric);
 
-  // Log to console
+
   const methodEmoji = method === 'sequential' ? '⏳' : '⚡';
   if (import.meta.env.DEV) {
     console.log(
@@ -40,21 +40,17 @@ export const logPerformanceMetric = (
     );
   }
 
-  // Log to localStorage for later analysis
+  // Lưu vào localStorage để phân tích sau
   try {
     const existing = localStorage.getItem('performanceMetrics');
     const parsed = existing ? JSON.parse(existing) : [];
     parsed.push(metric);
-    // Keep only last 100 metrics
+    // Chỉ giữ lại 100 số liệu đo lường gần nhất
     localStorage.setItem('performanceMetrics', JSON.stringify(parsed.slice(-100)));
   } catch (e) {
-    // ignore localStorage errors
   }
 };
 
-/**
- * Get all collected metrics
- */
 export const getPerformanceMetrics = (): PerformanceMetric[] => {
   try {
     const stored = localStorage.getItem('performanceMetrics');
@@ -64,9 +60,6 @@ export const getPerformanceMetrics = (): PerformanceMetric[] => {
   }
 };
 
-/**
- * Get performance summary
- */
 export const getPerformanceSummary = () => {
   const metrics = getPerformanceMetrics();
   if (metrics.length === 0) return null;
@@ -104,9 +97,6 @@ export const getPerformanceSummary = () => {
   return summary;
 };
 
-/**
- * Print performance report to console
- */
 export const printPerformanceReport = () => {
   const summary = getPerformanceSummary();
   if (!summary || summary.length === 0) {
@@ -153,21 +143,17 @@ export const printPerformanceReport = () => {
   if (import.meta.env.DEV) console.log('========================================\n');
 };
 
-/**
- * Clear collected metrics
- */
 export const clearPerformanceMetrics = () => {
   performanceMetrics.length = 0;
   try {
     localStorage.removeItem('performanceMetrics');
   } catch (e) {
-    // ignore
   }
   if (import.meta.env.DEV) console.log('🧹 Performance metrics cleared');
 };
 
 /**
- * Export metrics as CSV for analysis
+ * Xuất dữ liệu đo lường dưới dạng file CSV để phân tích
  */
 export const exportMetricsAsCSV = () => {
   const metrics = getPerformanceMetrics();
@@ -181,7 +167,6 @@ export const exportMetricsAsCSV = () => {
     csv += `${metric.timestamp},${metric.pageName},${metric.duration.toFixed(2)},${metric.method}\n`;
   });
 
-  // Trigger download
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');

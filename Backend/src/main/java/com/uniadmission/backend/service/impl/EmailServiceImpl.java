@@ -78,7 +78,7 @@ public class EmailServiceImpl implements EmailService {
             sendMimeMessageWithRetry(mimeMessage, "application submitted email");
         } catch (MessagingException ex) {
             log.warn("Không gửi được email HTML, thử gửi text fallback: {}", ex.getMessage());
-            // fallback to plain text
+            // Dự phòng: Chuyển sang gửi email dạng văn bản thuần túy (plain text) nếu gửi HTML thất bại
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
                 message.setFrom(fromAddress);

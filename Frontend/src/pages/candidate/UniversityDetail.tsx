@@ -16,7 +16,7 @@ export const UniversityDetail: React.FC = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/candidate') ? '/candidate' : '';
   const listPath = basePath ? `${basePath}/universities` : '/universities';
-  
+
   const { loading: universitiesLoading, getUniversityById, getUniversities } = useUniversityStore();
   const { loading: majorsLoading, getActiveMajorsByUniversityId, getMajors } = useMajorStore();
 
@@ -110,30 +110,30 @@ export const UniversityDetail: React.FC = () => {
 
   return (
     <div>
-      <PageHeader 
-        title="Chi tiết trường đại học" 
+      <PageHeader
+        title="Chi tiết trường đại học"
         breadcrumbs={[
-          { title: "Danh sách trường", href: listPath }, 
+          { title: "Danh sách trường", href: listPath },
           { title: university.shortName }
-        ]} 
+        ]}
         extra={
-          <Button type="primary" size="large" onClick={() => navigate(`/candidate/apply?universityId=${university.id}`)}>
+          <Button type="primary" size="large" onClick={() => navigate(`/candidate/apply?universityId=${university.id}`)} style={{ marginRight: 30, marginTop: 30 }}>
             Nộp hồ sơ vào trường này
           </Button>
         }
       />
-      
+
       <Row gutter={[24, 24]}>
         <Col span={24}>
           <Card>
             <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 24 }}>
-              <div style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: 12, 
-                background: "#f0f2f5", 
-                display: "flex", 
-                alignItems: "center", 
+              <div style={{
+                width: 80,
+                height: 80,
+                borderRadius: 12,
+                background: "#f0f2f5",
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
                 marginRight: 24,
                 flexShrink: 0
@@ -182,10 +182,10 @@ export const UniversityDetail: React.FC = () => {
 
         <Col span={24}>
           <Card title={<Title level={4} style={{ margin: 0 }}>Danh sách ngành tuyển sinh</Title>}>
-            <Table 
-              dataSource={majors} 
-              columns={majorColumns} 
-              rowKey="id" 
+            <Table
+              dataSource={majors}
+              columns={majorColumns}
+              rowKey="id"
               pagination={false}
               scroll={{ x: true }}
             />
