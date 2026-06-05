@@ -125,7 +125,13 @@ export const loadCandidateDashboardData = async () => {
     ]);
 
     if (currentUser?.id) {
-      await useApplicationStore.getState().getApplicationsByCandidateId(String(currentUser.id));
+      let candidate = useCandidateStore.getState().getCandidateByUserId(String(currentUser.id));
+      if (!candidate) {
+        candidate = await useCandidateStore.getState().getProfile(String(currentUser.id)) || undefined;
+      }
+      if (candidate?.id) {
+        await useApplicationStore.getState().getApplicationsByCandidateId(String(candidate.id));
+      }
     }
 
     const universities = useUniversityStore.getState().universities;
@@ -167,11 +173,23 @@ export const loadMyApplicationsData = async () => {
     let applications: any[] = [];
 
     if (currentUser?.id) {
-      await Promise.all([
-        useApplicationStore.getState().getApplicationsByCandidateId(String(currentUser.id)),
-        useUniversityStore.getState().getUniversities(),
-        useMajorStore.getState().getMajors(),
-      ]);
+      let candidate = useCandidateStore.getState().getCandidateByUserId(String(currentUser.id));
+      if (!candidate) {
+        candidate = await useCandidateStore.getState().getProfile(String(currentUser.id)) || undefined;
+      }
+
+      if (candidate?.id) {
+        await Promise.all([
+          useApplicationStore.getState().getApplicationsByCandidateId(String(candidate.id)),
+          useUniversityStore.getState().getUniversities(),
+          useMajorStore.getState().getMajors(),
+        ]);
+      } else {
+        await Promise.all([
+          useUniversityStore.getState().getUniversities(),
+          useMajorStore.getState().getMajors(),
+        ]);
+      }
     } else {
       await Promise.all([
         useUniversityStore.getState().getUniversities(),
