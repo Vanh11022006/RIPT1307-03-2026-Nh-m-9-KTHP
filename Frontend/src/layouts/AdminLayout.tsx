@@ -35,15 +35,15 @@ export const AdminLayout: React.FC = () => {
   };
 
   const links = [
-    { path: "/admin/dashboard", icon: "dashboard", label: "BẢNG ĐIỀU KHIỂN" },
-    { path: "/admin/universities", icon: "school", label: "QUẢN LÝ TRƯỜNG" },
-    { path: "/admin/majors", icon: "book", label: "QUẢN LÝ NGÀNH" },
-    { path: "/admin/subject-groups", icon: "layers", label: "QUẢN LÝ TỔ HỢP" },
-    { path: "/admin/candidates", icon: "groups", label: "QUẢN LÝ THÍ SINH" },
-    { path: "/admin/applications", icon: "folder_open", label: "QUẢN LÝ HỒ SƠ" },
-    { path: "/admin/notifications", icon: "notifications", label: "THÔNG BÁO", badge: unreadCount },
-    { path: "/admin/admission-rounds", icon: "calendar_today", label: "QUẢN LÝ ĐỢT" },
-    { path: "/admin/users", icon: "manage_accounts", label: "TÀI KHOẢN" },
+    { path: "/admin/dashboard", icon: "dashboard", label: "Bảng điều khiển" },
+    { path: "/admin/universities", icon: "school", label: "Quản lý trường" },
+    { path: "/admin/majors", icon: "book", label: "Quản lý ngành" },
+    { path: "/admin/subject-groups", icon: "layers", label: "Quản lý tổ hợp" },
+    { path: "/admin/candidates", icon: "groups", label: "Quản lý thí sinh" },
+    { path: "/admin/applications", icon: "folder_open", label: "Quản lý hồ sơ" },
+    { path: "/admin/notifications", icon: "notifications", label: "Thông báo", badge: unreadCount },
+    { path: "/admin/admission-rounds", icon: "calendar_today", label: "Quản lý đợt" },
+    { path: "/admin/users", icon: "manage_accounts", label: "Tài khoản" },
   ];
 
   const userMenu = {
@@ -99,9 +99,9 @@ export const AdminLayout: React.FC = () => {
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
-                className={`flex items-center gap-3 px-6 py-3 duration-200 ease-in-out font-bold text-xs uppercase tracking-widest border-0 cursor-pointer rounded-none text-left w-full bg-transparent ${isActive
-                  ? "text-[#00616D] border-r-4 border-[#00616D] bg-[#00616D]/5"
-                  : "text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/5"
+                className={`flex items-center gap-3 px-4 py-2.5 duration-200 ease-in-out font-medium text-sm tracking-wide border-0 cursor-pointer rounded-xl text-left w-full bg-transparent transition-all ${isActive
+                  ? "text-[#00616D] bg-[#00616D]/[0.08] font-semibold shadow-[0_2px_8px_rgba(0,97,109,0.06)]"
+                  : "text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/[0.04]"
                   }`}
               >
                 <span className="material-symbols-outlined text-lg shrink-0">{link.icon}</span>

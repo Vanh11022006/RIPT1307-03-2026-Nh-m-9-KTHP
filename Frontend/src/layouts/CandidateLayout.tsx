@@ -47,13 +47,13 @@ export const CandidateLayout: React.FC = () => {
   };
 
   const links = [
-    { path: "/candidate/dashboard", icon: "dashboard", label: "BẢNG ĐIỀU KHIỂN" },
-    { path: "/candidate/profile", icon: "person", label: "THÔNG TIN CÁ NHÂN" },
-    { path: "/candidate/universities", icon: "school", label: "DANH SÁCH TRƯỜNG" },
-    { path: "/candidate/apply", icon: "assignment", label: "NỘP HỒ SƠ" },
-    { path: "/candidate/applications", icon: "description", label: "HỒ SƠ CỦA TÔI" },
-    { path: "/candidate/notifications", icon: "notifications", label: "THÔNG BÁO", badge: unreadCount },
-    { path: "/candidate/results", icon: "military_tech", label: "KẾT QUẢ XÉT TUYỂN" },
+    { path: "/candidate/dashboard", icon: "dashboard", label: "Bảng điều khiển" },
+    { path: "/candidate/profile", icon: "person", label: "Thông tin cá nhân" },
+    { path: "/candidate/universities", icon: "school", label: "Danh sách trường" },
+    { path: "/candidate/apply", icon: "assignment", label: "Nộp hồ sơ" },
+    { path: "/candidate/applications", icon: "description", label: "Hồ sơ của tôi" },
+    { path: "/candidate/notifications", icon: "notifications", label: "Thông báo", badge: unreadCount },
+    { path: "/candidate/results", icon: "military_tech", label: "Kết quả xét tuyển" },
   ];
 
   return (
@@ -89,9 +89,9 @@ export const CandidateLayout: React.FC = () => {
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
-                className={`flex items-center gap-3 px-6 py-3 duration-200 ease-in-out font-bold text-xs uppercase tracking-widest border-0 cursor-pointer rounded-none text-left w-full bg-transparent ${isActive
-                  ? "text-[#00616D] border-r-4 border-[#00616D] bg-[#00616D]/5"
-                  : "text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/5"
+                className={`flex items-center gap-3 px-4 py-2.5 duration-200 ease-in-out font-medium text-sm tracking-wide border-0 cursor-pointer rounded-xl text-left w-full bg-transparent transition-all ${isActive
+                  ? "text-[#00616D] bg-[#00616D]/[0.08] font-semibold shadow-[0_2px_8px_rgba(0,97,109,0.06)]"
+                  : "text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/[0.04]"
                   }`}
               >
                 <span className="material-symbols-outlined text-lg shrink-0">{link.icon}</span>
