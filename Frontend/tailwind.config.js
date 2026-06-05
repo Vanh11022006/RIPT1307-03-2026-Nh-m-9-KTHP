@@ -72,6 +72,7 @@ export default {
         "xl": "80px"
       },
       fontFamily: {
+        "sans": ["'Be Vietnam Pro'", "Plus Jakarta Sans", "Inter", "sans-serif"],
         "headline-lg": ["Plus Jakarta Sans"],
         "label-sm": ["Inter"],
         "body-md": ["Inter"],
