@@ -1,0 +1,7 @@
+target/
+.git
+.gitignore
+.vscode/
+sql/
+Dockerfile
+HELP.md

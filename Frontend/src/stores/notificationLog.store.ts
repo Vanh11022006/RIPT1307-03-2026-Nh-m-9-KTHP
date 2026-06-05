@@ -86,6 +86,7 @@ interface NotificationLogState {
   getNotificationLogsByApplicationId: (applicationId: string) => NotificationLog[];
   getAllNotificationLogs: () => NotificationLog[];
   markNotificationAsRead: (notificationId: string) => Promise<void>;
+  markAllNotificationsAsRead: (userId: string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   deleteNotificationsByUserId: (userId: string) => Promise<void>;
 }
@@ -196,7 +197,9 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
   
   markNotificationAsRead: async (notificationId) => {
     try {
-      await axiosClient.put(`/notifications/${notificationId}/read`);
+      if (!notificationId.startsWith("noti_")) {
+        await axiosClient.put(`/notifications/${notificationId}/read`);
+      }
       const nextLogs = get().notificationLogs.map(log =>
         log.id === notificationId ? { ...log, isRead: true } : log
       );
@@ -207,9 +210,24 @@ export const useNotificationLogStore = create<NotificationLogState>((set, get) =
     }
   },
 
+  markAllNotificationsAsRead: async (userId) => {
+    try {
+      await axiosClient.put(`/notifications/user/${userId}/read-all`);
+      const nextLogs = get().notificationLogs.map(log =>
+        String(log.recipientUserId) === String(userId) ? { ...log, isRead: true } : log
+      );
+      set({ notificationLogs: nextLogs });
+      try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  },
+
   deleteNotification: async (notificationId) => {
     try {
-      await axiosClient.delete(`/notifications/${notificationId}`);
+      if (!notificationId.startsWith("noti_")) {
+        await axiosClient.delete(`/notifications/${notificationId}`);
+      }
       const nextLogs = get().notificationLogs.filter(log => log.id !== notificationId);
       set({ notificationLogs: nextLogs });
       try { localStorage.setItem('notificationLogs', JSON.stringify(nextLogs)); } catch(e){}

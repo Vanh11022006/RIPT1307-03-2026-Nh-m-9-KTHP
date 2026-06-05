@@ -276,7 +276,6 @@ export const ApplicationForm: React.FC = () => {
   };
 
   const currentPriorityScore = getPriorityScore(selectedPriorityGroup);
-  const finalAdmissionScore = scoreCalcResult?.finalScore ?? (totalScore + currentPriorityScore);
   const isDirectAdmission = scoreCalcResult?.isDirectAdmission ?? false;
   const pageLoading = candidateLoading || universitiesLoading || majorsLoading || roundsLoading || applicationsLoading;
 

@@ -1,38 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Dropdown, Avatar, Space, Button, Badge } from "antd";
+import { Dropdown } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
-  DashboardOutlined, 
-  BankOutlined, 
-  BookOutlined, 
-  TeamOutlined, 
-  FolderOpenOutlined,
-  UserOutlined,
+  UserOutlined, 
   LogoutOutlined,
-  AppstoreOutlined,
-  CalendarOutlined,
-  BellOutlined,
-  BulbOutlined,
-  BulbFilled,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  SafetyCertificateOutlined
 } from "@ant-design/icons";
 
 import { useAuthStore } from "../stores/auth.store";
-import { useTheme } from "../contexts/ThemeContext";
 import { useNotificationLogStore } from "../stores/notificationLog.store";
 import { useNotificationStream } from "../hooks/useNotificationStream";
-
-const { Header, Sider, Content } = Layout;
-
 
 export const AdminLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout } = useAuthStore();
-  const { isDarkMode, toggleTheme } = useTheme();
   const notificationLogs = useNotificationLogStore((state) => state.notificationLogs);
   useNotificationStream();
 
@@ -52,24 +34,16 @@ export const AdminLayout: React.FC = () => {
     navigate("/login");
   };
 
-  const menuItems = [
-    { key: "/admin/dashboard", icon: <DashboardOutlined />, label: "Bảng điều khiển" },
-    { key: "/admin/universities", icon: <BankOutlined />, label: "Quản lý trường" },
-    { key: "/admin/majors", icon: <BookOutlined />, label: "Quản lý ngành" },
-    { key: "/admin/subject-groups", icon: <AppstoreOutlined />, label: "Quản lý tổ hợp" },
-    { key: "/admin/candidates", icon: <TeamOutlined />, label: "Quản lý thí sinh" },
-    { key: "/admin/applications", icon: <FolderOpenOutlined />, label: "Quản lý hồ sơ" },
-    {
-      key: "/admin/notifications",
-      icon: (
-        <Badge count={unreadCount} size="small" overflowCount={99} offset={[6, -2]}>
-          <BellOutlined />
-        </Badge>
-      ),
-      label: <span>Trung tâm thông báo {unreadCount > 0 ? `(${unreadCount})` : ""}</span>,
-    },
-    { key: "/admin/admission-rounds", icon: <CalendarOutlined />, label: "Quản lý đợt" },
-    { key: "/admin/users", icon: <SafetyCertificateOutlined />, label: "Quản lý tài khoản" },
+  const links = [
+    { path: "/admin/dashboard", icon: "dashboard", label: "BẢNG ĐIỀU KHIỂN" },
+    { path: "/admin/universities", icon: "school", label: "QUẢN LÝ TRƯỜNG" },
+    { path: "/admin/majors", icon: "book", label: "QUẢN LÝ NGÀNH" },
+    { path: "/admin/subject-groups", icon: "layers", label: "QUẢN LÝ TỔ HỢP" },
+    { path: "/admin/candidates", icon: "groups", label: "QUẢN LÝ THÍ SINH" },
+    { path: "/admin/applications", icon: "folder_open", label: "QUẢN LÝ HỒ SƠ" },
+    { path: "/admin/notifications", icon: "notifications", label: "THÔNG BÁO", badge: unreadCount },
+    { path: "/admin/admission-rounds", icon: "calendar_today", label: "QUẢN LÝ ĐỢT" },
+    { path: "/admin/users", icon: "manage_accounts", label: "TÀI KHOẢN" },
   ];
 
   const userMenu = {
@@ -93,117 +67,130 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "transparent" }}>
-      <Sider 
-        collapsible 
-        collapsed={collapsed} 
-        onCollapse={(value) => setCollapsed(value)}
-        width={260}
-        className="saas-sidebar"
-        trigger={null}
+    <div className="w-full min-h-screen bg-[#F8FAFB] text-[#1A1C1E] font-sans relative overflow-x-hidden">
+      {/* SideNavBar */}
+      <aside 
+        className={`h-screen fixed left-0 top-0 bg-white border-r border-black/[0.08] flex flex-col pt-6 pb-12 z-50 transition-all duration-300 ${
+          collapsed ? "w-20" : "w-64"
+        }`}
       >
-        <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px", cursor: "pointer" }} onClick={() => navigate("/admin/dashboard")}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ 
-              background: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9", 
-              borderRadius: "12px", 
-              padding: "8px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center",
-              border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E2E8F0"
-            }}>
-              <img src="/favicon.svg" alt="UniAdmission Logo" style={{ width: 28, height: 28 }} />
+        {/* Logo Section */}
+        <div className="px-6 mb-8 mt-2">
+          {!collapsed ? (
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 shrink-0" style={{ objectFit: "contain" }} />
+              <div>
+                <h1 className="text-xl font-extrabold text-[#00616D] tracking-tight m-0">UniAdmission</h1>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#44474E] m-0 mt-0.5">System Admin</p>
+                <p className="text-[9px] text-[#00616D]/60 font-bold uppercase tracking-widest m-0 mt-0.5">Niên khóa 2025</p>
+              </div>
             </div>
-            {!collapsed && (
-              <span style={{ 
-                fontSize: "20px", 
-                fontWeight: 800, 
-                letterSpacing: "-0.5px",
-                background: "linear-gradient(90deg, #2563EB, #06B6D4)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
-                UniAdmission
-              </span>
-            )}
-          </div>
+          ) : (
+            <div className="flex justify-center">
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 shrink-0" style={{ objectFit: "contain" }} />
+            </div>
+          )}
         </div>
-        
-        <Menu 
-          mode="inline" 
-          selectedKeys={[location.pathname]} 
-          items={menuItems} 
-          onClick={({ key }) => navigate(key)}
-          style={{ borderRight: "none", padding: "12px 12px", background: "transparent" }}
-        />
-      </Sider>
-      
-      <Layout style={{ background: "transparent" }}>
-        <Header 
-          className="saas-header" 
-          style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            padding: "0 24px",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-            height: 72,
-            background: isDarkMode ? "rgba(17, 24, 39, 0.7)" : "rgba(255, 255, 255, 0.8)",
-          }}
-        >
-          {/* LEFT: Sidebar toggle */}
-          <Button
-            type="text"
-            onClick={() => setCollapsed((value) => !value)}
-            icon={collapsed ? <MenuUnfoldOutlined style={{ fontSize: 18 }} /> : <MenuFoldOutlined style={{ fontSize: 18 }} />}
-            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-            style={{
-              color: "var(--admin-text-primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              background: "var(--admin-bg)",
-              border: "1px solid var(--admin-border)",
-            }}
-          />
 
-          {/* CENTER: Spacer */}
-          <div style={{ flex: 1 }}></div>
-
-          {/* RIGHT: Actions */}
-          <Space size="large" align="center">
-            <Button 
-              type="text" 
-              icon={isDarkMode ? <BulbFilled style={{ color: "#F59E0B", fontSize: 18 }} /> : <BulbOutlined style={{ fontSize: 18 }} />} 
-              onClick={toggleTheme}
-              style={{ color: "var(--admin-text-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}
-            />
-            
+        {/* Navigation menu */}
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+          {links.map((link) => {
+            const isActive = location.pathname === link.path;
+            return (
+              <button
+                key={link.path}
+                onClick={() => navigate(link.path)}
+                className={`flex items-center gap-3 px-6 py-3 duration-200 ease-in-out font-bold text-xs uppercase tracking-widest border-0 cursor-pointer rounded-none text-left w-full bg-transparent ${
+                  isActive 
+                    ? "text-[#00616D] border-r-4 border-[#00616D] bg-[#00616D]/5" 
+                    : "text-[#44474E] hover:text-[#00616D] hover:bg-[#00616D]/5"
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg shrink-0">{link.icon}</span>
+                {!collapsed && (
+                  <span className="flex-1 flex justify-between items-center truncate">
+                    {link.label}
+                    {link.badge && link.badge > 0 ? (
+                      <span className="bg-[#00616D] text-white px-2 py-0.5 rounded-full text-[10px] font-bold leading-none">
+                        {link.badge}
+                      </span>
+                    ) : null}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
 
 
-            <Dropdown menu={userMenu} placement="bottomRight" arrow trigger={['click']}>
-              <Space style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "30px", border: "1px solid var(--admin-border)", background: "var(--admin-bg)" }}>
-                <Badge dot color="#10B981" offset={[-4, 28]}>
-                  <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#2563EB" }} />
-                </Badge>
-                <span style={{ fontWeight: 600, color: "var(--admin-text-primary)", paddingRight: 4 }}>{currentUser?.fullName}</span>
-              </Space>
-            </Dropdown>
-          </Space>
-        </Header>
-        
-        <Content style={{ margin: "24px", display: "flex", flexDirection: "column" }}>
-          <div style={{ flex: 1, position: "relative", zIndex: 2 }}>
-            <Outlet />
+      </aside>
+
+      {/* Main Wrapper */}
+      <div 
+        className="flex flex-col min-h-screen transition-all duration-300 max-w-full"
+        style={{ 
+          marginLeft: collapsed ? "80px" : "264px"
+        }}
+      >
+        {/* TopNavBar */}
+        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/[0.08]">
+          <div className="flex justify-between items-center px-6 py-3 max-w-container-max mx-auto">
+            <div className="flex items-center gap-4 flex-1">
+              <button
+                onClick={() => setCollapsed((value) => !value)}
+                className="text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition-all border-0 cursor-pointer bg-transparent flex items-center justify-center"
+                aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+              >
+                <span className="material-symbols-outlined">
+                  {collapsed ? "menu_open" : "menu"}
+                </span>
+              </button>
+              
+              <div className="flex items-center flex-1 max-w-md">
+                <div className="relative w-full">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#44474E] text-lg">search</span>
+                  <input 
+                    className="w-full bg-[#F1F4F5] border-transparent rounded-full py-2 pl-10 pr-4 text-slate-800 placeholder:text-[#44474E] text-sm focus:ring-2 focus:ring-[#00616D] focus:bg-white transition-all outline-none" 
+                    placeholder="Tìm kiếm nhanh..." 
+                    type="text"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6 ml-auto">
+              <button 
+                onClick={() => navigate("/admin/notifications")}
+                className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors active:scale-95 bg-transparent border-0 cursor-pointer flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined">notifications</span>
+                {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00616D] rounded-full"></span>}
+              </button>
+              
+              <Dropdown menu={userMenu} placement="bottomRight" arrow trigger={['click']}>
+                <div className="flex items-center gap-3 pl-4 border-l border-black/[0.08] cursor-pointer hover:opacity-80 transition-opacity">
+                  <div className="text-right hidden sm:block">
+                    <p className="font-bold text-slate-800 leading-none m-0">{currentUser?.fullName || "Quản trị viên"}</p>
+                    <p className="text-xs text-[#44474E] m-0 mt-1">System Admin</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#00616D] flex items-center justify-center bg-slate-100">
+                    {currentUser?.avatar ? (
+                      <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-slate-400">person</span>
+                    )}
+                  </div>
+                </div>
+              </Dropdown>
+            </div>
           </div>
-        </Content>
-      </Layout>
-    </Layout>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 p-6 max-w-container-max w-full mx-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };
