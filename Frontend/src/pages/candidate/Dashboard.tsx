@@ -234,11 +234,11 @@ export const CandidateDashboard: React.FC = () => {
           
           <div className="p-6 rounded-lg bg-[#00616D]/5 border border-[#00616D]/10">
             <p className="font-bold text-[#00616D] flex items-center gap-2 m-0 text-sm">
-              <span className="material-symbols-outlined text-base">auto_awesome</span>
-              Gợi ý từ AI
+              <span className="material-symbols-outlined text-base">school</span>
+              Gợi ý định hướng học tập
             </p>
             <p className="text-sm text-[#44474E] mt-2 leading-relaxed m-0">
-              Dựa trên học bạ của bạn, chúng tôi đề xuất bạn nên ứng tuyển vào ngành <span className="text-[#00616D] font-bold">Khoa học máy tính</span> tại VinUniversity để có tỷ lệ đậu cao nhất.
+              Dựa trên kết quả học tập THPT và chỉ tiêu tuyển sinh, hệ thống khuyến nghị bạn tham khảo thêm các chương trình đào tạo chính quy ngành <span className="text-[#00616D] font-bold">Khoa học máy tính</span>.
             </p>
           </div>
         </div>
@@ -269,9 +269,9 @@ export const CandidateDashboard: React.FC = () => {
                   // Fallback images matching mockup
                   let imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh";
                   let imageAlt = "Bách Khoa Hanoi";
-                  if (univName.toLowerCase().includes("vinuniversity") || univName.toLowerCase().includes("vinuni")) {
-                    imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLtCvuBmB7J7bbqOtGWgdfRwAotrfX_IJF43RuYnfCOMgar3uiJ5qL7pzmLU1LucNeZngeRGSmexs2SGOgZ01HPXoZD8AjlK-kTT8yYpPGeT5vBsL2jIrEJdxJ8zJ0hecfMYfk1QkdvzOJT571Aj4BOoa9q8XtH_2ovwCKkGBd5hBN9rAYsxj293m6SGV6BrRcpRgQf65zb8C0z6p3d0QgHnbhOok9eZq6OrWFqPZs_RqXyNuMtUN_AVwdA";
-                    imageAlt = "VinUniversity";
+                  if (univName.toLowerCase().includes("vinuniversity") || univName.toLowerCase().includes("vinuni") || univName.toLowerCase().includes("ptit") || univName.toLowerCase().includes("bưu chính")) {
+                    imageUrl = "https://ptit.edu.vn/wp-content/uploads/old/2022/03/2-768x1024.jpg";
+                    imageAlt = "PTIT";
                   } else if (univName.toLowerCase().includes("quốc gia") || univName.toLowerCase().includes("vnu")) {
                     imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvV9YZffv4RNtTr2B5sC_J_n6MIwWBj4atOKZ2fPziOz9JSfVO4_Tpkr2jEWiuCRJQwubLAP8fp5QVyY9LphGEekhm8XWk0TcNyyE0FpHF78phFXPMIaEYTpxS5GqJHlcPRARv92TRwqmtAl7irWY8X6IDEmxapoix7MaOGWwQuMocNKCNRZiE8VBUQ0Z97unTRZaLAguto3H27Tl9fpHW4mh9nsocET48juVkcUm0-2_16DtXx";
                     imageAlt = "Đại học Quốc gia TP.HCM";

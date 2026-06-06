@@ -317,13 +317,13 @@ export const AuthPage: React.FC = () => {
             UniAdmission
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="text-slate-600 font-medium hover:text-[#00616d] transition-colors duration-300" href="/">Support</a>
-            <button 
-              className="bg-[#00616d] text-white px-6 py-2.5 rounded-full font-semibold hover:scale-95 transition-transform duration-200 border-0 cursor-pointer"
+            <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
+            <a 
+              className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
-              Apply Now
-            </button>
+              Đăng ký ngay
+            </a>
           </div>
         </header>
 
@@ -343,14 +343,12 @@ export const AuthPage: React.FC = () => {
             
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
-                <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
+                <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
                   Chạm tay <br/>
                   vào <br/>
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
-                <p className="text-lg text-slate-600 mb-8 max-w-md">
-                  Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
-                </p>
+
                 
                 
                 <div className="flex flex-col gap-4">
@@ -359,8 +357,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">98% Success Rate</div>
-                      <div className="text-xs font-medium text-slate-500">Top University Admissions 2023</div>
+                      <div className="font-bold text-slate-800 text-lg">98% Tỷ lệ thành công</div>
+                      <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
                   
@@ -369,8 +367,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">Active Community</div>
-                      <div className="text-xs font-medium text-slate-500">1M+ Students Globally</div>
+                      <div className="font-bold text-slate-800 text-lg">Cộng đồng năng động</div>
+                      <div className="text-xs font-medium text-slate-500">Hơn 1 triệu Học sinh toàn cầu</div>
                     </div>
                   </div>
                 </div>
@@ -388,10 +386,10 @@ export const AuthPage: React.FC = () => {
                 
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Tạo tài khoản mới</h2>
-                  <p className="text-slate-500 text-sm mb-8">Bắt đầu hành trình chinh phục ước mơ học thuật của bạn.</p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Tạo tài khoản mới</h2>
+                  <p className="text-slate-500 text-sm" style={{ marginBottom: "28px" }}>Bắt đầu hành trình chinh phục ước mơ học thuật của bạn.</p>
                   
-                  <form className="space-y-4" onSubmit={handleRegisterSubmit}>
+                  <form className="space-y-6" onSubmit={handleRegisterSubmit}>
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Họ và tên</label>
@@ -481,7 +479,8 @@ export const AuthPage: React.FC = () => {
                     <button 
                       type="submit" 
                       disabled={loadingRegister}
-                      className="w-full mt-8 h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      style={{ marginTop: "32px" }}
                     >
                       {loadingRegister ? "Đang đăng ký..." : "Đăng ký"}
                     </button>
@@ -498,10 +497,10 @@ export const AuthPage: React.FC = () => {
               
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
-                  <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
-                  <a className="hover:text-[#006874] transition-colors" href="#">Terms</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Điều khoản</a>
                 </div>
-                <div>© 2024 UniAdmission</div>
+                <div>© 2026 UniAdmission</div>
               </footer>
             </div>
           </section>
@@ -526,13 +525,13 @@ export const AuthPage: React.FC = () => {
             UniAdmission
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="text-slate-600 font-medium hover:text-[#00616d] transition-colors duration-300" href="/">Support</a>
-            <button 
-              className="bg-[#00616d] text-white px-6 py-2.5 rounded-full font-semibold hover:scale-95 transition-transform duration-200 border-0 cursor-pointer"
+            <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
+            <a 
+              className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
-              Apply Now
-            </button>
+              Đăng ký ngay
+            </a>
           </div>
         </header>
 
@@ -552,14 +551,12 @@ export const AuthPage: React.FC = () => {
             
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
-                <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
+                <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
                   Chạm tay <br/>
                   vào <br/>
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
-                <p className="text-lg text-slate-600 mb-8 max-w-md">
-                  Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
-                </p>
+
                 
                 
                 <div className="flex flex-col gap-4">
@@ -568,8 +565,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">98% Success Rate</div>
-                      <div className="text-xs font-medium text-slate-500">Top University Admissions 2023</div>
+                      <div className="font-bold text-slate-800 text-lg">98% Tỷ lệ thành công</div>
+                      <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
                   
@@ -578,8 +575,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">Active Community</div>
-                      <div className="text-xs font-medium text-slate-500">1M+ Students Globally</div>
+                      <div className="font-bold text-slate-800 text-lg">Cộng đồng năng động</div>
+                      <div className="text-xs font-medium text-slate-500">Hơn 1 triệu Học sinh toàn cầu</div>
                     </div>
                   </div>
                 </div>
@@ -597,10 +594,10 @@ export const AuthPage: React.FC = () => {
                 
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Chào mừng trở lại</h2>
-                  <p className="text-slate-500 text-sm mb-8">Vui lòng đăng nhập để tiếp tục hành trình của bạn.</p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Chào mừng trở lại</h2>
+                  <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Vui lòng đăng nhập để tiếp tục hành trình của bạn.</p>
                   
-                  <form className="space-y-6" onSubmit={handleLoginSubmit}>
+                  <form className="space-y-8" onSubmit={handleLoginSubmit}>
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email hoặc Số điện thoại</label>
@@ -662,7 +659,8 @@ export const AuthPage: React.FC = () => {
                     <button 
                       type="submit" 
                       disabled={loadingLogin}
-                      className="w-full mt-8 h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      style={{ marginTop: "32px" }}
                     >
                       {loadingLogin ? "Đang đăng nhập..." : "Đăng nhập"}
                     </button>
@@ -679,10 +677,10 @@ export const AuthPage: React.FC = () => {
               
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
-                  <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
-                  <a className="hover:text-[#006874] transition-colors" href="#">Terms</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Điều khoản</a>
                 </div>
-                <div>© 2024 UniAdmission</div>
+                <div>© 2026 UniAdmission</div>
               </footer>
             </div>
           </section>
@@ -707,13 +705,13 @@ export const AuthPage: React.FC = () => {
             UniAdmission
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="text-slate-600 font-medium hover:text-[#00616d] transition-colors duration-300" href="/">Support</a>
-            <button 
-              className="bg-[#00616d] text-white px-6 py-2.5 rounded-full font-semibold hover:scale-95 transition-transform duration-200 border-0 cursor-pointer"
+            <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
+            <a 
+              className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
-              Apply Now
-            </button>
+              Đăng ký ngay
+            </a>
           </div>
         </header>
 
@@ -733,14 +731,12 @@ export const AuthPage: React.FC = () => {
             
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
-                <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
+                <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
                   Chạm tay <br/>
                   vào <br/>
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
-                <p className="text-lg text-slate-600 mb-8 max-w-md">
-                  Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
-                </p>
+
                 
                 
                 <div className="flex flex-col gap-4">
@@ -749,8 +745,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">98% Success Rate</div>
-                      <div className="text-xs font-medium text-slate-500">Top University Admissions 2023</div>
+                      <div className="font-bold text-slate-800 text-lg">98% Tỷ lệ thành công</div>
+                      <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
                   
@@ -759,8 +755,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">Active Community</div>
-                      <div className="text-xs font-medium text-slate-500">1M+ Students Globally</div>
+                      <div className="font-bold text-slate-800 text-lg">Cộng đồng năng động</div>
+                      <div className="text-xs font-medium text-slate-500">Hơn 1 triệu Học sinh toàn cầu</div>
                     </div>
                   </div>
                 </div>
@@ -778,10 +774,10 @@ export const AuthPage: React.FC = () => {
                 
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Quên mật khẩu</h2>
-                  <p className="text-slate-500 text-sm mb-8">Nhập email đã đăng ký để chúng tôi gửi mã khôi phục mật khẩu 4 chữ số.</p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Quên mật khẩu</h2>
+                  <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Nhập email đã đăng ký để chúng tôi gửi mã khôi phục mật khẩu 4 chữ số.</p>
                   
-                  <form className="space-y-6" onSubmit={handleForgotPasswordSubmit}>
+                  <form className="space-y-8" onSubmit={handleForgotPasswordSubmit}>
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
@@ -803,7 +799,8 @@ export const AuthPage: React.FC = () => {
                     <button 
                       type="submit" 
                       disabled={loadingForgot}
-                      className="w-full mt-8 h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      style={{ marginTop: "32px" }}
                     >
                       {loadingForgot ? "Đang gửi..." : "Gửi email khôi phục"}
                     </button>
@@ -819,10 +816,10 @@ export const AuthPage: React.FC = () => {
               
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
-                  <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
-                  <a className="hover:text-[#006874] transition-colors" href="#">Terms</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Điều khoản</a>
                 </div>
-                <div>© 2024 UniAdmission</div>
+                <div>© 2026 UniAdmission</div>
               </footer>
             </div>
           </section>
@@ -847,13 +844,13 @@ export const AuthPage: React.FC = () => {
             UniAdmission
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="text-slate-600 font-medium hover:text-[#00616d] transition-colors duration-300" href="/">Support</a>
-            <button 
-              className="bg-[#00616d] text-white px-6 py-2.5 rounded-full font-semibold hover:scale-95 transition-transform duration-200 border-0 cursor-pointer"
+            <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
+            <a 
+              className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
-              Apply Now
-            </button>
+              Đăng ký ngay
+            </a>
           </div>
         </header>
 
@@ -873,14 +870,12 @@ export const AuthPage: React.FC = () => {
             
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
-                <h1 className="text-4xl md:text-6xl text-slate-800 mb-6 leading-tight font-extrabold">
+                <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
                   Chạm tay <br/>
                   vào <br/>
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
-                <p className="text-lg text-slate-600 mb-8 max-w-md">
-                  Gia nhập cộng đồng hơn 1 triệu sinh viên đang tìm kiếm cơ hội học tập tốt nhất.
-                </p>
+
                 
                 
                 <div className="flex flex-col gap-4">
@@ -889,8 +884,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">98% Success Rate</div>
-                      <div className="text-xs font-medium text-slate-500">Top University Admissions 2023</div>
+                      <div className="font-bold text-slate-800 text-lg">98% Tỷ lệ thành công</div>
+                      <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
                   
@@ -899,8 +894,8 @@ export const AuthPage: React.FC = () => {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
                     </div>
                     <div>
-                      <div className="font-bold text-slate-800 text-lg">Active Community</div>
-                      <div className="text-xs font-medium text-slate-500">1M+ Students Globally</div>
+                      <div className="font-bold text-slate-800 text-lg">Cộng đồng năng động</div>
+                      <div className="text-xs font-medium text-slate-500">Hơn 1 triệu Học sinh toàn cầu</div>
                     </div>
                   </div>
                 </div>
@@ -918,10 +913,10 @@ export const AuthPage: React.FC = () => {
                 
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Đặt lại mật khẩu</h2>
-                  <p className="text-slate-500 text-sm mb-8">Nhập email, mã khôi phục 4 chữ số và mật khẩu mới để hoàn tất đặt lại mật khẩu.</p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Đặt lại mật khẩu</h2>
+                  <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Nhập email, mã khôi phục 4 chữ số và mật khẩu mới để hoàn tất đặt lại mật khẩu.</p>
                   
-                  <form className="space-y-4" onSubmit={handleResetPasswordSubmit}>
+                  <form className="space-y-6" onSubmit={handleResetPasswordSubmit}>
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
@@ -1014,7 +1009,8 @@ export const AuthPage: React.FC = () => {
                     <button 
                       type="submit" 
                       disabled={loadingReset}
-                      className="w-full mt-8 h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
+                      style={{ marginTop: "32px" }}
                     >
                       {loadingReset ? "Đang xử lý..." : "Đặt lại mật khẩu"}
                     </button>
@@ -1030,10 +1026,10 @@ export const AuthPage: React.FC = () => {
               
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
-                  <a className="hover:text-[#006874] transition-colors" href="#">Privacy Policy</a>
-                  <a className="hover:text-[#006874] transition-colors" href="#">Terms</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
+                  <a className="hover:text-[#006874] transition-colors" href="#">Điều khoản</a>
                 </div>
-                <div>© 2024 UniAdmission</div>
+                <div>© 2026 UniAdmission</div>
               </footer>
             </div>
           </section>
