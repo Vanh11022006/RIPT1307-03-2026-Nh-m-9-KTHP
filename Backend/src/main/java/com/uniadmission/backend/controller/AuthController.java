@@ -79,8 +79,8 @@ public class AuthController {
 
                 User user = userOpt.get();
 
-                boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword())
-                                || request.getPassword().equals(user.getPassword());
+                boolean isPasswordMatch = request.getPassword() != null
+                                && passwordEncoder.matches(request.getPassword(), user.getPassword());
 
                 if (!isPasswordMatch) {
                         return ResponseEntity.badRequest()
