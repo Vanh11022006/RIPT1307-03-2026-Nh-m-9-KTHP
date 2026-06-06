@@ -32,13 +32,14 @@ import org.springframework.http.ResponseEntity;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServiceImpl implements EmailService {
+    private static final String DEFAULT_FROM_ADDRESS = "no-reply@uniadmission.local";
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
     private final UserRepository userRepository;
     private final NotificationLogService notificationService;
 
-    @Value("${spring.mail.username}")
+    @Value("${app.mail.from:no-reply@uniadmission.local}")
     private String fromAddress;
 
     @Value("${app.frontend.base-url:http://localhost:5173}")
@@ -449,7 +450,9 @@ public class EmailServiceImpl implements EmailService {
 
         Map<String, Object> senderMap = new HashMap<>();
         senderMap.put("name", "UniAdmission");
-        senderMap.put("email", fromAddress != null && !fromAddress.trim().isEmpty() ? fromAddress : "hethongxettuyen.uniadmission@gmail.com");
+        senderMap.put("email", fromAddress != null && !fromAddress.trim().isEmpty()
+                ? fromAddress
+                : DEFAULT_FROM_ADDRESS);
 
         Map<String, Object> recipientMap = new HashMap<>();
         recipientMap.put("email", to);
