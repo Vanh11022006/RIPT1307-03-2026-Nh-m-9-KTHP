@@ -67,35 +67,35 @@ export const LandingPage: React.FC = () => {
         >
           UniAdmission
         </div>
-        <div className="hidden md:flex gap-8 items-center">
-          <button
-            onClick={() => scrollToSection("discovery")}
-            className="text-secondary-fixed-dim font-bold border-b-2 border-secondary-fixed-dim pb-1 font-body-md bg-transparent border-0 cursor-pointer"
-          >
-            Khám phá
-          </button>
-          <button
-            onClick={() => scrollToSection("journey")}
-            className="text-on-surface-variant hover:text-secondary transition-colors font-body-md bg-transparent border-0 cursor-pointer"
-          >
-            Quy trình
-          </button>
-          <button
-            onClick={() => scrollToSection("metrics")}
-            className="text-on-surface-variant hover:text-secondary transition-colors font-body-md bg-transparent border-0 cursor-pointer"
-          >
-            Thành tựu
-          </button>
-          <button
-            onClick={() => scrollToSection("footer")}
-            className="text-on-surface-variant hover:text-secondary transition-colors font-body-md bg-transparent border-0 cursor-pointer"
-          >
-            Kết nối
-          </button>
-        </div>
+        <div className="hidden md:flex gap-12 items-center">
+           <button
+             onClick={() => scrollToSection("discovery")}
+             className="text-secondary-fixed-dim font-bold border-b-2 border-secondary-fixed-dim pb-1 bg-transparent border-0 cursor-pointer text-lg tracking-wider"
+           >
+             Khám phá
+           </button>
+           <button
+             onClick={() => scrollToSection("journey")}
+             className="text-on-surface-variant hover:text-secondary transition-colors bg-transparent border-0 cursor-pointer text-lg tracking-wider font-medium"
+           >
+             Quy trình
+           </button>
+           <button
+             onClick={() => scrollToSection("metrics")}
+             className="text-on-surface-variant hover:text-secondary transition-colors bg-transparent border-0 cursor-pointer text-lg tracking-wider font-medium"
+           >
+             Thành tựu
+           </button>
+           <button
+             onClick={() => scrollToSection("footer")}
+             className="text-on-surface-variant hover:text-secondary transition-colors bg-transparent border-0 cursor-pointer text-lg tracking-wider font-medium"
+           >
+             Kết nối
+           </button>
+         </div>
         <button
           onClick={() => navigate("/register")}
-          className="bg-primary text-white font-bold px-6 py-2 rounded-full hover:scale-105 transition-all active:scale-95 border-0 cursor-pointer"
+          className="bg-primary text-white font-bold px-8 py-3 rounded-full hover:scale-105 transition-all active:scale-95 border-0 cursor-pointer text-lg"
         >
           Bắt đầu ngay
         </button>
@@ -114,7 +114,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-secondary">đại học của bạn.</span>
             </h1>
             <p className="font-body-lg text-lg text-on-surface-variant max-w-lg leading-relaxed">
-              Nền tảng tuyển sinh thông minh thế hệ mới, giúp bạn kết nối với những trường đại học hàng đầu Việt Nam và thế giới thông qua sức mạnh AI.
+              Cổng thông tin tuyển sinh trực tuyến chính thức của Bộ Giáo dục và Đào tạo, giúp kết nối học sinh với các trường Đại học và Cao đẳng trên toàn quốc.
             </p>
             <div className="flex gap-4">
               <button
@@ -162,7 +162,7 @@ export const LandingPage: React.FC = () => {
                 <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-sm text-primary">school</span>
                 </div>
-                <div className="text-xs font-bold text-primary">HUST Match</div>
+                <div className="text-xs font-bold text-primary">PTIT Match</div>
               </div>
               <div className="text-xl font-bold text-secondary">98.5%</div>
             </div>
@@ -204,11 +204,17 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-container-max mx-auto w-full">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div className="max-w-2xl">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-primary">
+              <h2 
+                className="text-3xl md:text-5xl font-bold text-primary"
+                style={{ marginBottom: '28px', lineHeight: '1.45' }}
+              >
                 Khám phá tiềm năng<br />
                 <span className="text-secondary">không giới hạn.</span>
               </h2>
-              <p className="text-on-surface-variant text-lg">
+              <p 
+                className="text-on-surface-variant text-lg"
+                style={{ lineHeight: '1.75' }}
+              >
                 Chúng tôi mang những ngôi trường danh giá nhất Việt Nam đến gần hơn với lộ trình học thuật của bạn.
               </p>
             </div>
@@ -252,12 +258,13 @@ export const LandingPage: React.FC = () => {
               <div className="relative rounded-[48px] overflow-hidden group shadow-lg">
                 <img
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  alt="VinUniversity"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KtqqTLaR_-KAKVJI1Lr8bJdF51fCMeb6Uk99foD3r7Dhf2bEVkXuR6Kjp0l_ajSBqlDWhSd4IipIsg_KIXBQZhENsGYnFY2WZCMir1tI2Db_3p0sTSUQYL7wAHe3P3zZSeMED5FhfUksNxSEOPBJBp4TBbiOx1QFiTaE6To9hqzHxUEH8wfxF0PxGZVWMEc6tnwtOBRcAKx8EYpQP5fX9CwPIGcIEdWSiceGyLD2ze3XECvkCdxyDcNkXwGSzsnpNYpRfFFob8QR"
+                  style={{ aspectRatio: "1.5", objectFit: "cover" }}
+                  alt="Học viện Công nghệ Bưu chính Viễn thông"
+                  src="https://ptit.edu.vn/wp-content/uploads/old/2022/03/2-768x1024.jpg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                 <div className="absolute bottom-8 left-8 text-white">
-                  <div className="text-xl md:text-2xl font-bold">VinUniversity</div>
+                  <div className="text-xl md:text-2xl font-bold">Học viện Bưu chính Viễn thông (PTIT)</div>
                 </div>
               </div>
             </div>
@@ -270,8 +277,18 @@ export const LandingPage: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary/20 to-transparent"></div>
         <div className="max-w-container-max mx-auto w-full">
           <div className="text-center mb-24">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-primary">Hành trình của bạn</h2>
-            <p className="text-on-surface-variant max-w-xl mx-auto">Từ khát vọng đến hiện thực chỉ qua 4 bước được tối ưu hóa bằng trí tuệ nhân tạo.</p>
+            <h2 
+              className="text-3xl md:text-5xl font-bold text-primary"
+              style={{ marginBottom: '16px' }}
+            >
+              Hành trình của bạn
+            </h2>
+            <p 
+              className="text-on-surface-variant max-w-xl"
+              style={{ margin: '0 auto', lineHeight: '1.75' }}
+            >
+              Quy trình đăng ký tuyển sinh và định hướng học tập trực tuyến theo quy định của Bộ Giáo dục và Đào tạo.
+            </p>
           </div>
 
           <div className="relative">
@@ -344,7 +361,10 @@ export const LandingPage: React.FC = () => {
               <div className="inline-block px-4 py-1 rounded-full bg-secondary/10 border border-secondary/20 text-secondary font-bold text-xs uppercase tracking-widest">
                 Tính năng ưu việt
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold text-primary">
+              <h2 
+                className="text-3xl md:text-5xl font-bold text-primary"
+                style={{ lineHeight: '1.45' }}
+              >
                 Nền tảng quản lý<br />
                 <span className="text-secondary">toàn diện.</span>
               </h2>
@@ -356,9 +376,17 @@ export const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-secondary text-2xl">psychology</span>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-2 text-primary">Trí tuệ nhân tạo tư vấn lộ trình</h4>
-                  <p className="text-on-surface-variant leading-relaxed">
-                    AI phân tích điểm mạnh và sở thích để gợi ý những ngôi trường và học bổng có tỷ lệ trúng tuyển cao nhất.
+                  <h4 
+                    className="text-xl font-bold text-primary"
+                    style={{ marginBottom: '8px' }}
+                  >
+                    Tư vấn lộ trình & Định hướng nghề nghiệp
+                  </h4>
+                  <p 
+                    className="text-on-surface-variant"
+                    style={{ lineHeight: '1.75' }}
+                  >
+                    Hệ thống tích hợp dữ liệu ngành nghề và chỉ tiêu tuyển sinh chính thức giúp định hướng lộ trình học tập tối ưu cho từng học sinh.
                   </p>
                 </div>
               </div>
@@ -368,8 +396,16 @@ export const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-primary text-2xl">inventory_2</span>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-2 text-primary">Quản lý nguyện vọng tập trung</h4>
-                  <p className="text-on-surface-variant leading-relaxed">
+                  <h4 
+                    className="text-xl font-bold text-primary"
+                    style={{ marginBottom: '8px' }}
+                  >
+                    Quản lý nguyện vọng tập trung
+                  </h4>
+                  <p 
+                    className="text-on-surface-variant"
+                    style={{ lineHeight: '1.75' }}
+                  >
                     Không còn lo lắng về hàng tá tài khoản khác nhau. Mọi hồ sơ đều nằm trên một bảng điều khiển duy nhất.
                   </p>
                 </div>
@@ -380,8 +416,16 @@ export const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-tertiary text-2xl">bolt</span>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-2 text-primary">Thông báo thời gian thực</h4>
-                  <p className="text-on-surface-variant leading-relaxed">
+                  <h4 
+                    className="text-xl font-bold text-primary"
+                    style={{ marginBottom: '8px' }}
+                  >
+                    Thông báo thời gian thực
+                  </h4>
+                  <p 
+                    className="text-on-surface-variant"
+                    style={{ lineHeight: '1.75' }}
+                  >
                     Nhận cập nhật tức thì về hạn chót, yêu cầu bổ sung và kết quả trúng tuyển qua thiết bị di động.
                   </p>
                 </div>
@@ -394,7 +438,12 @@ export const LandingPage: React.FC = () => {
       
       <section className="py-20 px-4 overflow-hidden bg-surface-container-low">
         <div className="max-w-container-max mx-auto w-full">
-          <h2 className="text-3xl md:text-5xl font-bold text-center mb-24 text-primary">Câu chuyện thành công</h2>
+          <h2 
+            className="text-3xl md:text-5xl font-bold text-center text-primary"
+            style={{ marginBottom: '48px' }}
+          >
+            Câu chuyện thành công
+          </h2>
           <div className="grid md:grid-cols-3 gap-8">
             
             <div className="glass-panel p-10 rounded-[48px] border-black/5 flex flex-col justify-between h-full hover:border-secondary/30 transition-all bg-white">
@@ -426,7 +475,7 @@ export const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>format_quote</span>
                 </div>
                 <p className="text-lg leading-relaxed text-on-surface italic">
-                  "Quy trình nộp đơn tối ưu giúp mình tiết kiệm rất nhiều thời gian khi ứng tuyển vào VinUniversity. Cảm ơn UniAdmission rất nhiều!"
+                  "Quy trình nộp đơn tối ưu giúp mình tiết kiệm rất nhiều thời gian khi ứng tuyển vào Học viện Công nghệ Bưu chính Viễn thông. Cảm ơn cổng thông tin tuyển sinh rất nhiều!"
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -437,7 +486,7 @@ export const LandingPage: React.FC = () => {
                 />
                 <div>
                   <div className="font-bold text-primary text-base">Linh Chi</div>
-                  <div className="text-xs text-on-surface-variant">Sinh viên Học bổng VinUniversity</div>
+                  <div className="text-xs text-on-surface-variant">Sinh viên Học bổng PTIT</div>
                 </div>
               </div>
             </div>
@@ -476,9 +525,6 @@ export const LandingPage: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-bold leading-tight text-primary">
               Tương lai của bạn<br />bắt đầu từ hôm nay.
             </h2>
-            <p className="text-on-surface-variant text-xl max-w-xl mx-auto">
-              Gia nhập cộng đồng 1M+ sinh viên và bắt đầu hành trình chinh phục ước mơ ngay bây giờ.
-            </p>
             <div className="pt-8">
               <button
                 onClick={() => navigate("/register")}
@@ -497,7 +543,7 @@ export const LandingPage: React.FC = () => {
           <div className="flex flex-col gap-4 text-center md:text-left">
             <div className="text-2xl md:text-3xl font-bold text-primary">UniAdmission</div>
             <p className="text-on-surface-variant font-body-md max-w-xs leading-relaxed">
-              Nâng tầm giáo dục thông qua công nghệ số và trí tuệ nhân tạo.
+              Phát triển giáo dục thông qua công nghệ số và chuyển đổi số quốc gia.
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-8 font-body-md text-on-surface-variant">

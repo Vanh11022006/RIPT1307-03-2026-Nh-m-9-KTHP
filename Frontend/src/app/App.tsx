@@ -48,7 +48,7 @@ export const App: React.FC = () => {
           borderRadius: 8,
           colorBgContainer: isDarkMode ? "#0f172a" : "#ffffff", // slate-900 or white
           colorBgElevated: isDarkMode ? "#1e293b" : "#ffffff", // slate-800 or white
-          fontFamily: "'Be Vietnam Pro', 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          fontFamily: "'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         },
         components: {
           Card: {
