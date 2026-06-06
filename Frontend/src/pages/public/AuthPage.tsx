@@ -308,9 +308,9 @@ export const AuthPage: React.FC = () => {
   if (isRegister) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        
+
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
-          <div 
+          <div
             onClick={() => navigate("/")}
             className="font-bold text-2xl text-[#00616d] tracking-tight cursor-pointer"
           >
@@ -318,7 +318,7 @@ export const AuthPage: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
-            <a 
+            <a
               className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
@@ -328,29 +328,30 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          
+
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
-              <img 
-                alt="University Campus" 
-                className="w-full h-full object-cover opacity-40" 
+              <img
+                alt="University Campus"
+                className="w-full h-full object-cover opacity-60"
                 style={{ height: "100%", objectFit: "cover" }}
-                src="https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2k09UW_hmA0sjDJIKdPQEKOmhqcaFGqOO9VSF9MUWLqxxH7FkKsuQFewVqwmJIkItBIdiSl3tervv6TzTYQAVsL3uIPNIaDp1x0wzc3VK5YxIw2rLYEZ2Dab0W_YL_dK18PXy-4niBxxcSoGLNzHF0AF2K_dW_2x99iE3MYJViAG0OtyABQ9Ucfd7OKxD2hEIRBOeWTiRKMFoye2b9uDLJ5FRv-MhNEReoKz4z78F-dNHu2kQA-frQs4Aswa2aN-k2W9uPBfK_dZa"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-transparent"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#F8FAFC] backdrop-blur-[2px] pointer-events-none"></div>
             </div>
-            
-            
+
+
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
-                  Chạm tay <br/>
-                  vào <br/>
+                  Chạm tay <br />
+                  vào <br />
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
 
-                
-                
+
+
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -361,7 +362,7 @@ export const AuthPage: React.FC = () => {
                       <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
-                  
+
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit ml-0 md:ml-12 shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#6b00af] text-white flex items-center justify-center shadow-md shrink-0">
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
@@ -374,30 +375,30 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          
+
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md md:-translate-x-12 z-20">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                
+
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Tạo tài khoản mới</h2>
                   <p className="text-slate-500 text-sm" style={{ marginBottom: "28px" }}>Bắt đầu hành trình chinh phục ước mơ học thuật của bạn.</p>
-                  
+
                   <form className="space-y-6" onSubmit={handleRegisterSubmit}>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Họ và tên</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'fullName' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">person</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="Nguyễn Văn A" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="Nguyễn Văn A"
                           type="text"
                           value={regFullName}
                           onChange={(e) => regFullName !== e.target.value && setRegFullName(e.target.value)}
@@ -407,14 +408,14 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'phone' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">call</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="0901 234 567" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="0901 234 567"
                           type="tel"
                           value={regPhone}
                           onChange={(e) => regPhone !== e.target.value && setRegPhone(e.target.value)}
@@ -424,14 +425,14 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">mail</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="example@email.com" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="example@email.com"
                           type="email"
                           value={regEmail}
                           onChange={(e) => regEmail !== e.target.value && setRegEmail(e.target.value)}
@@ -441,14 +442,14 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">lock</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="••••••••" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="••••••••"
                           type="password"
                           value={regPassword}
                           onChange={(e) => regPassword !== e.target.value && setRegPassword(e.target.value)}
@@ -458,14 +459,14 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Xác nhận mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'confirmPassword' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">enhanced_encryption</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="••••••••" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="••••••••"
                           type="password"
                           value={regConfirmPassword}
                           onChange={(e) => regConfirmPassword !== e.target.value && setRegConfirmPassword(e.target.value)}
@@ -475,9 +476,9 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
-                    <button 
-                      type="submit" 
+
+                    <button
+                      type="submit"
                       disabled={loadingRegister}
                       className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
                       style={{ marginTop: "32px" }}
@@ -494,7 +495,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              
+
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
@@ -506,7 +507,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        
+
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -516,9 +517,9 @@ export const AuthPage: React.FC = () => {
   if (isLogin) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        
+
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
-          <div 
+          <div
             onClick={() => navigate("/")}
             className="font-bold text-2xl text-[#00616d] tracking-tight cursor-pointer"
           >
@@ -526,7 +527,7 @@ export const AuthPage: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
-            <a 
+            <a
               className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
@@ -536,29 +537,30 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          
+
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
-              <img 
-                alt="University Campus" 
-                className="w-full h-full object-cover opacity-40" 
+              <img
+                alt="University Campus"
+                className="w-full h-full object-cover opacity-60"
                 style={{ height: "100%", objectFit: "cover" }}
-                src="https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2k09UW_hmA0sjDJIKdPQEKOmhqcaFGqOO9VSF9MUWLqxxH7FkKsuQFewVqwmJIkItBIdiSl3tervv6TzTYQAVsL3uIPNIaDp1x0wzc3VK5YxIw2rLYEZ2Dab0W_YL_dK18PXy-4niBxxcSoGLNzHF0AF2K_dW_2x99iE3MYJViAG0OtyABQ9Ucfd7OKxD2hEIRBOeWTiRKMFoye2b9uDLJ5FRv-MhNEReoKz4z78F-dNHu2kQA-frQs4Aswa2aN-k2W9uPBfK_dZa"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-transparent"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#F8FAFC] backdrop-blur-[2px] pointer-events-none"></div>
             </div>
-            
-            
+
+
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
-                  Chạm tay <br/>
-                  vào <br/>
+                  Chạm tay <br />
+                  vào <br />
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
 
-                
-                
+
+
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -569,7 +571,7 @@ export const AuthPage: React.FC = () => {
                       <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
-                  
+
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit ml-0 md:ml-12 shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#6b00af] text-white flex items-center justify-center shadow-md shrink-0">
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
@@ -582,30 +584,30 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          
+
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md md:-translate-x-12 z-20">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                
+
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Chào mừng trở lại</h2>
                   <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Vui lòng đăng nhập để tiếp tục hành trình của bạn.</p>
-                  
+
                   <form className="space-y-8" onSubmit={handleLoginSubmit}>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email hoặc Số điện thoại</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">person</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="example@email.com" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="example@email.com"
                           type="text"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
@@ -615,22 +617,22 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">lock</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="••••••••" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="••••••••"
                           type={showPassword ? "text" : "password"}
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           onFocus={() => setFocusedField('password')}
                           onBlur={() => setFocusedField(null)}
                         />
-                        <button 
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
+                        <button
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0"
                           onClick={() => setShowPassword(!showPassword)}
                           type="button"
                         >
@@ -639,11 +641,11 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="flex items-center justify-between px-1">
                       <label className="flex items-center gap-2 cursor-pointer group select-none">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={loginRemember}
                           onChange={(e) => setLoginRemember(e.target.checked)}
                           className="w-4 h-4 rounded border-slate-300 text-[#006874] focus:ring-[#006874]/20 cursor-pointer"
@@ -655,9 +657,9 @@ export const AuthPage: React.FC = () => {
                       </Link>
                     </div>
 
-                    
-                    <button 
-                      type="submit" 
+
+                    <button
+                      type="submit"
                       disabled={loadingLogin}
                       className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
                       style={{ marginTop: "32px" }}
@@ -674,7 +676,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              
+
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
@@ -686,7 +688,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        
+
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -696,9 +698,9 @@ export const AuthPage: React.FC = () => {
   if (isForgotPassword) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        
+
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
-          <div 
+          <div
             onClick={() => navigate("/")}
             className="font-bold text-2xl text-[#00616d] tracking-tight cursor-pointer"
           >
@@ -706,7 +708,7 @@ export const AuthPage: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
-            <a 
+            <a
               className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
@@ -716,29 +718,30 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          
+
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
-              <img 
-                alt="University Campus" 
-                className="w-full h-full object-cover opacity-40" 
+              <img
+                alt="University Campus"
+                className="w-full h-full object-cover opacity-60"
                 style={{ height: "100%", objectFit: "cover" }}
-                src="https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2k09UW_hmA0sjDJIKdPQEKOmhqcaFGqOO9VSF9MUWLqxxH7FkKsuQFewVqwmJIkItBIdiSl3tervv6TzTYQAVsL3uIPNIaDp1x0wzc3VK5YxIw2rLYEZ2Dab0W_YL_dK18PXy-4niBxxcSoGLNzHF0AF2K_dW_2x99iE3MYJViAG0OtyABQ9Ucfd7OKxD2hEIRBOeWTiRKMFoye2b9uDLJ5FRv-MhNEReoKz4z78F-dNHu2kQA-frQs4Aswa2aN-k2W9uPBfK_dZa"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-transparent"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#F8FAFC] backdrop-blur-[2px] pointer-events-none"></div>
             </div>
-            
-            
+
+
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
-                  Chạm tay <br/>
-                  vào <br/>
+                  Chạm tay <br />
+                  vào <br />
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
 
-                
-                
+
+
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -749,7 +752,7 @@ export const AuthPage: React.FC = () => {
                       <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
-                  
+
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit ml-0 md:ml-12 shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#6b00af] text-white flex items-center justify-center shadow-md shrink-0">
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
@@ -762,30 +765,30 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          
+
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md md:-translate-x-12 z-20">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                
+
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Quên mật khẩu</h2>
                   <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Nhập email đã đăng ký để chúng tôi gửi mã khôi phục mật khẩu 4 chữ số.</p>
-                  
+
                   <form className="space-y-8" onSubmit={handleForgotPasswordSubmit}>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">mail</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="example@email.com" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="example@email.com"
                           type="email"
                           value={forgotEmail}
                           onChange={(e) => setForgotEmail(e.target.value)}
@@ -795,9 +798,9 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
-                    <button 
-                      type="submit" 
+
+                    <button
+                      type="submit"
                       disabled={loadingForgot}
                       className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
                       style={{ marginTop: "32px" }}
@@ -813,7 +816,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              
+
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
@@ -825,7 +828,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        
+
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
@@ -835,9 +838,9 @@ export const AuthPage: React.FC = () => {
   if (isResetPassword) {
     return (
       <div className="landing-page-root w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-x-hidden relative">
-        
+
         <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-4 bg-transparent">
-          <div 
+          <div
             onClick={() => navigate("/")}
             className="font-bold text-2xl text-[#00616d] tracking-tight cursor-pointer"
           >
@@ -845,7 +848,7 @@ export const AuthPage: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300" href="/">Hỗ trợ</a>
-            <a 
+            <a
               className="text-sm text-slate-900 font-semibold hover:text-[#00616d] transition-colors duration-300 cursor-pointer"
               onClick={() => navigate("/register")}
             >
@@ -855,29 +858,30 @@ export const AuthPage: React.FC = () => {
         </header>
 
         <main className="min-h-screen flex flex-col md:flex-row relative">
-          
+
           <section className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen overflow-hidden bg-white flex flex-col justify-center">
             <div className="absolute inset-0">
-              <img 
-                alt="University Campus" 
-                className="w-full h-full object-cover opacity-40" 
+              <img
+                alt="University Campus"
+                className="w-full h-full object-cover opacity-60"
                 style={{ height: "100%", objectFit: "cover" }}
-                src="https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2k09UW_hmA0sjDJIKdPQEKOmhqcaFGqOO9VSF9MUWLqxxH7FkKsuQFewVqwmJIkItBIdiSl3tervv6TzTYQAVsL3uIPNIaDp1x0wzc3VK5YxIw2rLYEZ2Dab0W_YL_dK18PXy-4niBxxcSoGLNzHF0AF2K_dW_2x99iE3MYJViAG0OtyABQ9Ucfd7OKxD2hEIRBOeWTiRKMFoye2b9uDLJ5FRv-MhNEReoKz4z78F-dNHu2kQA-frQs4Aswa2aN-k2W9uPBfK_dZa"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-transparent"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#F8FAFC] backdrop-blur-[2px] pointer-events-none"></div>
             </div>
-            
-            
+
+
             <div className="relative h-full flex flex-col justify-center px-6 md:px-20 z-10 py-20 md:py-0">
               <div className="max-w-xl">
                 <h1 className="text-4xl md:text-6xl text-slate-800 leading-normal font-extrabold" style={{ marginBottom: "24px" }}>
-                  Chạm tay <br/>
-                  vào <br/>
+                  Chạm tay <br />
+                  vào <br />
                   <span className="bg-gradient-to-r from-[#00616d] to-[#00daf3] bg-clip-text text-transparent font-extrabold">tương lai</span>
                 </h1>
 
-                
-                
+
+
                 <div className="flex flex-col gap-4">
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#00616d] text-white flex items-center justify-center shadow-md shrink-0">
@@ -888,7 +892,7 @@ export const AuthPage: React.FC = () => {
                       <div className="text-xs font-medium text-slate-500">Tuyển sinh Đại học hàng đầu 2026</div>
                     </div>
                   </div>
-                  
+
                   <div className="glass-panel transform-card p-4 rounded-2xl flex items-center gap-4 transform hover:-translate-y-1 transition-all w-fit ml-0 md:ml-12 shadow-lg border border-white/20 bg-white/40 backdrop-blur-xl">
                     <div className="w-12 h-12 rounded-full bg-[#6b00af] text-white flex items-center justify-center shadow-md shrink-0">
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>diversity_3</span>
@@ -901,30 +905,30 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#00E3FD]/10 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F2DAFF]/10 blur-3xl rounded-full pointer-events-none"></div>
           </section>
 
-          
+
           <section className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 md:py-24 bg-[#F8FAFC]">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md md:-translate-x-12 z-20">
               <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-8 md:p-10 border border-slate-200/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden">
-                
+
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E3FD]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900" style={{ marginBottom: "12px" }}>Đặt lại mật khẩu</h2>
                   <p className="text-slate-500 text-sm" style={{ marginBottom: "32px" }}>Nhập email, mã khôi phục 4 chữ số và mật khẩu mới để hoàn tất đặt lại mật khẩu.</p>
-                  
+
                   <form className="space-y-6" onSubmit={handleResetPasswordSubmit}>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">mail</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="example@email.com" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-6 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="example@email.com"
                           type="email"
                           value={resetEmail}
                           onChange={(e) => setResetEmail(e.target.value)}
@@ -934,7 +938,7 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mã khôi phục</label>
                       <div className="grid grid-cols-4 gap-4">
@@ -957,22 +961,22 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Mật khẩu mới</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'newPassword' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">lock</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="••••••••" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="••••••••"
                           type={showNewPassword ? "text" : "password"}
                           value={resetNewPassword}
                           onChange={(e) => setResetNewPassword(e.target.value)}
                           onFocus={() => setFocusedField('newPassword')}
                           onBlur={() => setFocusedField(null)}
                         />
-                        <button 
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
+                        <button
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0"
                           onClick={() => setShowNewPassword(!showNewPassword)}
                           type="button"
                         >
@@ -981,22 +985,22 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-slate-700 ml-1">Xác nhận mật khẩu mới</label>
                       <div className={`relative group transition-all duration-300 ${focusedField === 'confirmPassword' ? 'scale-[1.01]' : ''}`}>
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#00daf3] transition-colors text-slate-400">enhanced_encryption</span>
-                        <input 
-                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]" 
-                          placeholder="••••••••" 
+                        <input
+                          className="w-full h-12 bg-white border border-slate-200/50 rounded-full pl-12 pr-12 text-slate-800 placeholder:text-slate-400 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.03)] transition-all focus:border-[#00daf3] focus:ring-4 focus:ring-[#00e3fd]/10 focus:shadow-[0_4px_12px_rgba(0,227,253,0.15)]"
+                          placeholder="••••••••"
                           type={showConfirmPassword ? "text" : "password"}
                           value={resetConfirmPassword}
                           onChange={(e) => setResetConfirmPassword(e.target.value)}
                           onFocus={() => setFocusedField('confirmPassword')}
                           onBlur={() => setFocusedField(null)}
                         />
-                        <button 
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0" 
+                        <button
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00daf3] transition-colors bg-transparent border-0 cursor-pointer flex items-center justify-center p-0"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           type="button"
                         >
@@ -1005,9 +1009,9 @@ export const AuthPage: React.FC = () => {
                       </div>
                     </div>
 
-                    
-                    <button 
-                      type="submit" 
+
+                    <button
+                      type="submit"
                       disabled={loadingReset}
                       className="w-full h-12 rounded-full bg-[#00e3fd] hover:bg-[#00daf3] text-[#001f24] font-bold text-base shadow-[0_8px_20px_rgba(0,227,253,0.35)] hover:shadow-[0_10px_25px_rgba(0,227,253,0.5)] active:scale-[0.98] transition-all duration-300 border-0 cursor-pointer flex items-center justify-center"
                       style={{ marginTop: "32px" }}
@@ -1023,7 +1027,7 @@ export const AuthPage: React.FC = () => {
                 </div>
               </div>
 
-              
+
               <footer className="mt-8 flex justify-between items-center text-xs text-slate-400">
                 <div className="flex gap-4">
                   <a className="hover:text-[#006874] transition-colors" href="#">Chính sách bảo mật</a>
@@ -1035,7 +1039,7 @@ export const AuthPage: React.FC = () => {
           </section>
         </main>
 
-        
+
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#00E3FD]/5 blur-3xl pointer-events-none -z-10"></div>
         <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#F2DAFF]/5 blur-3xl pointer-events-none -z-10"></div>
       </div>
