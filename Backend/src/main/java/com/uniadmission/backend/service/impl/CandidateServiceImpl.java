@@ -24,6 +24,17 @@ public class CandidateServiceImpl implements CandidateService {
 
     @Override
     public Candidate getProfile(Long userId) {
+        // Chống lỗ hổng IDOR: Thí sinh chỉ được truy cập hồ sơ của chính mình. Admin được truy cập tất cả.
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            String currentEmail = auth.getName();
+            User currentUser = userRepository.findByEmail(currentEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng đang đăng nhập"));
+            if (!"ADMIN".equalsIgnoreCase(currentUser.getRole()) && !currentUser.getId().equals(userId)) {
+                throw new org.springframework.security.access.AccessDeniedException("Từ chối truy cập: Bạn không có quyền xem/sửa hồ sơ này");
+            }
+        }
+
         Optional<Candidate> candidateOpt = candidateRepository.findByUser_Id(userId);
         if (candidateOpt.isPresent()) {
             return candidateOpt.get();

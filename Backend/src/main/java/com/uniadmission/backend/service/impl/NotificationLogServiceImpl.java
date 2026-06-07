@@ -47,8 +47,33 @@ public class NotificationLogServiceImpl implements NotificationLogService {
         return saved;
     }
 
+    private void verifyUserAccess(Long userId) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            String currentEmail = auth.getName();
+            com.uniadmission.backend.entity.User currentUser = userRepository.findByEmail(currentEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng đăng nhập"));
+            if (!"ADMIN".equalsIgnoreCase(currentUser.getRole()) && !currentUser.getId().equals(userId)) {
+                throw new org.springframework.security.access.AccessDeniedException("Từ chối truy cập: Bạn không thể xem/sửa thông báo của người dùng khác");
+            }
+        }
+    }
+
+    private void verifyNotificationOwnership(NotificationLog log) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            String currentEmail = auth.getName();
+            com.uniadmission.backend.entity.User currentUser = userRepository.findByEmail(currentEmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng đăng nhập"));
+            if (!"ADMIN".equalsIgnoreCase(currentUser.getRole()) && !currentUser.getId().equals(log.getUserId())) {
+                throw new org.springframework.security.access.AccessDeniedException("Từ chối truy cập: Bạn không sở hữu thông báo này");
+            }
+        }
+    }
+
     @Override
     public List<NotificationLog> getUserNotifications(Long userId) {
+        verifyUserAccess(userId);
         List<NotificationLog> logs = repository.findByUserIdOrderByCreatedAtDesc(userId);
         enrichRecipientFields(logs);
         return logs;
@@ -64,6 +89,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
 
     @Override
     public List<NotificationLog> getUnreadNotifications(Long userId) {
+        verifyUserAccess(userId);
         List<NotificationLog> logs = repository.findByUserIdAndIsReadFalse(userId);
         enrichRecipientFields(logs);
         return logs;
@@ -130,19 +156,22 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     public void markAsRead(Long id) {
         NotificationLog log = repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
+        verifyNotificationOwnership(log);
         log.setRead(true);
         repository.save(log);
     }
 
     @Override
     public void deleteNotification(Long id) {
-        repository.findById(java.util.Objects.requireNonNull(id))
+        NotificationLog log = repository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
+        verifyNotificationOwnership(log);
         repository.deleteById(id);
     }
 
     @Override
     public void deleteNotificationsByUserId(Long userId) {
+        verifyUserAccess(userId);
         List<NotificationLog> logs = repository
                 .findByUserIdOrderByCreatedAtDesc(java.util.Objects.requireNonNull(userId));
         if (logs == null) {
@@ -158,6 +187,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
 
     @Override
     public void markAllAsRead(Long userId) {
+        verifyUserAccess(userId);
         List<NotificationLog> unreadLogs = repository.findByUserIdAndIsReadFalse(userId);
         unreadLogs.forEach(log -> log.setRead(true));
         repository.saveAll(unreadLogs);

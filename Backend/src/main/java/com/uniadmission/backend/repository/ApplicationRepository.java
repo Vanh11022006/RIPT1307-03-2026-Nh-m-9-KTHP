@@ -21,6 +21,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     })
     List<Application> findByCandidate_Id(Long candidateId);
 
+    boolean existsByCandidateIdAndMajorIdAndAdmissionRoundId(Long candidateId, Long majorId, Long admissionRoundId);
+
+    boolean existsByCandidateIdAndMajorIdAndAdmissionRoundIdAndIdNot(Long candidateId, Long majorId, Long admissionRoundId, Long id);
+
     Page<Application> findByStatus(ApplicationStatus status, @org.springframework.lang.NonNull Pageable pageable);
 
     long countByStatus(ApplicationStatus status);

@@ -60,6 +60,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         private final MajorRepository majorRepository;
         private final AdmissionRoundRepository admissionRoundRepository;
         private final SubjectGroupRepository subjectGroupRepository;
+        private final com.uniadmission.backend.service.FileService fileService;
+        private final com.uniadmission.backend.repository.AttachmentRepository attachmentRepository;
 
         private Application applyRequest(Application application, ApplicationSubmitRequest request,
                         boolean requireMajorAndSubjectGroup) {
@@ -388,8 +390,26 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
         }
 
+        private void verifyApplicationOwnership(Application application) {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated()) {
+                        String currentEmail = auth.getName();
+                        User currentUser = userRepository.findByEmail(currentEmail)
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng đăng nhập"));
+                        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+                                if (application.getCandidate() == null || !currentUser.getId().equals(application.getCandidate().getUser().getId())) {
+                                        throw new org.springframework.security.access.AccessDeniedException("Từ chối truy cập: Bạn không có quyền sở hữu hồ sơ này");
+                                }
+                        }
+                }
+        }
+
         @Override
         public Application submit(ApplicationSubmitRequest request) {
+                if (applicationRepository.existsByCandidateIdAndMajorIdAndAdmissionRoundId(
+                                request.getCandidateId(), request.getMajorId(), request.getAdmissionRoundId())) {
+                        throw new RuntimeException("Bạn đã nộp hồ sơ xét tuyển cho ngành này trong đợt tuyển sinh này rồi.");
+                }
                 Application application = applyRequest(new Application(), request, true);
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.PENDING);
@@ -400,6 +420,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Override
         public Application saveDraft(ApplicationSubmitRequest request) {
+                if (applicationRepository.existsByCandidateIdAndMajorIdAndAdmissionRoundId(
+                                request.getCandidateId(), request.getMajorId(), request.getAdmissionRoundId())) {
+                        throw new RuntimeException("Bạn đã nộp hồ sơ xét tuyển cho ngành này trong đợt tuyển sinh này rồi.");
+                }
                 Application application = applyRequest(new Application(), request, false);
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.DRAFT);
@@ -410,6 +434,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         public Application updateDraft(Long id, ApplicationSubmitRequest request) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                verifyApplicationOwnership(application);
+                if (applicationRepository.existsByCandidateIdAndMajorIdAndAdmissionRoundIdAndIdNot(
+                                request.getCandidateId(), request.getMajorId(), request.getAdmissionRoundId(), id)) {
+                        throw new RuntimeException("Bạn đã nộp hồ sơ xét tuyển cho ngành này trong đợt tuyển sinh này rồi.");
+                }
                 application = applyRequest(application, request, false);
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.DRAFT);
@@ -420,6 +449,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         public Application submitDraft(Long id, ApplicationSubmitRequest request) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                verifyApplicationOwnership(application);
+                if (applicationRepository.existsByCandidateIdAndMajorIdAndAdmissionRoundIdAndIdNot(
+                                request.getCandidateId(), request.getMajorId(), request.getAdmissionRoundId(), id)) {
+                        throw new RuntimeException("Bạn đã nộp hồ sơ xét tuyển cho ngành này trong đợt tuyển sinh này rồi.");
+                }
                 application = applyRequest(application, request, true);
                 application.setSubmissionDate(java.time.LocalDateTime.now());
                 application.setStatus(ApplicationStatus.PENDING);
@@ -430,6 +464,20 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Override
         public List<Application> getApplicationsByCandidate(Long candidateId) {
+                // IDOR check: Candidate can only view their own applications. Admin can view any.
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated()) {
+                        String currentEmail = auth.getName();
+                        User currentUser = userRepository.findByEmail(currentEmail)
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng đăng nhập"));
+                        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+                                Candidate candidate = candidateRepository.findById(candidateId)
+                                                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thí sinh"));
+                                if (!currentUser.getId().equals(candidate.getUser().getId())) {
+                                        throw new org.springframework.security.access.AccessDeniedException("Từ chối truy cập: Bạn không thể xem hồ sơ của thí sinh khác");
+                                }
+                        }
+                }
                 return applicationRepository.findByCandidate_Id(candidateId);
         }
 
@@ -438,6 +486,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 Application application = applicationRepository
                                 .findById(java.util.Objects.requireNonNull(applicationId))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                verifyApplicationOwnership(application);
                 application.setStatus(ApplicationStatus.CANCELLED);
                 applicationRepository.save(application);
         }
@@ -621,6 +670,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         com.uniadmission.backend.dto.request.ApplicationSubmitRequest request) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                verifyApplicationOwnership(application);
 
                 if (request.getMajorId() != null) {
                         Major major = majorRepository.findById(java.util.Objects.requireNonNull(request.getMajorId()))
@@ -666,6 +716,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         public void deleteApplication(Long id) {
                 Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
                                 .orElseThrow(() -> new RuntimeException("Application not found"));
+                verifyApplicationOwnership(application);
                 applicationRepository.delete(java.util.Objects.requireNonNull(application));
         }
 
@@ -909,10 +960,39 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
 
                 if (admissionRoundId != null) {
-                        specification = specification.and((root, query, cb) -> cb
-                                        .equal(root.get("admissionRound").get("id"), admissionRoundId));
+                         specification = specification.and((root, query, cb) -> cb
+                                         .equal(root.get("admissionRound").get("id"), admissionRoundId));
                 }
 
                 return specification;
+        }
+
+        @Override
+        public Application getApplicationById(Long id) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
+                verifyApplicationOwnership(application);
+                return application;
+        }
+
+        @Override
+        @org.springframework.transaction.annotation.Transactional
+        public void uploadAttachments(Long id, List<org.springframework.web.multipart.MultipartFile> files) {
+                Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ ID: " + id));
+                verifyApplicationOwnership(application);
+
+                if (files != null) {
+                        files.forEach(file -> {
+                                String fileName = fileService.storeFile(file);
+                                com.uniadmission.backend.entity.Attachment attachment = com.uniadmission.backend.entity.Attachment.builder()
+                                                .fileName(file.getOriginalFilename())
+                                                .fileType(file.getContentType())
+                                                .filePath(fileName)
+                                                .application(application)
+                                                .build();
+                                attachmentRepository.save(java.util.Objects.requireNonNull(attachment));
+                        });
+                }
         }
 }

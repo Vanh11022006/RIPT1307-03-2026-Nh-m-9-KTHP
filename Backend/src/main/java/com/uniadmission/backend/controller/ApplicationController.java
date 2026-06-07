@@ -50,21 +50,7 @@ public class ApplicationController {
     public ResponseEntity<ApiResponse<Void>> uploadAttachments(
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) {
-
-        Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ ID: " + id));
-
-        files.forEach(file -> {
-            String fileName = fileService.storeFile(file);
-            Attachment attachment = Attachment.builder()
-                    .fileName(file.getOriginalFilename())
-                    .fileType(file.getContentType())
-                    .filePath(fileName)
-                    .application(application)
-                    .build();
-            attachmentRepository.save(java.util.Objects.requireNonNull(attachment));
-        });
-
+        applicationService.uploadAttachments(id, files);
         return ResponseEntity.ok(new ApiResponse<>(true, "Upload " + files.size() + " files thành công", null));
     }
 
@@ -309,9 +295,7 @@ public class ApplicationController {
     @GetMapping("/{id}")
     @Operation(summary = "Chi tiết hồ sơ", description = "Lấy thông tin chi tiết của một hồ sơ")
     public ResponseEntity<ApiResponse<ApplicationResponse>> getApplicationDetail(@PathVariable Long id) {
-        Application application = applicationRepository.findById(java.util.Objects.requireNonNull(id))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
-
+        Application application = applicationService.getApplicationById(id);
         ApplicationResponse resp = mapToResponse(application);
         return ResponseEntity.ok(new ApiResponse<>(true, "Lấy chi tiết hồ sơ thành công", resp));
     }
