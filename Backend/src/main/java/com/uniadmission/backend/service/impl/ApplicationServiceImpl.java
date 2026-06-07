@@ -9,6 +9,7 @@ import com.uniadmission.backend.entity.Candidate;
 import com.uniadmission.backend.entity.Major;
 import com.uniadmission.backend.entity.SubjectGroup;
 import com.uniadmission.backend.entity.ApplicationReviewLog;
+import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.entity.enums.ApplicationStatus;
 import com.uniadmission.backend.repository.AdmissionRoundRepository;
 import com.uniadmission.backend.repository.ApplicationRepository;
