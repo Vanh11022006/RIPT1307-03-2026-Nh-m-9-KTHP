@@ -47,4 +47,8 @@ public interface ApplicationService {
                         Long admissionRoundId, int page, int size);
 
         ApplicationStatisticsResponse getApplicationStatistics(Long universityId, Long majorId, Long admissionRoundId);
+
+        Application getApplicationById(Long id);
+
+        void uploadAttachments(Long id, java.util.List<org.springframework.web.multipart.MultipartFile> files);
 }

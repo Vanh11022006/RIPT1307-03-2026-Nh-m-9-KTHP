@@ -12,6 +12,7 @@ import com.uniadmission.backend.entity.Application;
 import com.uniadmission.backend.entity.Candidate;
 import com.uniadmission.backend.entity.User;
 import com.uniadmission.backend.repository.ApplicationRepository;
+import com.uniadmission.backend.repository.UserRepository;
 import com.uniadmission.backend.security.CustomUserDetailsService;
 import com.uniadmission.backend.security.JwtTokenProvider;
 import com.uniadmission.backend.service.ApplicationService;
@@ -38,6 +39,9 @@ class AdminControllerBulkEmailTest {
 
     @MockBean
     private ApplicationRepository applicationRepository;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @MockBean
     private EmailService emailService;

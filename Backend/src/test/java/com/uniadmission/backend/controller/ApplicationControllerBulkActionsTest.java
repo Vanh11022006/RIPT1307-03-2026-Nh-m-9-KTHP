@@ -75,7 +75,7 @@ class ApplicationControllerBulkActionsTest {
                 .accept(MediaType.valueOf("text/csv")))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.valueOf("text/csv")))
-                .andExpect(content().string("ID,Mã hồ sơ\n1,HS20260001\n"));
+                .andExpect(content().string("\uFEFFID,Mã hồ sơ\n1,HS20260001\n"));
 
         verify(applicationService).exportApplicationsCsv(
                 eq(com.uniadmission.backend.entity.enums.ApplicationStatus.PENDING), eq(1L), eq(2L), eq(3L));

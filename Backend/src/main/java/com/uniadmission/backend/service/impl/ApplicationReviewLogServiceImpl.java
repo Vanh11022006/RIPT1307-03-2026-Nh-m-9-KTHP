@@ -172,6 +172,10 @@ public class ApplicationReviewLogServiceImpl implements ApplicationReviewLogServ
                         .build())
                 .collect(Collectors.toList());
 
+        List<ApplicationReviewLog> reviewLogs = repository
+                .findByApplicationIdAndActionTypeOrderByCreatedAtDesc(application.getId(),
+                        ApplicationReviewActionType.REVIEW_SCORE);
+
         return ApplicationReviewSummaryResponse.builder()
                 .applicationId(application.getId())
                 .assignedReviewers(reviewers)
@@ -179,7 +183,7 @@ public class ApplicationReviewLogServiceImpl implements ApplicationReviewLogServ
                 .reviewCount(reviewCount)
                 .reviewedBy(application.getReviewedBy())
                 .reviewedAt(application.getReviewedAt())
-                .reviewLogs(Collections.emptyList())
+                .reviewLogs(reviewLogs)
                 .build();
     }
 
