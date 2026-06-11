@@ -251,30 +251,41 @@ export const CandidateDashboard: React.FC = () => {
               onClick={() => navigate("/candidate/applications")}
               className="text-[#00616D] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap shrink-0"
             >
-              Xem tất cả
+      Xem tất cả
               <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
             </a>
           </div>
 
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-6">
             {applications.length > 0 ? (
               [...applications]
                 .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
                 .slice(0, 3)
                 .map((app) => {
-                  const univName = getUniversityName(app.universityId);
+                  const university = safeUniversities.find(u => u.id === app.universityId);
+                  const univName = university?.name || getUniversityName(app.universityId);
                   const majorName = getMajorName(app.majorId);
                   const roundName = getRoundName(app.admissionRoundId);
 
-                  // Fallback images matching mockup
-                  let imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvN0Sk4JKTdaEUCkpCz9iZqfPmM3Tfg7bwTrY79ZnGUAxKMXrMiG6k_y0Z36iqX3RHeXoAMo6uBIpjPpeYl1S3Js8NzKF6HkVYonDszcLDZohmR4DjT1d7gaEEcZ2kOxZ8VlmlVtsP-sA2rOAiGWN6WTOyU5l9xqmbrSYPxrZviLCxeG0SXfWsPbjlR94JQQAIxQ6toT_rJaPB_hX-jMuPc1xJUa44TanghrYzdst_GgIrE8gqN4S84VqCh";
-                  let imageAlt = "Bách Khoa Hanoi";
-                  if (univName.toLowerCase().includes("vinuniversity") || univName.toLowerCase().includes("vinuni") || univName.toLowerCase().includes("ptit") || univName.toLowerCase().includes("bưu chính")) {
-                    imageUrl = "https://ptit.edu.vn/wp-content/uploads/old/2022/03/2-768x1024.jpg";
-                    imageAlt = "PTIT";
-                  } else if (univName.toLowerCase().includes("quốc gia") || univName.toLowerCase().includes("vnu")) {
-                    imageUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvV9YZffv4RNtTr2B5sC_J_n6MIwWBj4atOKZ2fPziOz9JSfVO4_Tpkr2jEWiuCRJQwubLAP8fp5QVyY9LphGEekhm8XWk0TcNyyE0FpHF78phFXPMIaEYTpxS5GqJHlcPRARv92TRwqmtAl7irWY8X6IDEmxapoix7MaOGWwQuMocNKCNRZiE8VBUQ0Z97unTRZaLAguto3H27Tl9fpHW4mh9nsocET48juVkcUm0-2_16DtXx";
-                    imageAlt = "Đại học Quốc gia TP.HCM";
+                  // Resolve school logo URL
+                  let logoUrl = "";
+                  let imageAlt = university?.shortName || university?.name || univName;
+
+                  if (university?.logo && (university.logo.startsWith("http") || university.logo.startsWith("/"))) {
+                    logoUrl = university.logo;
+                  } else {
+                    const nameLower = univName.toLowerCase();
+                    if (nameLower.includes("vinuniversity") || nameLower.includes("vinuni")) {
+                      logoUrl = "https://upload.wikimedia.org/wikipedia/commons/0/05/Logo_VinUniversity.png";
+                    } else if (nameLower.includes("ptit") || nameLower.includes("bưu chính") || nameLower.includes("viễn thông")) {
+                      logoUrl = "https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_PTIT.png";
+                    } else if (nameLower.includes("quốc gia") || nameLower.includes("vnu") || nameLower.includes("đhqg")) {
+                      logoUrl = "https://upload.wikimedia.org/wikipedia/commons/d/d4/Logo_%C4%90HQG-HCM.png";
+                    } else if (nameLower.includes("bách khoa") || nameLower.includes("hust") || nameLower.includes("science and technology")) {
+                      logoUrl = "https://upload.wikimedia.org/wikipedia/commons/b/b8/Logo_Hust.png";
+                    } else if (nameLower.includes("fpt")) {
+                      logoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/FPT_logo.svg/320px-FPT_logo.svg.png";
+                    }
                   }
 
                   // Status configurations
@@ -299,16 +310,29 @@ export const CandidateDashboard: React.FC = () => {
                     <div
                       key={app.id}
                       onClick={() => navigate(`/candidate/applications/${app.id}`)}
-                      className="bg-white border border-black/[0.08] p-3 rounded-lg flex flex-col md:flex-row gap-6 hover:border-[#00E3FD]/50 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,227,253,0.08)] transition-all duration-300 group cursor-pointer"
+                      className="bg-white border border-black/[0.08] p-4 rounded-lg flex flex-row items-center gap-5 hover:border-[#00E3FD]/50 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,227,253,0.08)] transition-all duration-300 group cursor-pointer"
                     >
-                      <div className="w-full md:w-48 h-32 rounded-md overflow-hidden flex-shrink-0">
-                        <img
-                          alt={imageAlt}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          src={imageUrl}
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center py-2">
+                      {logoUrl ? (
+                        <div className="w-16 h-16 rounded-xl bg-slate-50 border border-black/[0.06] flex items-center justify-center p-2 flex-shrink-0">
+                          <img
+                            alt={imageAlt}
+                            className="w-full h-full object-contain"
+                            src={logoUrl}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `<span class="material-symbols-outlined text-3xl text-[#00616D]">school</span>`;
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-[#00616D]/5 border border-[#00616D]/10 flex items-center justify-center flex-shrink-0">
+                          <span className="material-symbols-outlined text-3xl text-[#00616D]">school</span>
+                        </div>
+                      )}
+                      <div className="flex-1 flex flex-col justify-center py-1">
                         <div className="flex justify-between items-start gap-4">
                           <div>
                             <p className="text-xs font-bold text-[#00616D] uppercase tracking-wider m-0">{majorName}</p>
